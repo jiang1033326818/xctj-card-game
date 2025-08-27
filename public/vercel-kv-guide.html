@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vercel KV存储指南</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            background-color: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .step {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            border-left: 3px solid #007bff;
+        }
+        img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>使用Vercel KV存储替代MongoDB</h1>
+    
+    <div class="section">
+        <h2>为什么选择Vercel KV?</h2>
+        <p>如果您在连接MongoDB Atlas时遇到问题，Vercel KV是一个很好的替代方案：</p>
+        <ul>
+            <li>与Vercel无服务器函数完美集成</li>
+            <li>基于Redis，性能出色</li>
+            <li>无需处理复杂的连接问题</li>
+            <li>有免费层级</li>
+            <li>设置简单</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>设置Vercel KV的步骤</h2>
+        
+        <div class="step">
+            <h3>步骤1: 登录Vercel控制台</h3>
+            <p>访问 <a href="https://vercel.com" target="_blank">https://vercel.com</a> 并登录您的账户。</p>
+        </div>
+        
+        <div class="step">
+            <h3>步骤2: 选择您的项目</h3>
+            <p>找到并选择您的"xctj-card-game"项目。</p>
+        </div>
+        
+        <div class="step">
+            <h3>步骤3: 添加KV存储</h3>
+            <p>在项目控制台中，点击"Storage"标签，然后选择"Connect Store" → "KV Database"。</p>
+            <p>如果您是第一次使用，需要创建一个新的KV数据库。点击"Create New"，然后按照向导完成创建。</p>
+        </div>
+        
+        <div class="step">
+            <h3>步骤4: 连接到您的项目</h3>
+            <p>创建或选择KV数据库后，点击"Connect"将其连接到您的项目。</p>
+            <p>Vercel会自动添加必要的环境变量到您的项目中。</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>代码修改</h2>
+        <p>连接KV存储后，您需要修改代码以使用KV而不是MongoDB。以下是基本示例：</p>
+        
+        <h3>1. 安装依赖</h3>
+        <pre><code>npm install @vercel/kv</code></pre>
+        
+        <h3>2. 创建KV客户端</h3>
+        <pre><code>// api/kv.js
+const { kv } = require('@vercel/kv');
+
+module.exports = { kv };</code></pre>
+        
+        <h3>3. 用户认证示例</h3>
+        <pre><code>// api/login.js
+const bcrypt = require('bcrypt');
+const { kv } = require('./kv');
+
+module.exports = async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "方法不允许" });
+  }
+
+  try {
+    const { username, password } = req.body;
+    
+    // 从KV获取用户
+    const user = await kv.hgetall(`user:${username}`);
+    
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      return res.status(401).json({ error: "用户名或密码错误" });
+    }
+    
+    // 创建会话
+    const sessionId = require('crypto').randomBytes(64).toString('hex');
+    
+    // 存储会话
+    await kv.set(`session:${sessionId}`, {
+      userId: user.id,
+      username: user.username,
+      isAdmin: user.isAdmin,
+      expiresAt: Date.now() + 86400000 // 24小时后过期
+    }, { ex: 86400 }); // 设置过期时间为24小时
+    
+    // 设置cookie
+    res.setHeader(
+      "Set-Cookie",
+      `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=86400`
+    );
+    
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        balance: user.balance,
+        isAdmin: user.isAdmin
+      }
+    });
+  } catch (error) {
+    console.error("登录错误:", error);
+    res.status(500).json({ error: "服务器错误" });
+  }
+};</code></pre>
+        
+        <h3>4. 初始化用户数据</h3>
+        <pre><code>// api/init-kv.js
+const bcrypt = require('bcrypt');
+const { kv } = require('./kv');
+
+module.exports = async (req, res) => {
+  try {
+    // 创建默认管理员账户
+    const adminPassword = bcrypt.hashSync("068162", 10);
+    
+    // 检查是否已经初始化
+    const initialized = await kv.get("initialized");
+    
+    if (!initialized) {
+      // 创建管理员用户
+      await kv.hset("user:admin", {
+        id: "admin",
+        username: "admin",
+        password: adminPassword,
+        balance: 10000,
+        isAdmin: true,
+        createdAt: Date.now()
+      });
+      
+      await kv.hset("user:laojiang", {
+        id: "laojiang",
+        username: "laojiang",
+        password: adminPassword,
+        balance: 10000,
+        isAdmin: true,
+        createdAt: Date.now()
+      });
+      
+      // 设置初始化标志
+      await kv.set("initialized", true);
+      
+      res.json({ success: true, message: "KV数据库初始化成功" });
+    } else {
+      res.json({ success: true, message: "KV数据库已经初始化" });
+    }
+  } catch (error) {
+    console.error("初始化KV错误:", error);
+    res.status(500).json({ error: "服务器错误", message: error.message });
+  }
+};</code></pre>
+    </div>
+    
+    <div class="section">
+        <h2>完整迁移</h2>
+        <p>如果您决定使用Vercel KV，我们可以帮助您完成从MongoDB到KV的完整迁移。这将需要修改所有API端点以使用KV而不是MongoDB。</p>
+        <p>请联系我们获取更多帮助。</p>
+    </div>
+</body>
+</html>
