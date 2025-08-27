@@ -88,6 +88,8 @@ module.exports = async (req, res) => {
         return await handleHistory(req, res);
       } else if (action === "check-env") {
         return await handleCheckEnv(req, res);
+      } else if (action === "create-user") {
+        return await handleCreateUser(req, res);
       }
     }
 
@@ -119,7 +121,8 @@ async function handleDefault(req, res) {
       "/api/user - 用户信息",
       "/api/play - 进行游戏",
       "/api/history - 获取游戏历史",
-      "/api/check-env - 检查环境变量"
+      "/api/check-env - 检查环境变量",
+      "/api/create-user - 创建新用户"
     ],
     timestamp: new Date().toISOString(),
     nodeVersion: process.version
@@ -192,7 +195,7 @@ async function handleInit(req, res) {
     }
 
     // 创建默认管理员账户
-    const adminPassword = bcrypt.hashSync("068162", 10);
+    const adminPassword = await bcrypt.hash("068162", 10);
 
     // 尝试插入管理员用户
     try {
@@ -288,12 +291,40 @@ async function handleLogin(req, res) {
   }
 
   try {
+    // 解析请求体
+    let body;
+    if (typeof req.body === "object") {
+      body = req.body;
+    } else if (req.body) {
+      try {
+        body = JSON.parse(req.body);
+      } catch (e) {
+        console.error("解析请求体失败:", e);
+        return res.status(400).json({ error: "无效的JSON格式" });
+      }
+    } else {
+      // 尝试从请求流中读取
+      const buffers = [];
+      for await (const chunk of req) {
+        buffers.push(chunk);
+      }
+      const data = Buffer.concat(buffers).toString();
+      try {
+        body = data ? JSON.parse(data) : {};
+      } catch (e) {
+        console.error("从请求流解析JSON失败:", e);
+        return res.status(400).json({ error: "无效的JSON格式" });
+      }
+    }
+
+    console.log("解析的请求体:", body);
+
     // 检查请求体
-    if (!req.body || !req.body.username || !req.body.password) {
+    if (!body || !body.username || !body.password) {
       return res.status(400).json({ error: "请求缺少必要字段" });
     }
 
-    const { username, password } = req.body;
+    const { username, password } = body;
     console.log(`尝试登录用户: ${username}`);
 
     // 连接数据库
@@ -303,6 +334,8 @@ async function handleLogin(req, res) {
     // 查找用户
     const user = await db.collection("users").findOne({ username });
 
+    console.log("查找用户结果:", user ? "找到用户" : "未找到用户");
+
     if (!user) {
       console.log("用户不存在");
       return res.status(401).json({ error: "用户名或密码错误" });
@@ -310,6 +343,8 @@ async function handleLogin(req, res) {
 
     // 验证密码
     const passwordMatch = await bcrypt.compare(password, user.password);
+
+    console.log("密码验证结果:", passwordMatch ? "密码匹配" : "密码不匹配");
 
     if (!passwordMatch) {
       console.log("密码不匹配");
@@ -466,4 +501,90 @@ async function handleCheckEnv(req, res) {
       hasMongodbUri: !!process.env.MONGODB_URI
     }
   });
+}
+
+// 创建新用户
+async function handleCreateUser(req, res) {
+  console.log("开始处理创建用户请求");
+
+  // 检查请求方法
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "方法不允许" });
+  }
+
+  try {
+    // 解析请求体
+    let body;
+    if (typeof req.body === "object") {
+      body = req.body;
+    } else if (req.body) {
+      try {
+        body = JSON.parse(req.body);
+      } catch (e) {
+        console.error("解析请求体失败:", e);
+        return res.status(400).json({ error: "无效的JSON格式" });
+      }
+    } else {
+      // 尝试从请求流中读取
+      const buffers = [];
+      for await (const chunk of req) {
+        buffers.push(chunk);
+      }
+      const data = Buffer.concat(buffers).toString();
+      try {
+        body = data ? JSON.parse(data) : {};
+      } catch (e) {
+        console.error("从请求流解析JSON失败:", e);
+        return res.status(400).json({ error: "无效的JSON格式" });
+      }
+    }
+
+    console.log("解析的请求体:", body);
+
+    // 检查请求体
+    if (!body || !body.username || !body.password) {
+      return res.status(400).json({ error: "请求缺少必要字段" });
+    }
+
+    const { username, password } = body;
+    console.log(`尝试创建用户: ${username}`);
+
+    // 连接数据库
+    const { db } = await connectToDatabase();
+    console.log("数据库连接成功");
+
+    // 检查用户是否已存在
+    const existingUser = await db.collection("users").findOne({ username });
+    if (existingUser) {
+      return res.status(409).json({ error: "用户名已存在" });
+    }
+
+    // 哈希密码
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 创建用户
+    const result = await db.collection("users").insertOne({
+      username,
+      password: hashedPassword,
+      balance: 1000,
+      is_admin: false,
+      created_at: new Date()
+    });
+
+    console.log("创建用户成功");
+
+    // 返回成功响应
+    res.status(201).json({
+      success: true,
+      message: "用户创建成功",
+      userId: result.insertedId.toString()
+    });
+  } catch (error) {
+    console.error("创建用户失败:", error);
+    res.status(500).json({
+      success: false,
+      error: "创建用户失败",
+      message: error.message
+    });
+  }
 }

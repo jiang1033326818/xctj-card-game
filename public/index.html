@@ -42,6 +42,15 @@
             border-radius: 5px;
             margin: 15px 0;
         }
+        .important {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -50,6 +59,10 @@
     <div class="card">
         <h2>欢迎</h2>
         <p>欢迎来到喜从天降游戏平台。这是一个多用户卡牌游戏系统。</p>
+        
+        <div class="important">
+            <strong>重要提示：</strong> 首次使用前，请先访问<a href="/db-setup.html" style="background-color: #dc3545;">数据库初始化页面</a>，点击"初始化数据库"按钮，创建必要的数据库结构和默认用户。
+        </div>
         
         <div class="warning">
             <strong>注意：</strong> 系统正在维护中，某些功能可能暂时不可用。
@@ -60,15 +73,20 @@
         <h2>测试页面</h2>
         <p>以下是可用的测试页面：</p>
         <ul>
-            <li><a href="/unified-test.html">统一API测试</a> - 测试数据库连接和API功能</li>
+            <li><a href="/db-setup.html">数据库初始化</a> - 初始化数据库并测试连接</li>
+            <li><a href="/unified-test.html">统一API测试</a> - 测试API功能</li>
             <li><a href="/mongodb-setup.html">MongoDB设置助手</a> - 帮助设置MongoDB连接</li>
         </ul>
     </div>
     
     <div class="card">
         <h2>游戏入口</h2>
-        <p>游戏入口暂时关闭，请先使用测试页面确认系统正常运行。</p>
-        <a href="/login.html" style="background-color: #6c757d;">登录游戏</a>
+        <p>完成数据库初始化后，您可以使用以下默认账户登录：</p>
+        <ul>
+            <li>管理员账户: admin / 068162</li>
+            <li>测试账户: laojiang / 068162</li>
+        </ul>
+        <a href="/login.html">登录游戏</a>
     </div>
 </body>
 </html>

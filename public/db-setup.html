@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库初始化</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        input {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>数据库初始化和测试</h1>
+    
+    <div class="section">
+        <h2>1. 初始化数据库</h2>
+        <p>创建必要的集合和默认用户</p>
+        <button id="initDb">初始化数据库</button>
+        <pre id="initResult">等待操作...</pre>
+    </div>
+    
+    <div class="section">
+        <h2>2. 测试数据库连接</h2>
+        <p>测试简单的数据库操作</p>
+        <button id="testDb">测试数据库</button>
+        <pre id="testResult">等待操作...</pre>
+    </div>
+    
+    <div class="section">
+        <h2>3. 检查环境变量</h2>
+        <p>检查MongoDB连接字符串是否正确设置</p>
+        <button id="checkEnv">检查环境变量</button>
+        <pre id="envResult">等待操作...</pre>
+    </div>
+    
+    <div class="section">
+        <h2>4. 测试登录</h2>
+        <div>
+            <input type="text" id="username" placeholder="用户名" value="admin">
+            <input type="password" id="password" placeholder="密码" value="068162">
+        </div>
+        <button id="login">登录</button>
+        <pre id="loginResult">等待操作...</pre>
+    </div>
+    
+    <div class="section">
+        <h2>5. 创建新用户</h2>
+        <div>
+            <input type="text" id="newUsername" placeholder="用户名" value="test">
+            <input type="password" id="newPassword" placeholder="密码" value="123456">
+        </div>
+        <button id="createUser">创建用户</button>
+        <pre id="createResult">等待操作...</pre>
+    </div>
+    
+    <script>
+        // API基础URL
+        const API_BASE = '/api';
+        
+        async function callApi(endpoint, method = 'GET', body = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {}
+                };
+                
+                if (body) {
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = JSON.stringify(body);
+                }
+                
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                
+                try {
+                    const data = await response.json();
+                    return {
+                        ok: response.ok,
+                        status: response.status,
+                        data
+                    };
+                } catch (e) {
+                    const text = await response.text();
+                    return {
+                        ok: response.ok,
+                        status: response.status,
+                        text
+                    };
+                }
+            } catch (error) {
+                return { ok: false, error: error.message };
+            }
+        }
+        
+        function updateResult(elementId, result, isSuccess) {
+            const element = document.getElementById(elementId);
+            element.textContent = typeof result === 'object' ? JSON.stringify(result, null, 2) : result;
+            element.className = isSuccess ? 'success' : 'error';
+        }
+        
+        document.getElementById('initDb').addEventListener('click', async () => {
+            const resultElement = document.getElementById('initResult');
+            resultElement.textContent = '正在初始化数据库...';
+            resultElement.className = '';
+            
+            const result = await callApi('/init');
+            updateResult('initResult', result.data || result.text || result.error, result.ok);
+        });
+        
+        document.getElementById('testDb').addEventListener('click', async () => {
+            const resultElement = document.getElementById('testResult');
+            resultElement.textContent = '正在测试数据库...';
+            resultElement.className = '';
+            
+            const result = await callApi('/test');
+            updateResult('testResult', result.data || result.text || result.error, result.ok);
+        });
+        
+        document.getElementById('checkEnv').addEventListener('click', async () => {
+            const resultElement = document.getElementById('envResult');
+            resultElement.textContent = '正在检查环境变量...';
+            resultElement.className = '';
+            
+            const result = await callApi('/check-env');
+            updateResult('envResult', result.data || result.text || result.error, result.ok);
+        });
+        
+        document.getElementById('login').addEventListener('click', async () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                updateResult('loginResult', '请输入用户名和密码', false);
+                return;
+            }
+            
+            const resultElement = document.getElementById('loginResult');
+            resultElement.textContent = '正在登录...';
+            resultElement.className = '';
+            
+            const result = await callApi('/login', 'POST', { username, password });
+            updateResult('loginResult', result.data || result.text || result.error, result.ok);
+        });
+        
+        document.getElementById('createUser').addEventListener('click', async () => {
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            
+            if (!username || !password) {
+                updateResult('createResult', '请输入用户名和密码', false);
+                return;
+            }
+            
+            const resultElement = document.getElementById('createResult');
+            resultElement.textContent = '正在创建用户...';
+            resultElement.className = '';
+            
+            const result = await callApi('/create-user', 'POST', { username, password });
+            updateResult('createResult', result.data || result.text || result.error, result.ok);
+        });
+    </script>
+</body>
+</html>
