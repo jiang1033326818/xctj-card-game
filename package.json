@@ -1,0 +1,21 @@
+{
+  "name": "card-game-vercel",
+  "version": "1.0.0",
+  "description": "喜从天降多用户游戏 - Vercel版本",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Build complete'",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "sqlite3": "^5.1.6"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": ["game", "card", "multiplayer", "vercel"],
+  "author": "CodeBuddy",
+  "license": "MIT"
+}
