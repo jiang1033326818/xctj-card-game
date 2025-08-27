@@ -1,44 +1,47 @@
-// 简单的内存会话存储（生产环境建议使用Redis）
-const sessions = new Map();
+const { connectToDatabase } = require("./db");
+const cookie = require("cookie");
 
-function createSession(userId, username, isAdmin) {
-  const sessionId = Math.random().toString(36).substring(2, 15) + 
-                   Math.random().toString(36).substring(2, 15);
-  
-  sessions.set(sessionId, {
-    userId,
-    username,
-    isAdmin,
-    createdAt: Date.now()
-  });
-  
-  return sessionId;
-}
+async function getSession(sessionId) {
+  if (!sessionId) return null;
 
-function getSession(sessionId) {
-  const session = sessions.get(sessionId);
-  if (!session) return null;
-  
-  // 检查会话是否过期（24小时）
-  if (Date.now() - session.createdAt > 24 * 60 * 60 * 1000) {
-    sessions.delete(sessionId);
+  try {
+    const { db } = await connectToDatabase();
+
+    // 查找会话
+    const session = await db.collection("sessions").findOne({
+      sessionId,
+      expiresAt: { $gt: new Date() } // 确保会话未过期
+    });
+
+    return session;
+  } catch (error) {
+    console.error("获取会话错误:", error);
     return null;
   }
-  
-  return session;
 }
 
-function destroySession(sessionId) {
-  sessions.delete(sessionId);
+async function destroySession(sessionId) {
+  if (!sessionId) return;
+
+  try {
+    const { db } = await connectToDatabase();
+    await db.collection("sessions").deleteOne({ sessionId });
+  } catch (error) {
+    console.error("删除会话错误:", error);
+  }
 }
 
-function getSessionFromRequest(req) {
-  const sessionId = req.cookies?.sessionId;
-  return sessionId ? getSession(sessionId) : null;
+async function getSessionFromRequest(req) {
+  // 解析cookie
+  const cookies = req.headers.cookie ? cookie.parse(req.headers.cookie) : {};
+  const sessionId = cookies.sessionId;
+
+  if (!sessionId) return null;
+
+  return await getSession(sessionId);
 }
 
 module.exports = {
-  createSession,
   getSession,
   destroySession,
   getSessionFromRequest

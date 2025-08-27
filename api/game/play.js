@@ -1,31 +1,41 @@
-const { getDatabase } = require("../db");
+const { connectToDatabase } = require("../db");
 const { getSessionFromRequest } = require("../session");
+const { ObjectId } = require("mongodb");
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "方法不允许" });
   }
 
-  const session = getSessionFromRequest(req);
-  if (!session) {
-    return res.status(401).json({ error: "请先登录" });
-  }
+  try {
+    const session = await getSessionFromRequest(req);
+    if (!session) {
+      return res.status(401).json({ error: "请先登录" });
+    }
 
-  const { bets } = req.body;
-  const userId = session.userId;
-  const db = getDatabase();
+    const { bets } = req.body;
+    const userId = session.userId;
+    const { db } = await connectToDatabase();
 
-  const totalBet = Object.values(bets).reduce((sum, amount) => sum + amount, 0);
+    // 计算总下注金额
+    const totalBet = Object.values(bets).reduce(
+      (sum, amount) => sum + Number(amount),
+      0
+    );
 
-  db.get("SELECT balance FROM users WHERE id = ?", [userId], (err, user) => {
-    if (err) {
-      return res.status(500).json({ error: "数据库错误" });
+    // 获取用户信息
+    const user = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(userId) });
+    if (!user) {
+      return res.status(404).json({ error: "用户不存在" });
     }
 
     if (user.balance < totalBet) {
       return res.status(400).json({ error: "余额不足" });
     }
 
+    // 游戏逻辑
     const suits = ["hearts", "diamonds", "clubs", "spades", "joker"];
     const cards = [];
 
@@ -44,6 +54,7 @@ export default function handler(req, res) {
       joker: 20
     };
 
+    // 计算赢得金额
     let winnings = 0;
     if (bets[result]) {
       winnings = bets[result] * (payouts[result] + 1);
@@ -51,76 +62,69 @@ export default function handler(req, res) {
 
     const newBalance = user.balance - totalBet + winnings;
 
-    db.run(
-      "UPDATE users SET balance = ? WHERE id = ?",
-      [newBalance, userId],
-      err => {
-        if (err) {
-          return res.status(500).json({ error: "更新余额失败" });
-        }
+    // 更新用户余额
+    await db
+      .collection("users")
+      .updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { balance: newBalance } }
+      );
 
-        db.run(
-          `INSERT INTO game_records (user_id, bet_amount, result_suit, winnings, balance_after)
-           VALUES (?, ?, ?, ?, ?)`,
-          [userId, totalBet, result, winnings, newBalance],
-          function(err) {
-            if (err) {
-              return res.status(500).json({ error: "记录游戏失败" });
-            }
+    // 创建游戏记录
+    const gameRecord = {
+      userId: new ObjectId(userId),
+      betAmount: totalBet,
+      resultSuit: result,
+      winnings: winnings,
+      balanceAfter: newBalance,
+      createdAt: new Date()
+    };
 
-            const gameRecordId = this.lastID;
+    const gameRecordResult = await db
+      .collection("game_records")
+      .insertOne(gameRecord);
+    const gameRecordId = gameRecordResult.insertedId;
 
-            const betInserts = Object.entries(bets).map(([suit, amount]) => {
-              return new Promise((resolve, reject) => {
-                db.run(
-                  "INSERT INTO bet_records (game_record_id, suit, amount) VALUES (?, ?, ?)",
-                  [gameRecordId, suit, amount],
-                  err => {
-                    if (err) reject(err);
-                    else resolve();
-                  }
-                );
-              });
-            });
+    // 创建下注记录
+    const betRecords = Object.entries(bets).map(([suit, amount]) => ({
+      gameRecordId: gameRecordId,
+      suit,
+      amount: Number(amount)
+    }));
 
-            Promise.all(betInserts)
-              .then(() => {
-                const profit = totalBet - winnings;
-                const suitUpdate = `${result}_count = ${result}_count + 1`;
+    if (betRecords.length > 0) {
+      await db.collection("bet_records").insertMany(betRecords);
+    }
 
-                db.run(
-                  `UPDATE house_stats SET 
-                   total_games = total_games + 1,
-                   total_bets = total_bets + ?,
-                   total_payouts = total_payouts + ?,
-                   house_profit = house_profit + ?,
-                   ${suitUpdate},
-                   updated_at = CURRENT_TIMESTAMP
-                   WHERE id = 1`,
-                  [totalBet, winnings, profit],
-                  err => {
-                    res.json({
-                      success: true,
-                      result,
-                      winnings,
-                      newBalance,
-                      gameId: gameRecordId
-                    });
-                  }
-                );
-              })
-              .catch(err => {
-                res.json({
-                  success: true,
-                  result,
-                  winnings,
-                  newBalance,
-                  gameId: gameRecordId
-                });
-              });
-          }
-        );
-      }
+    // 更新庄家统计
+    const profit = totalBet - winnings;
+    const suitUpdateField = `${result}Count`;
+
+    await db.collection("house_stats").updateOne(
+      { _id: 1 },
+      {
+        $inc: {
+          totalGames: 1,
+          totalBets: totalBet,
+          totalPayouts: winnings,
+          houseProfit: profit,
+          [suitUpdateField]: 1
+        },
+        $set: { updatedAt: new Date() }
+      },
+      { upsert: true }
     );
-  });
+
+    // 返回结果
+    res.json({
+      success: true,
+      result,
+      winnings,
+      newBalance,
+      gameId: gameRecordId.toString()
+    });
+  } catch (error) {
+    console.error("游戏错误:", error);
+    res.status(500).json({ error: "服务器错误" });
+  }
 }
