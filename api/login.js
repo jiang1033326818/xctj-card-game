@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const { connectToDatabase } = require("./db");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "方法不允许" });
   }
@@ -90,4 +90,4 @@ export default async function handler(req, res) {
     console.error("登录错误:", error);
     res.status(500).json({ error: "服务器错误", message: error.message });
   }
-}
+};

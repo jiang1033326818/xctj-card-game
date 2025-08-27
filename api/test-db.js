@@ -1,6 +1,6 @@
 const { connectToDatabase } = require("./db");
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   try {
     console.log("测试数据库连接...");
     const { db } = await connectToDatabase();
@@ -28,4 +28,4 @@ export default async function handler(req, res) {
       stack: error.stack
     });
   }
-}
+};
