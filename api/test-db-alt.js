@@ -28,11 +28,8 @@ module.exports = async (req, res) => {
 
     // 尝试连接，使用最简单的选项
     console.log("尝试连接到MongoDB...");
-    client = new MongoClient(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-      // 不使用SSL选项
-    });
+    // MongoDB 5.x 驱动不再需要 useNewUrlParser 和 useUnifiedTopology 选项
+    client = new MongoClient(uri);
 
     await client.connect();
     console.log("MongoDB连接成功");
@@ -46,7 +43,8 @@ module.exports = async (req, res) => {
       success: true,
       message: "数据库连接成功",
       host: hostPart,
-      mongodbUri: "已设置"
+      mongodbUri: "已设置",
+      nodeVersion: process.version
     });
   } catch (error) {
     console.error("数据库连接错误:", error);
@@ -56,7 +54,8 @@ module.exports = async (req, res) => {
       success: false,
       error: "数据库连接失败",
       message: error.message,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+      nodeVersion: process.version
     });
   } finally {
     // 关闭连接

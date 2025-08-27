@@ -18,10 +18,8 @@ async function connectToDatabase() {
 
   try {
     // 创建新的客户端实例，使用最简单的选项
-    const client = new MongoClient(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    // MongoDB 5.x 驱动不再需要 useNewUrlParser 和 useUnifiedTopology 选项
+    const client = new MongoClient(uri);
 
     // 连接到MongoDB
     await client.connect();
