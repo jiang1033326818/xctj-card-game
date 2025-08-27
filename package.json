@@ -12,7 +12,7 @@
     "bcrypt": "^5.1.1",
     "cookie": "^0.5.0",
     "cookie-parser": "^1.4.6",
-    "mongodb": "^5.7.0"
+    "mongodb": "^4.17.1"
   },
   "engines": {
     "node": "18.x"

@@ -22,6 +22,12 @@
             border-radius: 5px;
             overflow-x: auto;
         }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
     </style>
 </head>
 <body>
@@ -29,30 +35,101 @@
     
     <div>
         <button id="testApi">测试API根路径</button>
+        <button id="testHello">测试Hello端点</button>
         <button id="testDb">测试数据库连接</button>
+        <button id="checkEnv">检查环境变量</button>
     </div>
     
     <h2>结果：</h2>
     <pre id="result">点击按钮开始测试...</pre>
     
     <script>
-        document.getElementById('testApi').addEventListener('click', async () => {
+        async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            
             try {
-                const response = await fetch('/api');
-                const data = await response.json();
-                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(id);
+                
+                // 尝试解析为JSON
+                try {
+                    const data = await response.json();
+                    return { ok: response.ok, status: response.status, data };
+                } catch (e) {
+                    // 如果不是JSON，获取文本
+                    const text = await response.text();
+                    return { ok: response.ok, status: response.status, text };
+                }
             } catch (error) {
-                document.getElementById('result').textContent = `错误: ${error.message}`;
+                clearTimeout(id);
+                return { ok: false, error: error.message };
             }
-        });
+        }
         
-        document.getElementById('testDb').addEventListener('click', async () => {
+        async function testEndpoint(url) {
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = `正在请求 ${url}...`;
+            resultElement.className = '';
+            
+            try {
+                const result = await fetchWithTimeout(url);
+                
+                if (result.ok) {
+                    resultElement.className = 'success';
+                    if (result.data) {
+                        resultElement.textContent = JSON.stringify(result.data, null, 2);
+                    } else {
+                        resultElement.textContent = result.text || '请求成功，但没有返回数据';
+                    }
+                } else {
+                    resultElement.className = 'error';
+                    if (result.data) {
+                        resultElement.textContent = JSON.stringify(result.data, null, 2);
+                    } else if (result.text) {
+                        resultElement.textContent = result.text;
+                    } else if (result.error) {
+                        resultElement.textContent = `错误: ${result.error}`;
+                    } else {
+                        resultElement.textContent = `HTTP错误: ${result.status}`;
+                    }
+                }
+            } catch (error) {
+                resultElement.className = 'error';
+                resultElement.textContent = `错误: ${error.message}`;
+            }
+        }
+        
+        document.getElementById('testApi').addEventListener('click', () => testEndpoint('/api'));
+        document.getElementById('testHello').addEventListener('click', () => testEndpoint('/api/hello'));
+        document.getElementById('testDb').addEventListener('click', () => testEndpoint('/api/test-db'));
+        
+        document.getElementById('checkEnv').addEventListener('click', async () => {
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = '检查环境变量...';
+            resultElement.className = '';
+            
             try {
                 const response = await fetch('/api/test-db');
                 const data = await response.json();
-                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    resultElement.className = 'success';
+                    resultElement.textContent = 'MongoDB URI环境变量已正确设置';
+                } else if (data.message && data.message.includes('MONGODB_URI')) {
+                    resultElement.className = 'error';
+                    resultElement.textContent = 'MongoDB URI环境变量未设置或不正确';
+                } else {
+                    resultElement.className = 'error';
+                    resultElement.textContent = `数据库连接错误: ${data.message || '未知错误'}`;
+                }
             } catch (error) {
-                document.getElementById('result').textContent = `错误: ${error.message}`;
+                resultElement.className = 'error';
+                resultElement.textContent = `错误: ${error.message}`;
             }
         });
     </script>

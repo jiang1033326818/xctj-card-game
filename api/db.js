@@ -10,122 +10,94 @@ let db = null;
 
 async function connectToDatabase() {
   try {
-    if (client) return { client, db };
-
-    if (!uri) {
-      throw new Error("请设置MONGODB_URI环境变量");
+    // 如果已经连接，直接返回
+    if (client && db) {
+      return { client, db };
     }
-
-    console.log("正在连接到MongoDB...");
-    client = new MongoClient(uri);
+    
+    // 检查URI是否设置
+    if (!uri) {
+      throw new Error("MONGODB_URI环境变量未设置");
+    }
+    
+    // 创建新的客户端实例
+    client = new MongoClient(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000 // 5秒超时
+    });
+    
+    // 连接到MongoDB
     await client.connect();
-    console.log("MongoDB连接成功");
-
+    
+    // 获取数据库实例
     db = client.db(dbName);
-
-    // 确保集合存在
-    await initializeDatabase();
-
+    
+    // 测试连接
+    await db.command({ ping: 1 });
+    
+    console.log("MongoDB连接成功");
+    
     return { client, db };
   } catch (error) {
     console.error("MongoDB连接错误:", error);
-    throw error;
+    
+    // 重置连接
+    client = null;
+    db = null;
+    
+    // 返回错误
+    throw new Error(`数据库连接失败: ${error.message}`);
   }
 }
 
+// 简化版初始化函数，只在需要时调用
 async function initializeDatabase() {
   try {
-    // 检查users集合是否存在
-    const collections = await db.listCollections().toArray();
-    const collectionNames = collections.map(c => c.name);
-
+    const { db } = await connectToDatabase();
+    
     // 创建默认管理员账户
     const adminPassword = bcrypt.hashSync("068162", 10);
-
-    // 用户集合
-    if (!collectionNames.includes("users")) {
-      console.log("创建users集合...");
+    
+    // 确保users集合存在并有默认用户
+    try {
+      await db.collection("users").findOne({});
+    } catch (e) {
       await db.createCollection("users");
-      // 创建唯一索引
-      await db
-        .collection("users")
-        .createIndex({ username: 1 }, { unique: true });
-
+      await db.collection("users").createIndex({ username: 1 }, { unique: true });
+      
       // 添加默认管理员
-      await db
-        .collection("users")
-        .insertMany(
-          [
-            {
-              username: "admin",
-              password: adminPassword,
-              balance: 10000,
-              is_admin: true,
-              created_at: new Date(),
-              last_login: null
-            },
-            {
-              username: "laojiang",
-              password: adminPassword,
-              balance: 10000,
-              is_admin: true,
-              created_at: new Date(),
-              last_login: null
-            }
-          ],
-          { ordered: false }
-        )
-        .catch(err => {
-          // 忽略重复键错误
-          if (err.code !== 11000) throw err;
-        });
-    }
-
-    // 游戏记录集合
-    if (!collectionNames.includes("game_records")) {
-      console.log("创建game_records集合...");
-      await db.createCollection("game_records");
-    }
-
-    // 押注记录集合
-    if (!collectionNames.includes("bet_records")) {
-      console.log("创建bet_records集合...");
-      await db.createCollection("bet_records");
-    }
-
-    // 会话集合
-    if (!collectionNames.includes("sessions")) {
-      console.log("创建sessions集合...");
-      await db.createCollection("sessions");
-      // 创建会话索引，并设置过期时间
-      await db
-        .collection("sessions")
-        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-    }
-
-    // 庄家统计集合
-    if (!collectionNames.includes("house_stats")) {
-      console.log("创建house_stats集合...");
-      await db.createCollection("house_stats");
-      // 初始化庄家统计记录
-      await db.collection("house_stats").insertOne({
-        _id: 1,
-        totalGames: 0,
-        totalBets: 0,
-        totalPayouts: 0,
-        houseProfit: 0,
-        heartsCount: 0,
-        diamondsCount: 0,
-        clubsCount: 0,
-        spadesCount: 0,
-        jokerCount: 0,
-        updated_at: new Date()
+      await db.collection("users").insertMany([
+        {
+          username: "admin",
+          password: adminPassword,
+          balance: 10000,
+          is_admin: true,
+          created_at: new Date(),
+          last_login: null
+        },
+        {
+          username: "laojiang",
+          password: adminPassword,
+          balance: 10000,
+          is_admin: true,
+          created_at: new Date(),
+          last_login: null
+        }
+      ], { ordered: false }).catch(err => {
+        // 忽略重复键错误
+        if (err.code !== 11000) throw err;
       });
     }
+    
+    console.log("数据库初始化完成");
   } catch (error) {
-    console.error("初始化数据库错误:", error);
+    console.error("数据库初始化错误:", error);
     throw error;
   }
 }
 
-module.exports = { connectToDatabase };
+module.exports = { 
+  connectToDatabase,
+  initializeDatabase
+};
