@@ -28,16 +28,39 @@
         .success {
             color: green;
         }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <h1>API测试页面</h1>
     
-    <div>
+    <div class="section">
+        <h2>基本API测试</h2>
         <button id="testApi">测试API根路径</button>
         <button id="testHello">测试Hello端点</button>
+    </div>
+    
+    <div class="section">
+        <h2>数据库测试</h2>
         <button id="testDb">测试数据库连接</button>
         <button id="checkEnv">检查环境变量</button>
+    </div>
+    
+    <div class="section">
+        <h2>MongoDB连接测试器</h2>
+        <p>如果您遇到连接问题，可以尝试修改连接字符串并测试：</p>
+        <div>
+            <label for="mongoUri">MongoDB URI:</label><br>
+            <input type="text" id="mongoUri" style="width: 100%; padding: 8px; margin: 5px 0;" 
+                   placeholder="mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority">
+        </div>
+        <button id="testCustomUri">测试自定义URI</button>
+        <p><small>注意：此测试仅在浏览器中进行，不会修改服务器配置</small></p>
     </div>
     
     <h2>结果：</h2>
@@ -71,13 +94,13 @@
             }
         }
         
-        async function testEndpoint(url) {
+        async function testEndpoint(url, options = {}) {
             const resultElement = document.getElementById('result');
             resultElement.textContent = `正在请求 ${url}...`;
             resultElement.className = '';
             
             try {
-                const result = await fetchWithTimeout(url);
+                const result = await fetchWithTimeout(url, options);
                 
                 if (result.ok) {
                     resultElement.className = 'success';
@@ -107,30 +130,23 @@
         document.getElementById('testApi').addEventListener('click', () => testEndpoint('/api'));
         document.getElementById('testHello').addEventListener('click', () => testEndpoint('/api/hello'));
         document.getElementById('testDb').addEventListener('click', () => testEndpoint('/api/test-db'));
+        document.getElementById('checkEnv').addEventListener('click', () => testEndpoint('/api/check-env'));
         
-        document.getElementById('checkEnv').addEventListener('click', async () => {
-            const resultElement = document.getElementById('result');
-            resultElement.textContent = '检查环境变量...';
-            resultElement.className = '';
-            
-            try {
-                const response = await fetch('/api/test-db');
-                const data = await response.json();
-                
-                if (data.success) {
-                    resultElement.className = 'success';
-                    resultElement.textContent = 'MongoDB URI环境变量已正确设置';
-                } else if (data.message && data.message.includes('MONGODB_URI')) {
-                    resultElement.className = 'error';
-                    resultElement.textContent = 'MongoDB URI环境变量未设置或不正确';
-                } else {
-                    resultElement.className = 'error';
-                    resultElement.textContent = `数据库连接错误: ${data.message || '未知错误'}`;
-                }
-            } catch (error) {
-                resultElement.className = 'error';
-                resultElement.textContent = `错误: ${error.message}`;
+        document.getElementById('testCustomUri').addEventListener('click', async () => {
+            const uri = document.getElementById('mongoUri').value.trim();
+            if (!uri) {
+                document.getElementById('result').textContent = '请输入MongoDB URI';
+                document.getElementById('result').className = 'error';
+                return;
             }
+            
+            testEndpoint('/api/test-db', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ uri })
+            });
         });
     </script>
 </body>
