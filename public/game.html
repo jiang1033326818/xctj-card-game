@@ -327,14 +327,14 @@
           }
 
           const data = await response.json();
-          if (data.user.isAdmin) {
+          if (data.is_admin) {
             // 管理员用户，重定向到管理页面
             window.location.href = '/admin.html';
             return;
           }
 
           // 更新用户余额
-          userBalance = data.user.balance;
+          userBalance = data.balance;
           userBalanceEl.textContent = userBalance;
         } catch (error) {
           console.error('检查认证失败:', error);
@@ -346,7 +346,7 @@
       async function loadHistory() {
         try {
           loadingEl.style.display = 'block';
-          const response = await fetch('/api/history');
+          const response = await fetch('/api/game_records');
           
           if (!response.ok) {
             throw new Error('加载历史记录失败');
@@ -365,7 +365,7 @@
       function renderHistory(records) {
         historyBody.innerHTML = '';
         
-        if (records.length === 0) {
+        if (!records || records.length === 0) {
           const row = document.createElement('tr');
           row.innerHTML = '<td colspan="5" style="text-align: center;">暂无游戏记录</td>';
           historyBody.appendChild(row);
@@ -519,7 +519,9 @@
       // 退出登录按钮点击事件
       logoutBtn.addEventListener('click', async function() {
         try {
-          await fetch('/api/logout');
+          await fetch('/api/logout', {
+            method: 'POST'
+          });
           window.location.href = '/login.html';
         } catch (error) {
           console.error('登出错误:', error);

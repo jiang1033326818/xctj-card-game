@@ -1,1 +1,426 @@
-[NOTE] Tool Results has been ignored to save space in the context window. Recall if necessary
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员面板 - 喜从天降</title>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      background-color: #2196F3;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+    }
+    .user-info span {
+      margin-right: 15px;
+    }
+    .btn {
+      padding: 8px 16px;
+      background-color: #1976D2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    .btn:hover {
+      background-color: #0D47A1;
+    }
+    .card {
+      background-color: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #2196F3;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    .stat-card {
+      background-color: #f9f9f9;
+      border-radius: 5px;
+      padding: 15px;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #2196F3;
+      margin: 10px 0;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+    .win {
+      color: #4CAF50;
+    }
+    .lose {
+      color: #F44336;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    .error-message {
+      color: #F44336;
+      padding: 10px;
+      background-color: #FFEBEE;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 喜从天降 - 管理员面板</h1>
+      <div class="user-info">
+        <span id="username">加载中...</span>
+        <span id="balance">余额: 加载中...</span>
+        <button class="btn" onclick="logout()">登出</button>
+      </div>
+    </header>
+    
+    <div class="card">
+      <h2>系统统计</h2>
+      <div id="stats-loading" class="loading">加载统计数据中...</div>
+      <div id="stats-error" class="error-message" style="display: none;"></div>
+      <div id="stats-container" class="stats-grid" style="display: none;">
+        <div class="stat-card">
+          <div class="stat-label">总游戏次数</div>
+          <div id="total-games" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">总下注金额</div>
+          <div id="total-bets" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">总派彩金额</div>
+          <div id="total-payouts" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">庄家盈利</div>
+          <div id="house-profit" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">红桃次数</div>
+          <div id="hearts-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">方块次数</div>
+          <div id="diamonds-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">梅花次数</div>
+          <div id="clubs-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">黑桃次数</div>
+          <div id="spades-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">小丑次数</div>
+          <div id="joker-count" class="stat-value">0</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>用户列表</h2>
+      <div id="users-loading" class="loading">加载用户数据中...</div>
+      <div id="users-error" class="error-message" style="display: none;"></div>
+      <div id="users-container" style="display: none;">
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th>用户名</th>
+              <th>余额</th>
+              <th>角色</th>
+              <th>创建时间</th>
+              <th>最后登录</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <!-- 用户数据将在这里动态加载 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>游戏记录</h2>
+      <div id="records-loading" class="loading">加载游戏记录中...</div>
+      <div id="records-error" class="error-message" style="display: none;"></div>
+      <div id="records-container" style="display: none;">
+        <table id="records-table">
+          <thead>
+            <tr>
+              <th>用户</th>
+              <th>下注花色</th>
+              <th>结果花色</th>
+              <th>下注金额</th>
+              <th>输赢</th>
+              <th>赢取金额</th>
+              <th>时间</th>
+            </tr>
+          </thead>
+          <tbody id="records-tbody">
+            <!-- 游戏记录将在这里动态加载 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 页面加载时检查登录状态并加载数据
+    window.addEventListener('load', async () => {
+      try {
+        // 检查登录状态
+        const userResponse = await fetch('/api/user');
+        if (!userResponse.ok) {
+          // 未登录，重定向到登录页面
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        const userData = await userResponse.json();
+        
+        // 检查是否为管理员
+        if (!userData.is_admin) {
+          // 不是管理员，重定向到游戏页面
+          window.location.href = '/game.html';
+          return;
+        }
+        
+        // 显示用户信息
+        document.getElementById('username').textContent = userData.username;
+        document.getElementById('balance').textContent = `余额: ${userData.balance}`;
+        
+        // 加载统计数据
+        loadStats();
+        
+        // 加载用户列表
+        loadUsers();
+        
+        // 加载游戏记录
+        loadGameRecords();
+      } catch (error) {
+        console.error('初始化失败:', error);
+        alert('加载数据失败，请刷新页面重试');
+      }
+    });
+
+    // 加载统计数据
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/house_stats');
+        
+        if (!response.ok) {
+          throw new Error('获取统计数据失败');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.stats) {
+          throw new Error('统计数据格式错误');
+        }
+        
+        // 显示统计数据
+        document.getElementById('total-games').textContent = data.stats.totalGames;
+        document.getElementById('total-bets').textContent = data.stats.totalBets;
+        document.getElementById('total-payouts').textContent = data.stats.totalPayouts;
+        document.getElementById('house-profit').textContent = data.stats.houseProfit;
+        document.getElementById('hearts-count').textContent = data.stats.heartsCount;
+        document.getElementById('diamonds-count').textContent = data.stats.diamondsCount;
+        document.getElementById('clubs-count').textContent = data.stats.clubsCount;
+        document.getElementById('spades-count').textContent = data.stats.spadesCount;
+        document.getElementById('joker-count').textContent = data.stats.jokerCount;
+        
+        // 隐藏加载提示，显示统计数据
+        document.getElementById('stats-loading').style.display = 'none';
+        document.getElementById('stats-container').style.display = 'grid';
+      } catch (error) {
+        console.error('加载统计数据失败:', error);
+        document.getElementById('stats-loading').style.display = 'none';
+        document.getElementById('stats-error').textContent = '加载统计数据失败: ' + error.message;
+        document.getElementById('stats-error').style.display = 'block';
+      }
+    }
+
+    // 加载用户列表
+    async function loadUsers() {
+      try {
+        const response = await fetch('/api/users');
+        
+        if (!response.ok) {
+          throw new Error('获取用户列表失败');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.users) {
+          throw new Error('用户数据格式错误');
+        }
+        
+        // 清空表格
+        const tbody = document.getElementById('users-tbody');
+        tbody.innerHTML = '';
+        
+        // 添加用户数据
+        data.users.forEach(user => {
+          const tr = document.createElement('tr');
+          
+          // 格式化日期
+          const createdAt = user.created_at ? new Date(user.created_at).toLocaleString() : '未知';
+          const lastLogin = user.last_login ? new Date(user.last_login).toLocaleString() : '未知';
+          
+          tr.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.balance}</td>
+            <td>${user.is_admin ? '管理员' : '普通用户'}</td>
+            <td>${createdAt}</td>
+            <td>${lastLogin}</td>
+          `;
+          
+          tbody.appendChild(tr);
+        });
+        
+        // 隐藏加载提示，显示用户列表
+        document.getElementById('users-loading').style.display = 'none';
+        document.getElementById('users-container').style.display = 'block';
+      } catch (error) {
+        console.error('加载用户列表失败:', error);
+        document.getElementById('users-loading').style.display = 'none';
+        document.getElementById('users-error').textContent = '加载用户列表失败: ' + error.message;
+        document.getElementById('users-error').style.display = 'block';
+      }
+    }
+
+    // 加载游戏记录
+    async function loadGameRecords() {
+      try {
+        const response = await fetch('/api/game_records');
+        
+        if (!response.ok) {
+          throw new Error('获取游戏记录失败');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.records) {
+          throw new Error('游戏记录格式错误');
+        }
+        
+        // 清空表格
+        const tbody = document.getElementById('records-tbody');
+        tbody.innerHTML = '';
+        
+        // 添加游戏记录
+        data.records.forEach(record => {
+          const tr = document.createElement('tr');
+          
+          // 格式化日期
+          const createdAt = record.created_at ? new Date(record.created_at).toLocaleString() : '未知';
+          
+          // 翻译花色
+          const translateSuit = suit => {
+            switch (suit) {
+              case 'hearts': return '红桃';
+              case 'diamonds': return '方块';
+              case 'clubs': return '梅花';
+              case 'spades': return '黑桃';
+              case 'joker': return '小丑';
+              default: return suit;
+            }
+          };
+          
+          tr.innerHTML = `
+            <td>${record.username}</td>
+            <td>${translateSuit(record.bet_suit)}</td>
+            <td>${translateSuit(record.result_suit)}</td>
+            <td>${record.amount}</td>
+            <td class="${record.win ? 'win' : 'lose'}">${record.win ? '赢' : '输'}</td>
+            <td>${record.win_amount}</td>
+            <td>${createdAt}</td>
+          `;
+          
+          tbody.appendChild(tr);
+        });
+        
+        // 隐藏加载提示，显示游戏记录
+        document.getElementById('records-loading').style.display = 'none';
+        document.getElementById('records-container').style.display = 'block';
+      } catch (error) {
+        console.error('加载游戏记录失败:', error);
+        document.getElementById('records-loading').style.display = 'none';
+        document.getElementById('records-error').textContent = '加载游戏记录失败: ' + error.message;
+        document.getElementById('records-error').style.display = 'block';
+      }
+    }
+
+    // 登出
+    async function logout() {
+      try {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/login.html';
+      } catch (error) {
+        console.error('登出失败:', error);
+        alert('登出失败，请重试');
+      }
+    }
+  </script>
+</body>
+</html>
