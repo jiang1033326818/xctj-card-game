@@ -1,23 +1,21 @@
 {
-  "name": "card-game-vercel",
+  "name": "xctj-card-game",
   "version": "1.0.0",
-  "description": "喜从天降多用户游戏 - Vercel版本",
-  "main": "api/index.js",
-  "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'Build complete'",
-    "start": "vercel dev"
-  },
-  "dependencies": {
-    "bcrypt": "^5.1.1",
-    "cookie": "^0.5.0",
-    "cookie-parser": "^1.4.6",
-    "mongodb": "^5.9.0"
-  },
+  "description": "喜从天降卡牌游戏",
+  "main": "index.js",
   "engines": {
     "node": "22.x"
   },
-  "keywords": ["game", "card", "multiplayer", "vercel"],
-  "author": "CodeBuddy",
-  "license": "MIT"
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cookie": "^0.6.0",
+    "mongodb": "^5.9.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
 }
