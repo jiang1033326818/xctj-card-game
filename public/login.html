@@ -1,239 +1,302 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>喜从天降 - 登录</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .logo {
-            font-size: 2.5em;
-            color: #667eea;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.1em;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus, input[type="password"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        .login-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .error-message {
-            color: #e74c3c;
-            margin-top: 15px;
-            padding: 10px;
-            background: #fdf2f2;
-            border-radius: 5px;
-            display: none;
-        }
-
-        .admin-link {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .admin-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .admin-link a:hover {
-            text-decoration: underline;
-        }
-
-        .loading {
-            display: none;
-            margin-top: 10px;
-        }
-
-        .spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #667eea;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - 卡牌游戏</title>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 320px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .error-message {
+      color: #f44336;
+      margin-top: 16px;
+      text-align: center;
+      display: none;
+    }
+    .register-link {
+      text-align: center;
+      margin-top: 16px;
+    }
+    .register-link a {
+      color: #2196F3;
+      text-decoration: none;
+    }
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="logo">🎰</div>
-        <h1 class="subtitle">喜从天降</h1>
-        
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="username">用户名</label>
-                <input type="text" id="username" name="username" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">密码</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            
-            <button type="submit" class="login-btn" id="loginBtn">登录</button>
-            
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-            </div>
-            
-            <div class="error-message" id="errorMessage"></div>
-        </form>
-        
-        <div class="admin-link">
-            <a href="admin.html">管理员入口</a>
-        </div>
+  <div class="login-container">
+    <h1>卡牌游戏登录</h1>
+    <div class="form-group">
+      <label for="username">用户名</label>
+      <input type="text" id="username" placeholder="请输入用户名">
     </div>
+    <div class="form-group">
+      <label for="password">密码</label>
+      <input type="password" id="password" placeholder="请输入密码">
+    </div>
+    <button id="login-btn">登录</button>
+    <div id="error-message" class="error-message"></div>
+    <div class="register-link">
+      <a href="#" id="register-link">没有账号？点击注册</a>
+    </div>
+  </div>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const loading = document.getElementById('loading');
-            const errorMessage = document.getElementById('errorMessage');
-            
-            // 显示加载状态
-            loginBtn.disabled = true;
-            loading.style.display = 'block';
-            errorMessage.style.display = 'none';
-            
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // 登录成功，跳转到相应页面
-                    if (data.user.username === 'laojiang' || data.user.username === 'admin') {
-                        window.location.href = 'admin.html';
-                    } else {
-                        window.location.href = 'index.html';
-                    }
-                } else {
-                    // 显示错误信息
-                    errorMessage.textContent = data.error || '登录失败';
-                    errorMessage.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('登录错误:', error);
-                errorMessage.textContent = '网络错误，请稍后重试';
-                errorMessage.style.display = 'block';
-            } finally {
-                // 恢复按钮状态
-                loginBtn.disabled = false;
-                loading.style.display = 'none';
-            }
-        });
-        
-        // 检查是否已经登录
-        window.addEventListener('load', async () => {
-            try {
-                const response = await fetch('/api/user');
-                if (response.ok) {
-                    const user = await response.json();
-                    if (user.is_admin) {
-                        window.location.href = 'admin.html';
-                    } else {
-                        window.location.href = 'index.html';
-                    }
-                }
-            } catch (error) {
-                // 未登录，继续显示登录页面
-                console.log('用户未登录');
-            }
-        });
-    </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginBtn = document.getElementById('login-btn');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const errorMessage = document.getElementById('error-message');
+      const registerLink = document.getElementById('register-link');
+
+      // 登录按钮点击事件
+      loginBtn.addEventListener('click', async function() {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        // 简单验证
+        if (!username || !password) {
+          showError('请输入用户名和密码');
+          return;
+        }
+
+        try {
+          // 禁用按钮，防止重复提交
+          loginBtn.disabled = true;
+          loginBtn.textContent = '登录中...';
+
+          // 发送登录请求
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || '登录失败');
+          }
+
+          // 登录成功
+          console.log('登录成功:', data);
+
+          // 根据用户类型跳转到不同页面
+          if (data.user.isAdmin) {
+            window.location.href = '/admin.html';
+          } else {
+            window.location.href = '/game.html';
+          }
+        } catch (error) {
+          showError(error.message);
+          console.error('登录错误:', error);
+        } finally {
+          // 恢复按钮状态
+          loginBtn.disabled = false;
+          loginBtn.textContent = '登录';
+        }
+      });
+
+      // 注册链接点击事件
+      registerLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        showRegisterForm();
+      });
+
+      // 显示错误信息
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+      }
+
+      // 显示注册表单
+      function showRegisterForm() {
+        // 修改标题和按钮
+        document.querySelector('h1').textContent = '注册新账户';
+        loginBtn.textContent = '注册';
+        registerLink.textContent = '已有账号？点击登录';
+        errorMessage.style.display = 'none';
+
+        // 切换按钮事件
+        loginBtn.removeEventListener('click', loginHandler);
+        loginBtn.addEventListener('click', registerHandler);
+        registerLink.removeEventListener('click', showRegisterForm);
+        registerLink.addEventListener('click', showLoginForm);
+      }
+
+      // 显示登录表单
+      function showLoginForm() {
+        // 修改标题和按钮
+        document.querySelector('h1').textContent = '卡牌游戏登录';
+        loginBtn.textContent = '登录';
+        registerLink.textContent = '没有账号？点击注册';
+        errorMessage.style.display = 'none';
+
+        // 切换按钮事件
+        loginBtn.removeEventListener('click', registerHandler);
+        loginBtn.addEventListener('click', loginHandler);
+        registerLink.removeEventListener('click', showLoginForm);
+        registerLink.addEventListener('click', showRegisterForm);
+      }
+
+      // 登录处理函数
+      async function loginHandler() {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        // 简单验证
+        if (!username || !password) {
+          showError('请输入用户名和密码');
+          return;
+        }
+
+        try {
+          // 禁用按钮，防止重复提交
+          loginBtn.disabled = true;
+          loginBtn.textContent = '登录中...';
+
+          // 发送登录请求
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || '登录失败');
+          }
+
+          // 登录成功
+          console.log('登录成功:', data);
+
+          // 根据用户类型跳转到不同页面
+          if (data.user.isAdmin) {
+            window.location.href = '/admin.html';
+          } else {
+            window.location.href = '/game.html';
+          }
+        } catch (error) {
+          showError(error.message);
+          console.error('登录错误:', error);
+        } finally {
+          // 恢复按钮状态
+          loginBtn.disabled = false;
+          loginBtn.textContent = '登录';
+        }
+      }
+
+      // 注册处理函数
+      async function registerHandler() {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        // 简单验证
+        if (!username || !password) {
+          showError('请输入用户名和密码');
+          return;
+        }
+
+        if (password.length < 6) {
+          showError('密码长度至少为6位');
+          return;
+        }
+
+        try {
+          // 禁用按钮，防止重复提交
+          loginBtn.disabled = true;
+          loginBtn.textContent = '注册中...';
+
+          // 发送注册请求
+          const response = await fetch('/api/create-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || '注册失败');
+          }
+
+          // 注册成功
+          alert('注册成功，请登录');
+          showLoginForm();
+        } catch (error) {
+          showError(error.message);
+          console.error('注册错误:', error);
+        } finally {
+          // 恢复按钮状态
+          loginBtn.disabled = false;
+          loginBtn.textContent = '注册';
+        }
+      }
+
+      // 初始化登录处理函数
+      loginBtn.addEventListener('click', loginHandler);
+    });
+  </script>
 </body>
 </html>

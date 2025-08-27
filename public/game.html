@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>卡牌游戏</title>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    h1 {
+      margin: 0;
+      color: #2196F3;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+    }
+    .balance {
+      margin-right: 20px;
+      font-weight: bold;
+    }
+    .logout-btn {
+      padding: 8px 16px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    .card-display {
+      width: 200px;
+      height: 280px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .card-display.hearts, .card-display.diamonds {
+      color: red;
+    }
+    .card-display.clubs, .card-display.spades {
+      color: black;
+    }
+    .card-display.joker {
+      color: purple;
+    }
+    .card-symbol {
+      font-size: 80px;
+    }
+    .bet-controls {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .bet-amount {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .bet-amount label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    .bet-amount input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .suit-selection {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .suit-btn {
+      padding: 10px 20px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      background-color: white;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s;
+    }
+    .suit-btn.selected {
+      border-color: #2196F3;
+      background-color: #e3f2fd;
+    }
+    .suit-btn.hearts, .suit-btn.diamonds {
+      color: red;
+    }
+    .suit-btn.clubs, .suit-btn.spades {
+      color: black;
+    }
+    .suit-btn.joker {
+      color: purple;
+    }
+    .suit-symbol {
+      margin-right: 8px;
+      font-size: 20px;
+    }
+    .play-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .play-btn:hover {
+      background-color: #45a049;
+    }
+    .play-btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+      text-align: center;
+      font-weight: bold;
+      display: none;
+    }
+    .result.win {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+    .result.lose {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef9a9a;
+    }
+    .history-section {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .history-section h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f5f5f5;
+      font-weight: bold;
+    }
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+    .win-record {
+      color: #2e7d32;
+    }
+    .lose-record {
+      color: #c62828;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #2196F3;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>卡牌游戏</h1>
+      <div class="user-info">
+        <div class="balance">余额: <span id="user-balance">0</span></div>
+        <button id="logout-btn" class="logout-btn">退出登录</button>
+      </div>
+    </header>
+
+    <div class="game-area">
+      <div id="card-display" class="card-display">
+        <span class="card-symbol">?</span>
+      </div>
+
+      <div class="bet-controls">
+        <div class="bet-amount">
+          <label for="amount">下注金额 (10-1000)</label>
+          <input type="number" id="amount" min="10" max="1000" value="100">
+        </div>
+
+        <div class="suit-selection">
+          <button class="suit-btn hearts" data-suit="hearts">
+            <span class="suit-symbol">♥</span> 红桃
+          </button>
+          <button class="suit-btn diamonds" data-suit="diamonds">
+            <span class="suit-symbol">♦</span> 方块
+          </button>
+          <button class="suit-btn clubs" data-suit="clubs">
+            <span class="suit-symbol">♣</span> 梅花
+          </button>
+          <button class="suit-btn spades" data-suit="spades">
+            <span class="suit-symbol">♠</span> 黑桃
+          </button>
+          <button class="suit-btn joker" data-suit="joker">
+            <span class="suit-symbol">🃏</span> 小丑
+          </button>
+        </div>
+
+        <button id="play-btn" class="play-btn" disabled>开始游戏</button>
+
+        <div id="result" class="result"></div>
+      </div>
+    </div>
+
+    <div class="history-section">
+      <h2>游戏历史</h2>
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+      </div>
+      <table id="history-table">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>下注花色</th>
+            <th>结果花色</th>
+            <th>下注金额</th>
+            <th>输赢</th>
+          </tr>
+        </thead>
+        <tbody id="history-body">
+          <!-- 历史记录将在这里动态添加 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 元素引用
+      const userBalanceEl = document.getElementById('user-balance');
+      const logoutBtn = document.getElementById('logout-btn');
+      const cardDisplay = document.getElementById('card-display');
+      const amountInput = document.getElementById('amount');
+      const suitBtns = document.querySelectorAll('.suit-btn');
+      const playBtn = document.getElementById('play-btn');
+      const resultEl = document.getElementById('result');
+      const historyBody = document.getElementById('history-body');
+      const loadingEl = document.getElementById('loading');
+
+      // 状态变量
+      let selectedSuit = null;
+      let userBalance = 0;
+
+      // 初始化
+      checkAuth();
+      loadHistory();
+
+      // 检查用户是否已登录
+      async function checkAuth() {
+        try {
+          const response = await fetch('/api/user');
+          if (!response.ok) {
+            // 未登录，重定向到登录页面
+            window.location.href = '/login.html';
+            return;
+          }
+
+          const data = await response.json();
+          if (data.user.isAdmin) {
+            // 管理员用户，重定向到管理页面
+            window.location.href = '/admin.html';
+            return;
+          }
+
+          // 更新用户余额
+          userBalance = data.user.balance;
+          userBalanceEl.textContent = userBalance;
+        } catch (error) {
+          console.error('检查认证失败:', error);
+          window.location.href = '/login.html';
+        }
+      }
+
+      // 加载游戏历史
+      async function loadHistory() {
+        try {
+          loadingEl.style.display = 'block';
+          const response = await fetch('/api/history');
+          
+          if (!response.ok) {
+            throw new Error('加载历史记录失败');
+          }
+
+          const data = await response.json();
+          renderHistory(data.records);
+        } catch (error) {
+          console.error('加载历史记录错误:', error);
+        } finally {
+          loadingEl.style.display = 'none';
+        }
+      }
+
+      // 渲染历史记录
+      function renderHistory(records) {
+        historyBody.innerHTML = '';
+        
+        if (records.length === 0) {
+          const row = document.createElement('tr');
+          row.innerHTML = '<td colspan="5" style="text-align: center;">暂无游戏记录</td>';
+          historyBody.appendChild(row);
+          return;
+        }
+
+        records.forEach(record => {
+          const row = document.createElement('tr');
+          
+          // 格式化时间
+          const date = new Date(record.created_at);
+          const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+          
+          // 花色符号
+          const suitSymbols = {
+            hearts: '♥',
+            diamonds: '♦',
+            clubs: '♣',
+            spades: '♠',
+            joker: '🃏'
+          };
+          
+          // 花色中文名称
+          const suitNames = {
+            hearts: '红桃',
+            diamonds: '方块',
+            clubs: '梅花',
+            spades: '黑桃',
+            joker: '小丑'
+          };
+          
+          // 花色颜色
+          const suitColors = {
+            hearts: 'red',
+            diamonds: 'red',
+            clubs: 'black',
+            spades: 'black',
+            joker: 'purple'
+          };
+          
+          row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td><span style="color: ${suitColors[record.bet_suit]}">${suitSymbols[record.bet_suit]}</span> ${suitNames[record.bet_suit]}</td>
+            <td><span style="color: ${suitColors[record.result_suit]}">${suitSymbols[record.result_suit]}</span> ${suitNames[record.result_suit]}</td>
+            <td>${record.amount}</td>
+            <td class="${record.win ? 'win-record' : 'lose-record'}">${record.win ? '赢 +' + record.win_amount : '输'}</td>
+          `;
+          
+          historyBody.appendChild(row);
+        });
+      }
+
+      // 花色按钮点击事件
+      suitBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          // 移除之前的选中状态
+          suitBtns.forEach(b => b.classList.remove('selected'));
+          
+          // 设置新的选中状态
+          this.classList.add('selected');
+          selectedSuit = this.dataset.suit;
+          
+          // 启用开始按钮
+          playBtn.disabled = false;
+        });
+      });
+
+      // 开始游戏按钮点击事件
+      playBtn.addEventListener('click', async function() {
+        // 验证输入
+        const amount = parseInt(amountInput.value);
+        if (isNaN(amount) || amount < 10 || amount > 1000) {
+          alert('请输入有效的下注金额 (10-1000)');
+          return;
+        }
+
+        if (!selectedSuit) {
+          alert('请选择一个花色');
+          return;
+        }
+
+        if (amount > userBalance) {
+          alert('余额不足');
+          return;
+        }
+
+        try {
+          // 禁用按钮，防止重复提交
+          playBtn.disabled = true;
+          
+          // 隐藏之前的结果
+          resultEl.style.display = 'none';
+          
+          // 显示加载状态
+          cardDisplay.innerHTML = '<div class="spinner"></div>';
+          
+          // 发送游戏请求
+          const response = await fetch('/api/play', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              suit: selectedSuit,
+              amount: amount
+            })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || '游戏处理失败');
+          }
+
+          // 更新余额
+          userBalance = data.balance;
+          userBalanceEl.textContent = userBalance;
+
+          // 显示结果卡牌
+          const suitSymbols = {
+            hearts: '♥',
+            diamonds: '♦',
+            clubs: '♣',
+            spades: '♠',
+            joker: '🃏'
+          };
+          
+          cardDisplay.className = 'card-display ' + data.card.suit;
+          cardDisplay.innerHTML = `<span class="card-symbol">${suitSymbols[data.card.suit]}</span>`;
+
+          // 显示结果消息
+          resultEl.className = data.win ? 'result win' : 'result lose';
+          if (data.win) {
+            resultEl.textContent = `恭喜！你赢了 ${data.winAmount} 金币`;
+          } else {
+            resultEl.textContent = `很遗憾，你输了 ${data.amount} 金币`;
+          }
+          resultEl.style.display = 'block';
+
+          // 重新加载历史记录
+          loadHistory();
+        } catch (error) {
+          console.error('游戏错误:', error);
+          alert(error.message);
+        } finally {
+          // 恢复按钮状态
+          playBtn.disabled = false;
+        }
+      });
+
+      // 退出登录按钮点击事件
+      logoutBtn.addEventListener('click', async function() {
+        try {
+          await fetch('/api/logout');
+          window.location.href = '/login.html';
+        } catch (error) {
+          console.error('登出错误:', error);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

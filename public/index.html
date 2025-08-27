@@ -1,92 +1,120 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>喜从天降游戏</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1, h2 {
-            color: #333;
-        }
-        a {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 10px 15px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        a:hover {
-            background-color: #0056b3;
-        }
-        .warning {
-            background-color: #fff3cd;
-            border: 1px solid #ffeeba;
-            color: #856404;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 15px 0;
-        }
-        .important {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 15px 0;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>卡牌游戏</title>
+  <style>
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #333;
+    }
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 400px;
+      text-align: center;
+    }
+    h1 {
+      color: #2196F3;
+      margin-bottom: 24px;
+    }
+    p {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #4CAF50;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 16px;
+      margin: 10px;
+      transition: background-color 0.3s;
+    }
+    .btn:hover {
+      background-color: #45a049;
+    }
+    .btn-secondary {
+      background-color: #2196F3;
+    }
+    .btn-secondary:hover {
+      background-color: #0b7dda;
+    }
+    .logo {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+    .card-symbols {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .hearts, .diamonds {
+      color: red;
+    }
+    .clubs, .spades {
+      color: black;
+    }
+    .joker {
+      color: purple;
+    }
+  </style>
 </head>
 <body>
-    <h1>喜从天降游戏</h1>
-    
-    <div class="card">
-        <h2>欢迎</h2>
-        <p>欢迎来到喜从天降游戏平台。这是一个多用户卡牌游戏系统。</p>
-        
-        <div class="important">
-            <strong>重要提示：</strong> 首次使用前，请先访问<a href="/db-setup.html" style="background-color: #dc3545;">数据库初始化页面</a>，点击"初始化数据库"按钮，创建必要的数据库结构和默认用户。
-        </div>
-        
-        <div class="warning">
-            <strong>注意：</strong> 系统正在维护中，某些功能可能暂时不可用。
-        </div>
+  <div class="container">
+    <div class="logo">🃏</div>
+    <h1>卡牌游戏</h1>
+    <div class="card-symbols">
+      <span class="hearts">♥</span>
+      <span class="diamonds">♦</span>
+      <span class="clubs">♣</span>
+      <span class="spades">♠</span>
+      <span class="joker">🃏</span>
     </div>
-    
-    <div class="card">
-        <h2>测试页面</h2>
-        <p>以下是可用的测试页面：</p>
-        <ul>
-            <li><a href="/db-setup.html">数据库初始化</a> - 初始化数据库并测试连接</li>
-            <li><a href="/unified-test.html">统一API测试</a> - 测试API功能</li>
-            <li><a href="/mongodb-setup.html">MongoDB设置助手</a> - 帮助设置MongoDB连接</li>
-        </ul>
+    <p>欢迎来到卡牌游戏！猜对花色赢取奖励，小丑牌赔率更高！</p>
+    <div>
+      <a href="/login.html" class="btn">登录游戏</a>
+      <a href="/db-setup.html" class="btn btn-secondary">数据库初始化</a>
     </div>
-    
-    <div class="card">
-        <h2>游戏入口</h2>
-        <p>完成数据库初始化后，您可以使用以下默认账户登录：</p>
-        <ul>
-            <li>管理员账户: admin / 068162</li>
-            <li>测试账户: laojiang / 068162</li>
-        </ul>
-        <a href="/login.html">登录游戏</a>
-    </div>
+    <p style="font-size: 14px; margin-top: 30px; color: #666;">
+      首次使用请先点击"数据库初始化"<br>
+      默认管理员账户: admin / 068162
+    </p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 检查用户是否已登录
+      fetch('/api/user')
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error('未登录');
+        })
+        .then(data => {
+          // 已登录，根据用户类型跳转
+          if (data.user.isAdmin) {
+            window.location.href = '/admin.html';
+          } else {
+            window.location.href = '/game.html';
+          }
+        })
+        .catch(error => {
+          console.log('用户未登录，显示首页');
+        });
+    });
+  </script>
 </body>
 </html>
