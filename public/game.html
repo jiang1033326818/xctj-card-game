@@ -1,1153 +1,1101 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>喜从天降 - 卡牌游戏</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      overflow: hidden;
-    }
-
-    .header {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
-    }
-
-    .user-info {
-      color: white;
-      font-weight: bold;
-    }
-
-    .logout-btn {
-      background: rgba(255,255,255,0.2);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .logout-btn:hover {
-      background: rgba(255,255,255,0.3);
-    }
-
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 2fr 1fr;
-      gap: 15px;
-      height: calc(100vh - 150px);
-      padding: 15px;
-      max-width: 1800px;
-      margin: 0 auto;
-    }
-
-    .game-control-area {
-      background: rgba(255,255,255,0.95);
-      border-radius: 25px;
-      padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .bet-area {
-      background: rgba(255,255,255,0.95);
-      border-radius: 25px;
-      padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .history-area {
-      background: rgba(255,255,255,0.95);
-      border-radius: 25px;
-      padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-
-    .title {
-      font-size: 2em;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 20px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .section-title {
-      font-size: 1.5em;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 15px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .card-display {
-      width: 180px;
-      height: 240px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4em;
-      margin: 20px auto;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-      background: linear-gradient(145deg, #f0f0f0, #cacaca);
-      border: 3px solid rgba(255,255,255,0.3);
-      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-      transform-style: preserve-3d;
-      position: relative;
-    }
-
-    .card-front, .card-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      border-radius: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .card-front {
-      transform: rotateY(180deg);
-    }
-
-    .card-display.flipped {
-      transform: rotateY(180deg);
-    }
-
-    .card-display.hearts { 
-      background: linear-gradient(145deg, #ff6b6b, #ee5a52); 
-      color: white; 
-    }
-    .card-display.diamonds { 
-      background: linear-gradient(145deg, #ff6b6b, #ee5a52); 
-      color: white; 
-    }
-    .card-display.clubs { 
-      background: linear-gradient(145deg, #2c3e50, #34495e); 
-      color: white; 
-    }
-    .card-display.spades { 
-      background: linear-gradient(145deg, #2c3e50, #34495e); 
-      color: white; 
-    }
-    .card-display.joker { 
-      background: linear-gradient(145deg, #f39c12, #e67e22); 
-      color: white; 
-      animation: jokerGlow 2s ease-in-out infinite alternate;
-    }
-
-    @keyframes jokerGlow {
-      from { box-shadow: 0 15px 35px rgba(243,156,18,0.4); }
-      to { box-shadow: 0 15px 35px rgba(243,156,18,0.8), 0 0 30px rgba(243,156,18,0.6); }
-    }
-
-    .user-stats {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 15px;
-      font-size: 1.1em;
-      font-weight: bold;
-    }
-
-    .balance {
-      color: #27ae60;
-    }
-
-    .status-message {
-      text-align: center;
-      padding: 12px;
-      border-radius: 15px;
-      font-weight: bold;
-      margin-bottom: 15px;
-      background: linear-gradient(145deg, #ecf0f1, #bdc3c7);
-      color: #2c3e50;
-      transition: all 0.3s;
-    }
-
-    .status-message.playing {
-      background: linear-gradient(145deg, #3498db, #2980b9);
-      color: white;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    .status-message.win {
-      background: linear-gradient(145deg, #2ecc71, #27ae60);
-      color: white;
-      animation: celebrate 0.6s ease-in-out;
-    }
-
-    .status-message.lose {
-      background: linear-gradient(145deg, #e74c3c, #c0392b);
-      color: white;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    @keyframes celebrate {
-      0%, 100% { transform: scale(1); }
-      25% { transform: scale(1.1) rotate(-2deg); }
-      75% { transform: scale(1.1) rotate(2deg); }
-    }
-
-    .play-btn {
-      background: linear-gradient(145deg, #2ecc71, #27ae60);
-      color: white;
-      border: none;
-      padding: 15px 30px;
-      border-radius: 25px;
-      font-size: 1.2em;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 25px rgba(46,204,113,0.4);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .play-btn:hover:not(:disabled) {
-      background: linear-gradient(145deg, #27ae60, #2ecc71);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 35px rgba(46,204,113,0.6);
-    }
-
-    .play-btn:disabled {
-      background: linear-gradient(145deg, #95a5a6, #7f8c8d);
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: 0 4px 15px rgba(149,165,166,0.3);
-    }
-
-    .bet-options {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-bottom: 15px;
-    }
-
-    .bet-option {
-      padding: 12px 6px;
-      border: 2px solid rgba(102,126,234,0.2);
-      border-radius: 15px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      background: linear-gradient(145deg, #ffffff, #f8f9fa);
-      cursor: pointer;
-      text-align: center;
-    }
-
-    .bet-option:hover {
-      border-color: #667eea;
-      background: linear-gradient(145deg, #f8f9ff, #ffffff);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(102,126,234,0.2);
-    }
-
-    .bet-option.selected {
-      border-color: #667eea;
-      background: linear-gradient(145deg, #667eea, #5a6fd8);
-      color: white;
-      box-shadow: 0 8px 20px rgba(102,126,234,0.4);
-    }
-
-    .bet-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .bet-symbol {
-      font-size: 1.5em;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-    }
-
-    .bet-name {
-      font-weight: 600;
-      font-size: 0.8em;
-    }
-
-    .bet-payout {
-      font-size: 0.7em;
-      opacity: 0.8;
-    }
-
-    .bet-amount {
-      font-weight: bold;
-      font-size: 1em;
-      background: rgba(255,255,255,0.9);
-      color: #667eea;
-      padding: 3px 6px;
-      border-radius: 8px;
-      min-width: 25px;
-    }
-
-    .bet-option.selected .bet-amount {
-      background: rgba(255,255,255,0.2);
-      color: white;
-    }
-
-    .chip-selection {
-      margin-top: 10px;
-    }
-
-    .chip-title {
-      font-weight: 600;
-      margin-bottom: 8px;
-      text-align: center;
-      color: #667eea;
-      font-size: 0.9em;
-    }
-
-    .chip-buttons {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 6px;
-    }
-
-    .chip-btn {
-      padding: 8px 4px;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 0.9em;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .chip-1 { background: linear-gradient(145deg, #95a5a6, #7f8c8d); color: white; }
-    .chip-5 { background: linear-gradient(145deg, #2ecc71, #27ae60); color: white; }
-    .chip-10 { background: linear-gradient(145deg, #3498db, #2980b9); color: white; }
-    .chip-25 { background: linear-gradient(145deg, #f1c40f, #f39c12); color: white; }
-    .chip-50 { background: linear-gradient(145deg, #e67e22, #d35400); color: white; }
-    .chip-100 { background: linear-gradient(145deg, #e74c3c, #c0392b); color: white; }
-
-    .chip-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    }
-
-    .chip-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .total-bet {
-      text-align: center;
-      font-size: 1.1em;
-      font-weight: bold;
-      color: #667eea;
-      margin: 10px 0;
-    }
-
-    .clear-btn {
-      background: linear-gradient(145deg, #e74c3c, #c0392b);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-top: 10px;
-    }
-
-    .clear-btn:hover {
-      background: linear-gradient(145deg, #c0392b, #e74c3c);
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(231,76,60,0.4);
-    }
-
-    .history-content {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-
-    #historyList {
-      flex: 1;
-      overflow: hidden;
-      min-height: 0;
-    }
-
-    .history-item {
-      padding: 10px;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      font-size: 12px;
-      border-radius: 8px;
-      margin-bottom: 5px;
-      background: linear-gradient(145deg, #ffffff, #f8f9fa);
-      transition: all 0.3s;
-    }
-
-    .history-item:hover {
-      background: linear-gradient(145deg, #f8f9fa, #ffffff);
-      transform: translateX(3px);
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-
-    .history-result {
-      font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 13px;
-    }
-
-    .history-result.win {
-      color: #27ae60;
-    }
-
-    .history-result.lose {
-      color: #e74c3c;
-    }
-
-    .history-details {
-      color: #666;
-      font-size: 10px;
-      line-height: 1.3;
-    }
-
-    .pagination {
-      margin-top: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-top: 1px solid rgba(0,0,0,0.1);
-    }
-
-    .page-btn {
-      background: linear-gradient(145deg, #667eea, #5a6fd8);
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: bold;
-      transition: all 0.3s;
-    }
-
-    .page-btn:hover:not(:disabled) {
-      background: linear-gradient(145deg, #5a6fd8, #667eea);
-      transform: translateY(-1px);
-    }
-
-    .page-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .page-info {
-      font-size: 11px;
-      color: #666;
-      font-weight: 500;
-    }
-
-    @media (max-width: 1600px) {
-      .container {
-        grid-template-columns: 1fr 2.5fr 1fr;
-        gap: 12px;
-      }
-    }
-
-    @media (max-width: 1200px) {
-      .container {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto;
-        height: auto;
-        overflow-y: auto;
-      }
-    }
-
-    @keyframes chipFly {
-      0% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-50px) scale(1.2);
-        opacity: 0;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>喜从天降 - 卡牌游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .user-info {
+            color: white;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 15px;
+            height: calc(100vh - 150px);
+            padding: 15px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .game-control-area {
+            background: rgba(255,255,255,0.95);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .bet-area {
+            background: rgba(255,255,255,0.95);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .history-area {
+            background: rgba(255,255,255,0.95);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .title {
+            font-size: 2em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .card-display {
+            width: 180px;
+            height: 240px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            margin: 20px auto;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            background: linear-gradient(145deg, #f0f0f0, #cacaca);
+            border: 3px solid rgba(255,255,255,0.3);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            position: relative;
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-front {
+            transform: rotateY(180deg);
+        }
+
+        .card-display.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-display.hearts { 
+            background: linear-gradient(145deg, #ff6b6b, #ee5a52); 
+            color: white; 
+        }
+        .card-display.diamonds { 
+            background: linear-gradient(145deg, #ff6b6b, #ee5a52); 
+            color: white; 
+        }
+        .card-display.clubs { 
+            background: linear-gradient(145deg, #2c3e50, #34495e); 
+            color: white; 
+        }
+        .card-display.spades { 
+            background: linear-gradient(145deg, #2c3e50, #34495e); 
+            color: white; 
+        }
+        .card-display.joker { 
+            background: linear-gradient(145deg, #f39c12, #e67e22); 
+            color: white; 
+            animation: jokerGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes jokerGlow {
+            from { box-shadow: 0 15px 35px rgba(243,156,18,0.4); }
+            to { box-shadow: 0 15px 35px rgba(243,156,18,0.8), 0 0 30px rgba(243,156,18,0.6); }
+        }
+
+        .user-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .balance {
+            color: #27ae60;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: linear-gradient(145deg, #ecf0f1, #bdc3c7);
+            color: #2c3e50;
+            transition: all 0.3s;
+        }
+
+        .status-message.playing {
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            color: white;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .status-message.win {
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+            color: white;
+            animation: celebrate 0.6s ease-in-out;
+        }
+
+        .status-message.lose {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.1) rotate(-2deg); }
+            75% { transform: scale(1.1) rotate(2deg); }
+        }
+
+        .play-btn {
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(46,204,113,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .play-btn:hover:not(:disabled) {
+            background: linear-gradient(145deg, #27ae60, #2ecc71);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(46,204,113,0.6);
+        }
+
+        .play-btn:disabled {
+            background: linear-gradient(145deg, #95a5a6, #7f8c8d);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 4px 15px rgba(149,165,166,0.3);
+        }
+
+        .bet-options {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .bet-option {
+            padding: 12px 6px;
+            border: 2px solid rgba(102,126,234,0.2);
+            border-radius: 15px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .bet-option:hover {
+            border-color: #667eea;
+            background: linear-gradient(145deg, #f8f9ff, #ffffff);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102,126,234,0.2);
+        }
+
+        .bet-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(145deg, #667eea, #5a6fd8);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+        }
+
+        .bet-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .bet-symbol {
+            font-size: 1.5em;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .bet-name {
+            font-weight: 600;
+            font-size: 0.8em;
+        }
+
+        .bet-payout {
+            font-size: 0.7em;
+            opacity: 0.8;
+        }
+
+        .bet-amount {
+            font-weight: bold;
+            font-size: 1em;
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+            padding: 3px 6px;
+            border-radius: 8px;
+            min-width: 25px;
+        }
+
+        .bet-option.selected .bet-amount {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .chip-selection {
+            margin-top: 10px;
+        }
+
+        .chip-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+
+        .chip-buttons {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+        }
+
+        .chip-btn {
+            padding: 8px 4px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chip-1 { background: linear-gradient(145deg, #95a5a6, #7f8c8d); color: white; }
+        .chip-5 { background: linear-gradient(145deg, #2ecc71, #27ae60); color: white; }
+        .chip-10 { background: linear-gradient(145deg, #3498db, #2980b9); color: white; }
+        .chip-25 { background: linear-gradient(145deg, #f1c40f, #f39c12); color: white; }
+        .chip-50 { background: linear-gradient(145deg, #e67e22, #d35400); color: white; }
+        .chip-100 { background: linear-gradient(145deg, #e74c3c, #c0392b); color: white; }
+
+        .chip-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .chip-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .total-bet {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .clear-btn {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .clear-btn:hover {
+            background: linear-gradient(145deg, #c0392b, #e74c3c);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231,76,60,0.4);
+        }
+
+        .history-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        #historyList {
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .history-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            font-size: 12px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            background: linear-gradient(145deg, #f8f9fa, #ffffff);
+            transform: translateX(3px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .history-result {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .history-result.win {
+            color: #27ae60;
+        }
+
+        .history-result.lose {
+            color: #e74c3c;
+        }
+
+        .history-details {
+            color: #666;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        .pagination {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .page-btn {
+            background: linear-gradient(145deg, #667eea, #5a6fd8);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: linear-gradient(145deg, #5a6fd8, #667eea);
+            transform: translateY(-1px);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            font-size: 11px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        @media (max-width: 1600px) {
+            .container {
+                grid-template-columns: 1fr 2.5fr 1fr;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+                overflow-y: auto;
+            }
+        }
+
+        @keyframes chipFly {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px) scale(1.2);
+                opacity: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="header">
-    <div class="user-info">
-      欢迎，<span id="username">加载中...</span> | 余额: <span id="balance" class="balance">0</span>
-    </div>
-    <button class="logout-btn" id="logout-btn">退出登录</button>
-  </div>
-
-  <div class="container">
-    <!-- 游戏控制区域 -->
-    <div class="game-control-area">
-      <h1 class="title">喜从天降</h1>
-      
-      <div class="card-display" id="card-display">
-        <div class="card-front">
-          <span id="card-symbol">?</span>
+    <div class="header">
+        <div class="user-info">
+            欢迎，<span id="username">加载中...</span> | 余额: <span id="balance" class="balance">0</span>
         </div>
-        <div class="card-back">
-          <span>?</span>
-        </div>
-      </div>
-      
-      <div class="status-message" id="status-message">选择押注金额，点击开始游戏</div>
-      
-      <button class="play-btn" id="play-btn" disabled>开始游戏</button>
+        <button class="logout-btn" id="logout-btn">退出登录</button>
     </div>
 
-    <!-- 押注区域 -->
-    <div class="bet-area">
-      <h2 class="section-title">押注选择</h2>
-      
-      <!-- 押注选项 -->
-      <div class="bet-options">
-        <div class="bet-option" data-suit="hearts" onclick="selectSuit('hearts')">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #dc3545;">♥</span>
-            <span class="bet-name">红桃</span>
-            <span class="bet-payout">(1:3.5)</span>
-            <span class="bet-amount" id="heartsAmount">0</span>
-          </div>
+    <div class="container">
+        <!-- 游戏控制区域 -->
+        <div class="game-control-area">
+            <h1 class="title">喜从天降</h1>
+            
+            <div class="card-display" id="card-display">
+                <div class="card-front">
+                    <span id="card-symbol">?</span>
+                </div>
+                <div class="card-back">
+                    <span>?</span>
+                </div>
+            </div>
+            
+            <div class="status-message" id="status-message">选择押注金额，点击开始游戏</div>
+            
+            <button class="play-btn" id="play-btn" disabled>开始游戏</button>
         </div>
-        
-        <div class="bet-option" data-suit="diamonds" onclick="selectSuit('diamonds')">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #dc3545;">♦</span>
-            <span class="bet-name">方块</span>
-            <span class="bet-payout">(1:3.5)</span>
-            <span class="bet-amount" id="diamondsAmount">0</span>
-          </div>
-        </div>
-        
-        <div class="bet-option" data-suit="clubs" onclick="selectSuit('clubs')">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #212529;">♣</span>
-            <span class="bet-name">梅花</span>
-            <span class="bet-payout">(1:3.5)</span>
-            <span class="bet-amount" id="clubsAmount">0</span>
-          </div>
-        </div>
-        
-        <div class="bet-option" data-suit="spades" onclick="selectSuit('spades')">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #212529;">♠</span>
-            <span class="bet-name">黑桃</span>
-            <span class="bet-payout">(1:3.5)</span>
-            <span class="bet-amount" id="spadesAmount">0</span>
-          </div>
-        </div>
-        
-        <div class="bet-option" data-suit="joker" onclick="selectSuit('joker')">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #feca57;">🃏</span>
-            <span class="bet-name">王牌</span>
-            <span class="bet-payout">(1:20)</span>
-            <span class="bet-amount" id="jokerAmount">0</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- 筹码选择 -->
-      <div class="chip-selection">
-        <div class="chip-title">选择筹码金额 <span id="selectedSuitName">（请先选择押注项目）</span></div>
-        <div class="chip-buttons">
-          <button class="chip-btn chip-1" onclick="addChipToSelected(1)" disabled>1</button>
-          <button class="chip-btn chip-5" onclick="addChipToSelected(5)" disabled>5</button>
-          <button class="chip-btn chip-10" onclick="addChipToSelected(10)" disabled>10</button>
-          <button class="chip-btn chip-25" onclick="addChipToSelected(25)" disabled>25</button>
-          <button class="chip-btn chip-50" onclick="addChipToSelected(50)" disabled>50</button>
-          <button class="chip-btn chip-100" onclick="addChipToSelected(100)" disabled>100</button>
+        <!-- 押注区域 -->
+        <div class="bet-area">
+            <h2 class="section-title">押注选择</h2>
+            
+            <!-- 押注选项 -->
+            <div class="bet-options">
+                <div class="bet-option" data-suit="hearts" onclick="selectSuit('hearts')">
+                    <div class="bet-content">
+                        <span class="bet-symbol" style="color: #dc3545;">♥</span>
+                        <span class="bet-name">红桃</span>
+                        <span class="bet-payout">(1:3.5)</span>
+                        <span class="bet-amount" id="heartsAmount">0</span>
+                    </div>
+                </div>
+                
+                <div class="bet-option" data-suit="diamonds" onclick="selectSuit('diamonds')">
+                    <div class="bet-content">
+                        <span class="bet-symbol" style="color: #dc3545;">♦</span>
+                        <span class="bet-name">方块</span>
+                        <span class="bet-payout">(1:3.5)</span>
+                        <span class="bet-amount" id="diamondsAmount">0</span>
+                    </div>
+                </div>
+                
+                <div class="bet-option" data-suit="clubs" onclick="selectSuit('clubs')">
+                    <div class="bet-content">
+                        <span class="bet-symbol" style="color: #212529;">♣</span>
+                        <span class="bet-name">梅花</span>
+                        <span class="bet-payout">(1:3.5)</span>
+                        <span class="bet-amount" id="clubsAmount">0</span>
+                    </div>
+                </div>
+                
+                <div class="bet-option" data-suit="spades" onclick="selectSuit('spades')">
+                    <div class="bet-content">
+                        <span class="bet-symbol" style="color: #212529;">♠</span>
+                        <span class="bet-name">黑桃</span>
+                        <span class="bet-payout">(1:3.5)</span>
+                        <span class="bet-amount" id="spadesAmount">0</span>
+                    </div>
+                </div>
+                
+                <div class="bet-option" data-suit="joker" onclick="selectSuit('joker')">
+                    <div class="bet-content">
+                        <span class="bet-symbol" style="color: #feca57;">🃏</span>
+                        <span class="bet-name">王牌</span>
+                        <span class="bet-payout">(1:20)</span>
+                        <span class="bet-amount" id="jokerAmount">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 筹码选择 -->
+            <div class="chip-selection">
+                <div class="chip-title">选择筹码金额 <span id="selectedSuitName">（请先选择押注项目）</span></div>
+                <div class="chip-buttons">
+                    <button class="chip-btn chip-1" onclick="addChipToSelected(1)" disabled>1</button>
+                    <button class="chip-btn chip-5" onclick="addChipToSelected(5)" disabled>5</button>
+                    <button class="chip-btn chip-10" onclick="addChipToSelected(10)" disabled>10</button>
+                    <button class="chip-btn chip-25" onclick="addChipToSelected(25)" disabled>25</button>
+                    <button class="chip-btn chip-50" onclick="addChipToSelected(50)" disabled>50</button>
+                    <button class="chip-btn chip-100" onclick="addChipToSelected(100)" disabled>100</button>
+                </div>
+            </div>
+            
+            <div class="total-bet">
+                总押注: <span id="totalBet">0</span>
+            </div>
+            
+            <button class="clear-btn" onclick="clearBets()">清空押注</button>
         </div>
-      </div>
-      
-      <div class="total-bet">
-        总押注: <span id="totalBet">0</span>
-      </div>
-      
-      <button class="clear-btn" onclick="clearBets()">清空押注</button>
+
+        <!-- 历史记录 -->
+        <div class="history-area">
+            <h2 class="section-title">游戏记录</h2>
+            <div class="history-content">
+                <div id="historyList">
+                    <!-- 历史记录将在这里动态添加 -->
+                </div>
+                <div class="pagination" id="pagination">
+                    <button class="page-btn" id="prevBtn" onclick="changePage(-1)" disabled>上一页</button>
+                    <span class="page-info">
+                        第 <span id="currentPage">1</span> 页，共 <span id="totalPages">1</span> 页
+                    </span>
+                    <button class="page-btn" id="nextBtn" onclick="changePage(1)">下一页</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 历史记录 -->
-    <div class="history-area">
-      <h2 class="section-title">游戏记录</h2>
-      <div class="history-content">
-        <div id="historyList">
-          <!-- 历史记录将在这里动态添加 -->
-        </div>
-        <div class="pagination" id="pagination">
-          <button class="page-btn" id="prevBtn" onclick="changePage(-1)" disabled>上一页</button>
-          <span class="page-info">
-            第 <span id="currentPage">1</span> 页，共 <span id="totalPages">1</span> 页
-          </span>
-          <button class="page-btn" id="nextBtn" onclick="changePage(1)">下一页</button>
-        </div>
-      </div>
-    </div>
-  </div>
+    <script>
+        // 变量声明
+        let currentUser = null;
+        let gameInProgress = false;
+        let selectedSuit = null;
+        let bets = {
+            hearts: 0,
+            diamonds: 0,
+            clubs: 0,
+            spades: 0,
+            joker: 0
+        };
+        let allHistory = [];
+        let currentPage = 1;
+        let itemsPerPage = 8; // 每页显示8条记录
 
-  <script>
-    // 变量声明
-    let currentUser = null;
-    let gameInProgress = false;
-    let selectedSuit = null;
-    let bets = {
-      hearts: 0,
-      diamonds: 0,
-      clubs: 0,
-      spades: 0,
-      joker: 0
-    };
-    let allHistory = [];
-    let currentPage = 1;
-    let itemsPerPage = 8; // 每页显示8条记录
-
-    // 页面加载时检查登录状态
-    window.addEventListener('load', async () => {
-      try {
-        // 使用 cookie 进行身份验证
-        const response = await fetch('/api/user', {
-          credentials: 'include' // 包含 cookies
+        // 页面加载时检查登录状态
+        window.addEventListener('load', async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const response = await fetch('/api/user', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    currentUser = user;
+                    document.getElementById('username').textContent = user.username;
+                    updateBalance(user.balance);
+                    loadHistory();
+                    
+                    // 如果是管理员，跳转到管理页面
+                    if (user.is_admin) {
+                        window.location.href = 'admin.html';
+                        return;
+                    }
+                } else {
+                    // 只有在明确未登录时才跳转
+                    if (response.status === 401) {
+                        window.location.href = 'login.html';
+                    }
+                }
+            } catch (error) {
+                console.error('检查登录状态失败:', error);
+                // 网络错误时不立即跳转，给用户一个提示
+                document.getElementById('status-message').textContent = '网络连接失败，请检查网络后刷新页面';
+                document.getElementById('status-message').className = 'status-message lose';
+            }
         });
-        
-        if (response.ok) {
-          const user = await response.json();
-          currentUser = user;
-          document.getElementById('username').textContent = user.username;
-          updateBalance(user.balance);
-          loadHistory();
-          
-          // 如果是管理员，跳转到管理页面
-          if (user.is_admin) {
-            window.location.href = 'admin.html';
-            return;
-          }
-        } else {
-          // 只有在明确未登录时才跳转
-          if (response.status === 401) {
+
+        // 选择押注项目
+        function selectSuit(suit) {
+            selectedSuit = suit;
+            
+            // 更新选中状态
+            document.querySelectorAll('.bet-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector(`[data-suit="${suit}"]`).classList.add('selected');
+            
+            // 更新筹码选择标题
+            const suitNames = {
+                hearts: '红桃',
+                diamonds: '方块',
+                clubs: '梅花',
+                spades: '黑桃',
+                joker: '王牌'
+            };
+            document.getElementById('selectedSuitName').textContent = `（当前选择：${suitNames[suit]}）`;
+            
+            // 启用筹码按钮
+            updateChipButtons();
+        }
+
+        // 获取当前总押注
+        function getCurrentTotalBet() {
+            return bets.hearts + bets.diamonds + bets.clubs + bets.spades + bets.joker;
+        }
+
+        // 添加筹码到选中的项目
+        function addChipToSelected(amount) {
+            if (!selectedSuit) {
+                alert('请先选择押注项目');
+                return;
+            }
+            
+            const currentTotal = getCurrentTotalBet();
+            
+            // 检查是否超过余额
+            if (currentTotal + amount > currentUser.balance) {
+                // 显示余额不足提示
+                const statusMessage = document.getElementById('status-message');
+                statusMessage.innerHTML = '余额不足，请联系老姜获取筹码';
+                statusMessage.className = 'status-message lose';
+                
+                // 3秒后恢复原状态
+                setTimeout(() => {
+                    if (currentUser.balance > 0) {
+                        statusMessage.textContent = '选择押注金额，点击开始游戏';
+                        statusMessage.className = 'status-message';
+                    }
+                }, 3000);
+                return;
+            }
+            
+            // 添加押注
+            bets[selectedSuit] += amount;
+            
+            // 更新显示
+            document.getElementById(selectedSuit + 'Amount').textContent = bets[selectedSuit];
+            updateTotalBet();
+            
+            // 添加筹码飞行动画
+            createChipAnimation(event.target, amount);
+        }
+
+        // 创建筹码飞行动画
+        function createChipAnimation(chipBtn, amount) {
+            const chip = document.createElement('div');
+            chip.textContent = amount;
+            chip.style.position = 'absolute';
+            chip.style.left = `${chipBtn.offsetLeft + chipBtn.offsetWidth / 2}px`;
+            chip.style.top = `${chipBtn.offsetTop + chipBtn.offsetHeight / 2}px`;
+            chip.style.transform = 'translate(-50%, -50%)';
+            chip.style.background = window.getComputedStyle(chipBtn).background;
+            chip.style.color = 'white';
+            chip.style.borderRadius = '50%';
+            chip.style.width = '30px';
+            chip.style.height = '30px';
+            chip.style.display = 'flex';
+            chip.style.alignItems = 'center';
+            chip.style.justifyContent = 'center';
+            chip.style.fontWeight = 'bold';
+            chip.style.zIndex = '100';
+            chip.style.animation = 'chipFly 0.8s ease-out forwards';
+            
+            document.body.appendChild(chip);
+            
+            // 动画结束后移除元素
+            setTimeout(() => {
+                document.body.removeChild(chip);
+            }, 800);
+        }
+
+        // 更新筹码按钮状态
+        function updateChipButtons() {
+            const chipAmounts = [1, 5, 10, 25, 50, 100];
+            const currentTotal = getCurrentTotalBet();
+            
+            chipAmounts.forEach(amount => {
+                const button = document.querySelector(`.chip-${amount}`);
+                if (!selectedSuit) {
+                    button.disabled = true;
+                } else if (currentTotal + amount > currentUser.balance) {
+                    button.disabled = true;
+                } else {
+                    button.disabled = false;
+                }
+            });
+        }
+
+        // 更新总押注
+        function updateTotalBet() {
+            const total = getCurrentTotalBet();
+            document.getElementById('totalBet').textContent = total;
+            
+            // 更新筹码按钮状态
+            updateChipButtons();
+            
+            // 检查是否可以开始游戏
+            const playBtn = document.getElementById('play-btn');
+            if (total > 0 && total <= currentUser.balance && !gameInProgress) {
+                playBtn.disabled = false;
+            } else {
+                playBtn.disabled = true;
+            }
+        }
+
+        // 更新余额显示
+        function updateBalance(balance) {
+            document.getElementById('balance').textContent = balance;
+            currentUser.balance = balance;
+            
+            // 更新筹码按钮状态
+            updateChipButtons();
+            
+            // 检查余额是否不足
+            if (balance <= 0) {
+                document.getElementById('status-message').textContent = '余额不足，请联系老姜获取筹码';
+                document.getElementById('status-message').className = 'status-message lose';
+            }
+        }
+
+        // 清空押注
+        function clearBets() {
+            bets = {
+                hearts: 0,
+                diamonds: 0,
+                clubs: 0,
+                spades: 0,
+                joker: 0
+            };
+            
+            // 更新显示
+            document.getElementById('heartsAmount').textContent = '0';
+            document.getElementById('diamondsAmount').textContent = '0';
+            document.getElementById('clubsAmount').textContent = '0';
+            document.getElementById('spadesAmount').textContent = '0';
+            document.getElementById('jokerAmount').textContent = '0';
+            
+            updateTotalBet();
+            
+            // 清除选中状态
+            document.querySelectorAll('.bet-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            selectedSuit = null;
+            document.getElementById('selectedSuitName').textContent = '（请先选择押注项目）';
+        }
+
+        // 开始游戏
+        document.getElementById('play-btn').addEventListener('click', playGame);
+
+        // 退出登录
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('token');
             window.location.href = 'login.html';
-          }
-        }
-      } catch (error) {
-        console.error('检查登录状态失败:', error);
-        // 网络错误时不立即跳转，给用户一个提示
-        document.getElementById('status-message').textContent = '网络连接失败，请检查网络后刷新页面';
-        document.getElementById('status-message').className = 'status-message lose';
-      }
-    });
-
-    // 选择押注项目
-    function selectSuit(suit) {
-      selectedSuit = suit;
-      
-      // 更新选中状态
-      document.querySelectorAll('.bet-option').forEach(option => {
-        option.classList.remove('selected');
-      });
-      document.querySelector(`[data-suit="${suit}"]`).classList.add('selected');
-      
-      // 更新筹码选择标题
-      const suitNames = {
-        hearts: '红桃',
-        diamonds: '方块',
-        clubs: '梅花',
-        spades: '黑桃',
-        joker: '王牌'
-      };
-      document.getElementById('selectedSuitName').textContent = `（当前选择：${suitNames[suit]}）`;
-      
-      // 启用筹码按钮
-      updateChipButtons();
-    }
-
-    // 获取当前总押注
-    function getCurrentTotalBet() {
-      return bets.hearts + bets.diamonds + bets.clubs + bets.spades + bets.joker;
-    }
-
-    // 添加筹码到选中的项目
-    function addChipToSelected(amount) {
-      if (!selectedSuit) {
-        alert('请先选择押注项目');
-        return;
-      }
-      
-      const currentTotal = getCurrentTotalBet();
-      
-      // 检查是否超过余额
-      if (currentTotal + amount > currentUser.balance) {
-        // 显示余额不足提示
-        const statusMessage = document.getElementById('status-message');
-        statusMessage.innerHTML = '余额不足，请联系老姜获取筹码';
-        statusMessage.className = 'status-message lose';
-        
-        // 3秒后恢复原状态
-        setTimeout(() => {
-          if (currentUser.balance > 0) {
-            statusMessage.textContent = '选择押注金额，点击开始游戏';
-            statusMessage.className = 'status-message';
-          }
-        }, 3000);
-        return;
-      }
-      
-      // 添加押注
-      bets[selectedSuit] += amount;
-      
-      // 更新显示
-      document.getElementById(selectedSuit + 'Amount').textContent = bets[selectedSuit];
-      updateTotalBet();
-      
-      // 添加筹码飞行动画
-      createChipAnimation(event.target, amount);
-    }
-
-    // 创建筹码飞行动画
-    function createChipAnimation(chipBtn, amount) {
-      const chip = document.createElement('div');
-      chip.textContent = amount;
-      chip.style.position = 'absolute';
-      chip.style.left = `${chipBtn.offsetLeft + chipBtn.offsetWidth / 2}px`;
-      chip.style.top = `${chipBtn.offsetTop + chipBtn.offsetHeight / 2}px`;
-      chip.style.transform = 'translate(-50%, -50%)';
-      chip.style.background = window.getComputedStyle(chipBtn).background;
-      chip.style.color = 'white';
-      chip.style.borderRadius = '50%';
-      chip.style.width = '30px';
-      chip.style.height = '30px';
-      chip.style.display = 'flex';
-      chip.style.alignItems = 'center';
-      chip.style.justifyContent = 'center';
-      chip.style.fontWeight = 'bold';
-      chip.style.zIndex = '100';
-      chip.style.animation = 'chipFly 0.8s ease-out forwards';
-      
-      document.body.appendChild(chip);
-      
-      // 动画结束后移除元素
-      setTimeout(() => {
-        document.body.removeChild(chip);
-      }, 800);
-    }
-
-    // 更新筹码按钮状态
-    function updateChipButtons() {
-      const chipAmounts = [1, 5, 10, 25, 50, 100];
-      const currentTotal = getCurrentTotalBet();
-      
-      chipAmounts.forEach(amount => {
-        const button = document.querySelector(`.chip-${amount}`);
-        if (!selectedSuit) {
-          button.disabled = true;
-        } else if (currentTotal + amount > currentUser.balance) {
-          button.disabled = true;
-        } else {
-          button.disabled = false;
-        }
-      });
-    }
-
-    // 更新总押注
-    function updateTotalBet() {
-      const total = getCurrentTotalBet();
-      document.getElementById('totalBet').textContent = total;
-      
-      // 更新筹码按钮状态
-      updateChipButtons();
-      
-      // 检查是否可以开始游戏
-      const playBtn = document.getElementById('play-btn');
-      if (total > 0 && total <= currentUser.balance && !gameInProgress) {
-        playBtn.disabled = false;
-      } else {
-        playBtn.disabled = true;
-      }
-    }
-
-    // 更新余额显示
-    function updateBalance(balance) {
-      document.getElementById('balance').textContent = balance;
-      currentUser.balance = balance;
-      
-      // 更新筹码按钮状态
-      updateChipButtons();
-      
-      // 检查余额是否不足
-      if (balance <= 0) {
-        document.getElementById('status-message').innerHTML = '余额不足，请联系老姜获取筹码';
-        document.getElementById('status-message').className = 'status-message lose';
-        document.getElementById('play-btn').disabled = true;
-      } else {
-        document.getElementById('play-btn').disabled = getCurrentTotalBet() === 0;
-      }
-    }
-
-    // 清空押注
-    function clearBets() {
-      bets = {
-        hearts: 0,
-        diamonds: 0,
-        clubs: 0,
-        spades: 0,
-        joker: 0
-      };
-      
-      // 更新显示
-      document.getElementById('heartsAmount').textContent = '0';
-      document.getElementById('diamondsAmount').textContent = '0';
-      document.getElementById('clubsAmount').textContent = '0';
-      document.getElementById('spadesAmount').textContent = '0';
-      document.getElementById('jokerAmount').textContent = '0';
-      
-      // 清除选中状态
-      document.querySelectorAll('.bet-option').forEach(option => {
-        option.classList.remove('selected');
-      });
-      selectedSuit = null;
-      document.getElementById('selectedSuitName').textContent = '（请先选择押注项目）';
-      
-      updateTotalBet();
-    }
-
-    // 开始游戏
-    async function playGame() {
-      if (gameInProgress) return;
-      
-      // 过滤掉0的押注
-      const filteredBets = {};
-      Object.keys(bets).forEach(key => {
-        if (bets[key] > 0) {
-          filteredBets[key] = bets[key];
-        }
-      });
-      
-      if (Object.keys(filteredBets).length === 0) {
-        alert('请先选择押注金额');
-        return;
-      }
-      
-      // 开始游戏
-      gameInProgress = true;
-      
-      // 更新状态
-      const statusMessage = document.getElementById('status-message');
-      statusMessage.textContent = '游戏进行中...';
-      statusMessage.className = 'status-message playing';
-      
-      // 禁用按钮
-      document.getElementById('play-btn').disabled = true;
-      
-      try {
-        console.log('发送游戏请求，下注信息:', filteredBets);
-        
-        // 发送请求到服务器
-        const response = await fetch('/api/game?action=play', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ bets: filteredBets }),
-          credentials: 'include' // 包含 cookies
         });
-        
-        console.log('游戏响应状态:', response.status);
-        
-        if (!response.ok) {
-          throw new Error('游戏请求失败');
+
+        // 游戏逻辑
+        async function playGame() {
+            if (gameInProgress) return;
+            
+            gameInProgress = true;
+            const playBtn = document.getElementById('play-btn');
+            playBtn.disabled = true;
+            
+            const statusMessage = document.getElementById('status-message');
+            statusMessage.textContent = '游戏进行中...';
+            statusMessage.className = 'status-message playing';
+            
+            const cardDisplay = document.getElementById('card-display');
+            cardDisplay.className = 'card-display';
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/game/play', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ bets })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // 更新余额
+                    updateBalance(result.new_balance);
+                    
+                    // 显示结果
+                    setTimeout(() => {
+                        // 设置卡牌花色
+                        const cardSymbol = document.getElementById('card-symbol');
+                        const symbols = {
+                            hearts: '♥',
+                            diamonds: '♦',
+                            clubs: '♣',
+                            spades: '♠',
+                            joker: '🃏'
+                        };
+                        cardSymbol.textContent = symbols[result.suit];
+                        
+                        // 添加花色类
+                        cardDisplay.className = `card-display ${result.suit} flipped`;
+                        
+                        // 计算赢得金额
+                        let winAmount = 0;
+                        let loseAmount = getCurrentTotalBet();
+                        
+                        // 修复多个押注时结果计算的问题
+                        if (result.suit === 'hearts' && bets.hearts > 0) {
+                            winAmount += bets.hearts * 3.5;
+                        }
+                        if (result.suit === 'diamonds' && bets.diamonds > 0) {
+                            winAmount += bets.diamonds * 3.5;
+                        }
+                        if (result.suit === 'clubs' && bets.clubs > 0) {
+                            winAmount += bets.clubs * 3.5;
+                        }
+                        if (result.suit === 'spades' && bets.spades > 0) {
+                            winAmount += bets.spades * 3.5;
+                        }
+                        if (result.suit === 'joker' && bets.joker > 0) {
+                            winAmount += bets.joker * 20;
+                        }
+                        
+                        // 显示结果消息
+                        if (winAmount > 0) {
+                            statusMessage.innerHTML = `恭喜！你赢得了 <strong>${winAmount}</strong> 筹码！`;
+                            statusMessage.className = 'status-message win';
+                        } else {
+                            statusMessage.innerHTML = `很遗憾，你输了 <strong>${loseAmount}</strong> 筹码。`;
+                            statusMessage.className = 'status-message lose';
+                        }
+                        
+                        // 添加到历史记录
+                        const historyItem = {
+                            suit: result.suit,
+                            bets: {...bets},
+                            winAmount,
+                            loseAmount,
+                            timestamp: new Date().toLocaleString()
+                        };
+                        allHistory.unshift(historyItem);
+                        updateHistoryDisplay();
+                        
+                        // 清空押注
+                        clearBets();
+                        
+                        // 8秒后重置游戏状态
+                        setTimeout(() => {
+                            cardDisplay.className = 'card-display';
+                            gameInProgress = false;
+                            
+                            if (currentUser.balance > 0) {
+                                statusMessage.textContent = '选择押注金额，点击开始游戏';
+                                statusMessage.className = 'status-message';
+                            }
+                        }, 8000); // 增加显示时间到8秒
+                    }, 2000);
+                } else {
+                    const error = await response.json();
+                    statusMessage.textContent = `错误: ${error.message || '游戏失败'}`;
+                    statusMessage.className = 'status-message lose';
+                    gameInProgress = false;
+                }
+            } catch (error) {
+                console.error('游戏失败:', error);
+                statusMessage.textContent = '网络错误，请重试';
+                statusMessage.className = 'status-message lose';
+                gameInProgress = false;
+            }
         }
-        
-        const result = await response.json();
-        
-        // 显示结果
-        showGameResult(result);
-        
-        // 更新余额
-        updateBalance(result.newBalance);
-        
-        // 创建历史记录对象
-        const historyItem = {
-          result: result.result,
-          bets: filteredBets,
-          timestamp: new Date().toISOString()
-        };
-        
-        // 添加到历史记录
-        allHistory.unshift(historyItem);
-        renderHistory();
-        
-      } catch (error) {
-        console.error('游戏错误:', error);
-        statusMessage.textContent = '游戏出错，请重试';
-        statusMessage.className = 'status-message lose';
-        gameInProgress = false;
-        document.getElementById('play-btn').disabled = getCurrentTotalBet() === 0;
-      }
-    }
 
-    // 显示游戏结果
-    function showGameResult(result) {
-      // 翻转卡牌
-      const cardDisplay = document.getElementById('card-display');
-      const cardSymbol = document.getElementById('card-symbol');
-      
-      // 设置卡牌花色
-      const suitSymbols = {
-        hearts: '♥',
-        diamonds: '♦',
-        clubs: '♣',
-        spades: '♠',
-        joker: '🃏'
-      };
-      
-      // 移除之前的花色类
-      cardDisplay.classList.remove('hearts', 'diamonds', 'clubs', 'spades', 'joker');
-      
-      // 先设置花色符号，确保翻转后显示的是花色而不是背面
-      cardSymbol.textContent = suitSymbols[result.result];
-      
-      // 添加新的花色类
-      cardDisplay.classList.add(result.result);
-      
-      // 翻转卡牌
-      cardDisplay.classList.add('flipped');
-      
-      // 显示结果消息
-      const statusMessage = document.getElementById('status-message');
-      
-      // 计算总赢/输金额
-      let totalWin = 0;
-      let totalBet = 0;
-      
-      Object.keys(bets).forEach(suit => {
-        if (bets[suit] > 0) {
-          totalBet += bets[suit];
-          if (suit === result.result) {
-            // 计算赢得的金额（包括本金）
-            const multiplier = suit === 'joker' ? 20 : 3.5;
-            totalWin += bets[suit] * (1 + multiplier);
-          }
+        // 加载历史记录
+        async function loadHistory() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/game/history', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const history = await response.json();
+                    allHistory = history.map(item => {
+                        // 计算赢得金额和输掉金额
+                        let winAmount = 0;
+                        let loseAmount = 0;
+                        
+                        if (item.bets) {
+                            Object.keys(item.bets).forEach(suit => {
+                                loseAmount += item.bets[suit];
+                                
+                                if (suit === item.suit) {
+                                    if (suit === 'joker') {
+                                        winAmount = item.bets[suit] * 20;
+                                    } else {
+                                        winAmount = item.bets[suit] * 3.5;
+                                    }
+                                }
+                            });
+                        }
+                        
+                        return {
+                            ...item,
+                            winAmount,
+                            loseAmount
+                        };
+                    });
+                    
+                    updateHistoryDisplay();
+                }
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+            }
         }
-      });
-      
-      // 计算净赢/输
-      const netWin = totalWin - totalBet;
-      
-      // 显示结果消息
-      if (netWin > 0) {
-        statusMessage.textContent = `恭喜！你赢了 ${netWin} 筹码！`;
-        statusMessage.className = 'status-message win';
-      } else {
-        statusMessage.textContent = `很遗憾，你输了 ${totalBet} 筹码`;
-        statusMessage.className = 'status-message lose';
-      }
-      
-      // 8秒后重置游戏（增加显示时间）
-      setTimeout(() => {
-        resetGame();
-      }, 8000);
-    }
 
-    // 重置游戏
-    function resetGame() {
-      // 重置卡牌
-      const cardDisplay = document.getElementById('card-display');
-      cardDisplay.classList.remove('flipped');
-      cardDisplay.classList.remove('hearts', 'diamonds', 'clubs', 'spades', 'joker');
-      
-      // 重置状态
-      const statusMessage = document.getElementById('status-message');
-      statusMessage.textContent = '选择押注金额，点击开始游戏';
-      statusMessage.className = 'status-message';
-      
-      // 清空押注
-      clearBets();
-      
-      // 重置游戏状态
-      gameInProgress = false;
-      
-      // 启用按钮
-      document.getElementById('play-btn').disabled = true;
-    }
-
-    // 加载历史记录
-    async function loadHistory() {
-      try {
-        console.log('加载历史记录');
-        
-        const response = await fetch('/api/game?action=history', {
-          credentials: 'include' // 包含 cookies
-        });
-        
-        console.log('历史记录响应状态:', response.status);
-        
-        if (!response.ok) {
-          throw new Error('获取历史记录失败');
+        // 更新历史记录显示
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, allHistory.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = allHistory[i];
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                const suitNames = {
+                    hearts: '红桃',
+                    diamonds: '方块',
+                    clubs: '梅花',
+                    spades: '黑桃',
+                    joker: '王牌'
+                };
+                
+                const symbols = {
+                    hearts: '♥',
+                    diamonds: '♦',
+                    clubs: '♣',
+                    spades: '♠',
+                    joker: '🃏'
+                };
+                
+                const resultClass = item.winAmount > 0 ? 'win' : 'lose';
+                const resultText = item.winAmount > 0 ? `赢得 ${item.winAmount}` : `输了 ${item.loseAmount}`;
+                
+                historyItem.innerHTML = `
+                    <div class="history-result ${resultClass}">
+                        ${symbols[item.suit]} ${suitNames[item.suit]} - ${resultText}
+                    </div>
+                    <div class="history-details">
+                        押注: ${Object.entries(item.bets)
+                            .filter(([_, amount]) => amount > 0)
+                            .map(([suit, amount]) => `${suitNames[suit]} ${amount}`)
+                            .join(', ')}
+                        <br>
+                        时间: ${item.timestamp || new Date().toLocaleString()}
+                    </div>
+                `;
+                
+                historyList.appendChild(historyItem);
+            }
+            
+            // 更新分页信息
+            document.getElementById('currentPage').textContent = currentPage;
+            const totalPages = Math.max(1, Math.ceil(allHistory.length / itemsPerPage));
+            document.getElementById('totalPages').textContent = totalPages;
+            
+            // 更新分页按钮状态
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
         }
-        
-        const history = await response.json();
-        allHistory = history;
-        
-        renderHistory();
-      } catch (error) {
-        console.error('加载历史记录错误:', error);
-      }
-    }
 
-    // 渲染历史记录
-    function renderHistory() {
-      const historyList = document.getElementById('historyList');
-      historyList.innerHTML = '';
-      
-      // 计算分页
-      const totalPages = Math.ceil(allHistory.length / itemsPerPage);
-      document.getElementById('totalPages').textContent = totalPages;
-      document.getElementById('currentPage').textContent = currentPage;
-      
-      // 更新分页按钮状态
-      document.getElementById('prevBtn').disabled = currentPage <= 1;
-      document.getElementById('nextBtn').disabled = currentPage >= totalPages;
-      
-      // 获取当前页的记录
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = Math.min(startIndex + itemsPerPage, allHistory.length);
-      const currentPageItems = allHistory.slice(startIndex, endIndex);
-      
-      // 渲染记录
-      currentPageItems.forEach(item => {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
-        
-        // 计算总赢/输金额
-        let totalWin = 0;
-        let totalBet = 0;
-        
-        Object.keys(item.bets).forEach(suit => {
-          totalBet += item.bets[suit];
-          if (suit === item.result) {
-            // 计算赢得的金额（包括本金）
-            const multiplier = suit === 'joker' ? 20 : 3.5;
-            totalWin += item.bets[suit] * (1 + multiplier);
-          }
-        });
-        
-        // 计算净赢/输
-        const netWin = totalWin - totalBet;
-        
-        // 创建结果显示
-        const resultDiv = document.createElement('div');
-        resultDiv.className = `history-result ${netWin > 0 ? 'win' : 'lose'}`;
-        
-        // 获取花色名称
-        const suitNames = {
-          hearts: '红桃',
-          diamonds: '方块',
-          clubs: '梅花',
-          spades: '黑桃',
-          joker: '王牌'
-        };
-        
-        resultDiv.textContent = `结果: ${suitNames[item.result]} | ${netWin > 0 ? '赢' : '输'}: ${Math.abs(netWin)}`;
-        
-        // 创建详情显示
-        const detailsDiv = document.createElement('div');
-        detailsDiv.className = 'history-details';
-        
-        // 格式化时间
-        const date = new Date(item.timestamp);
-        const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-        
-        // 格式化押注
-        const betsText = Object.entries(item.bets)
-          .filter(([_, amount]) => amount > 0)
-          .map(([suit, amount]) => `${suitNames[suit]}: ${amount}`)
-          .join(', ');
-        
-        detailsDiv.textContent = `时间: ${formattedDate} | 押注: ${betsText}`;
-        
-        // 添加到历史项
-        historyItem.appendChild(resultDiv);
-        historyItem.appendChild(detailsDiv);
-        
-        // 添加到历史列表
-        historyList.appendChild(historyItem);
-      });
-    }
-
-    // 切换历史记录页面
-    function changePage(delta) {
-      const newPage = currentPage + delta;
-      const totalPages = Math.ceil(allHistory.length / itemsPerPage);
-      
-      if (newPage >= 1 && newPage <= totalPages) {
-        currentPage = newPage;
-        renderHistory();
-      }
-    }
-
-    // 退出登录
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-      try {
-        // 调用登出API
-        const response = await fetch('/api/logout', {
-          method: 'POST',
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          window.location.href = '/login.html';
-        } else {
-          console.error('登出失败');
+        // 切换页面
+        function changePage(delta) {
+            const totalPages = Math.ceil(allHistory.length / itemsPerPage);
+            const newPage = currentPage + delta;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                updateHistoryDisplay();
+            }
         }
-      } catch (error) {
-        console.error('登出错误:', error);
-      }
-    });
-
-    // 开始游戏按钮点击事件
-    document.getElementById('play-btn').addEventListener('click', playGame);
-  </script>
+    </script>
 </body>
 </html>
