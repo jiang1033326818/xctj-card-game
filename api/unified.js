@@ -323,7 +323,8 @@ async function handleGame(req, res) {
     res.json({
       result_suit,
       win_amount,
-      new_balance
+      new_balance,
+      total_bet: totalAmount
     });
   } catch (error) {
     console.error("游戏错误:", error);
