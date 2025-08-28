@@ -648,16 +648,9 @@
     // 页面加载时检查登录状态
     window.addEventListener('load', async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          window.location.href = '/login.html';
-          return;
-        }
-        
+        // 使用 cookie 进行身份验证
         const response = await fetch('/api/user', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          credentials: 'include' // 包含 cookies
         });
         
         if (response.ok) {
@@ -888,16 +881,19 @@
       document.getElementById('play-btn').disabled = true;
       
       try {
+        console.log('发送游戏请求，下注信息:', filteredBets);
+        
         // 发送请求到服务器
-        const token = localStorage.getItem('token');
         const response = await fetch('/api/game?action=play', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ bets: filteredBets })
+          body: JSON.stringify({ bets: filteredBets }),
+          credentials: 'include' // 包含 cookies
         });
+        
+        console.log('游戏响应状态:', response.status);
         
         if (!response.ok) {
           throw new Error('游戏请求失败');
@@ -1019,12 +1015,13 @@
     // 加载历史记录
     async function loadHistory() {
       try {
-        const token = localStorage.getItem('token');
+        console.log('加载历史记录');
+        
         const response = await fetch('/api/game?action=history', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          credentials: 'include' // 包含 cookies
         });
+        
+        console.log('历史记录响应状态:', response.status);
         
         if (!response.ok) {
           throw new Error('获取历史记录失败');
@@ -1131,9 +1128,22 @@
     }
 
     // 退出登录
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      localStorage.removeItem('token');
-      window.location.href = '/login.html';
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      try {
+        // 调用登出API
+        const response = await fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          window.location.href = '/login.html';
+        } else {
+          console.error('登出失败');
+        }
+      } catch (error) {
+        console.error('登出错误:', error);
+      }
     });
 
     // 开始游戏按钮点击事件

@@ -4,16 +4,30 @@ const { ObjectId } = require("mongodb");
 
 // 游戏逻辑处理
 module.exports = async (req, res) => {
-  // 根据查询参数分发到不同的处理函数
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const action = url.searchParams.get('action');
-  
-  if (action === 'play') {
-    return handlePlay(req, res);
-  } else if (action === 'history') {
-    return handleHistory(req, res);
-  } else {
-    return res.status(404).json({ error: "API操作不存在" });
+  try {
+    console.log("游戏API被调用");
+    console.log("请求URL:", req.url);
+    console.log("请求方法:", req.method);
+    
+    // 根据查询参数分发到不同的处理函数
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    console.log("解析后的URL:", url.toString());
+    console.log("查询参数:", Object.fromEntries(url.searchParams));
+    
+    const action = url.searchParams.get('action');
+    console.log("Action参数:", action);
+    
+    if (action === 'play') {
+      return handlePlay(req, res);
+    } else if (action === 'history') {
+      return handleHistory(req, res);
+    } else {
+      console.log("未知的操作:", action);
+      return res.status(404).json({ error: "API操作不存在" });
+    }
+  } catch (error) {
+    console.error("游戏API错误:", error);
+    return res.status(500).json({ error: "服务器错误", message: error.message });
   }
 };
 
@@ -24,12 +38,24 @@ async function handlePlay(req, res) {
   }
 
   try {
+    console.log("Play API 被调用");
+    console.log("请求体:", req.body);
+    
     const session = await getSessionFromRequest(req);
     if (!session) {
       return res.status(401).json({ error: "请先登录" });
     }
 
+    // 检查请求体是否存在
+    if (!req.body) {
+      return res.status(400).json({ error: "请求体为空" });
+    }
+
+    // 检查 bets 是否存在
     const { bets } = req.body;
+    if (!bets) {
+      return res.status(400).json({ error: "缺少下注信息" });
+    }
     const userId = session.userId;
     const { db } = await connectToDatabase();
 
@@ -154,13 +180,20 @@ async function handleHistory(req, res) {
   }
 
   try {
+    console.log("历史记录API被调用");
+    
     const session = await getSessionFromRequest(req);
+    console.log("会话信息:", session ? "存在" : "不存在");
+    
     if (!session) {
       return res.status(401).json({ error: "请先登录" });
     }
 
     const userId = session.userId;
+    console.log("用户ID:", userId);
+    
     const { db } = await connectToDatabase();
+    console.log("数据库连接成功");
 
     // 获取游戏记录
     const gameRecords = await db
