@@ -1,14 +1,23 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/unified.js", "use": "@vercel/node" },
-    { "src": "public/**/*", "use": "@vercel/static" }
+    {
+      "src": "api/unified.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/unified.js" },
-    { "src": "/(.*)", "dest": "/public/$1" }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/unified.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ]
 }
