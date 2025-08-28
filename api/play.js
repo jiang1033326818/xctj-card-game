@@ -1,5 +1,5 @@
-const { connectToDatabase } = require("../db");
-const { getSessionFromRequest } = require("../session");
+const { connectToDatabase } = require("./db");
+const { getSessionFromRequest } = require("./session");
 const { ObjectId } = require("mongodb");
 
 module.exports = async function handler(req, res) {
