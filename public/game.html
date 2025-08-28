@@ -5,650 +5,540 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>卡牌游戏</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
       font-family: 'Microsoft YaHei', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
+      background-color: #121212;
+      margin: 0;
+      padding: 0;
+      color: #f5f5f5;
     }
-
-    .header {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      padding: 10px 20px;
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 30px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #333;
     }
-
+    h1 {
+      margin: 0;
+      color: #ff9800;
+      text-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+      font-size: 2.5rem;
+    }
     .user-info {
-      color: white;
-      font-weight: bold;
+      display: flex;
+      align-items: center;
     }
-
+    .balance {
+      margin-right: 20px;
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #4caf50;
+    }
     .logout-btn {
-      background: rgba(255,255,255,0.2);
+      padding: 10px 20px;
+      background-color: #f44336;
       color: white;
       border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.3s;
     }
-
     .logout-btn:hover {
-      background: rgba(255,255,255,0.3);
+      background-color: #d32f2f;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
-
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 2fr 1fr;
-      gap: 15px;
-      height: calc(100vh - 60px);
-      padding: 15px;
-      max-width: 1800px;
-      margin: 0 auto;
+    .main-content {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
     }
-
     .game-area {
-      background: rgba(255,255,255,0.95);
-      border-radius: 25px;
-      padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.2);
+      flex: 1;
+      min-width: 300px;
       display: flex;
       flex-direction: column;
-      gap: 15px;
-      height: 100%;
-      overflow: auto;
+      align-items: center;
+      background-color: #1e1e1e;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      padding: 30px;
+      margin-bottom: 30px;
+      border: 1px solid #333;
     }
-
-    .bet-area {
-      background: rgba(255,255,255,0.95);
-      border-radius: 25px;
-      padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      height: 100%;
-      overflow: auto;
-    }
-
-    .history-area {
-      background: rgba(255,255,255,0.95);
-      border-radius: 25px;
-      padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    .title {
-      font-size: 2em;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 20px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .section-title {
-      font-size: 1.5em;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 15px;
-      text-align: center;
-      font-weight: bold;
-    }
-
     .card-container {
       perspective: 1000px;
-      width: 180px;
-      height: 240px;
-      margin: 20px auto;
+      margin-bottom: 30px;
     }
-
     .card-display {
-      width: 100%;
-      height: 100%;
+      width: 220px;
+      height: 320px;
       position: relative;
       transition: transform 1.5s;
       transform-style: preserve-3d;
       cursor: pointer;
     }
-
     .card-display.flipped {
       transform: rotateY(1080deg); /* 多转几圈 */
     }
-
     .card-front, .card-back {
       position: absolute;
       width: 100%;
       height: 100%;
       backface-visibility: hidden;
-      border-radius: 20px;
+      border-radius: 15px;
       display: flex;
-      align-items: center;
       justify-content: center;
-      font-size: 4em;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
-
     .card-front {
-      background: linear-gradient(145deg, #f0f0f0, #cacaca);
+      background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+      border: 2px solid #444;
+      color: #ddd;
+      font-size: 36px;
       transform: rotateY(180deg);
     }
-
     .card-back {
-      background: linear-gradient(145deg, #667eea, #764ba2);
-      color: white;
+      background: linear-gradient(135deg, #4a148c, #311b92);
+      border: 2px solid #673ab7;
+      z-index: 2;
     }
-
-    .card-front.hearts, .card-front.diamonds { 
-      background: linear-gradient(145deg, #ff6b6b, #ee5a52); 
-      color: white; 
+    .card-pattern {
+      width: 80%;
+      height: 80%;
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.1) 10px,
+        transparent 10px,
+        transparent 20px
+      );
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    .card-front.clubs, .card-front.spades { 
-      background: linear-gradient(145deg, #2c3e50, #34495e); 
-      color: white; 
+    .card-logo {
+      font-size: 40px;
+      color: rgba(255, 255, 255, 0.7);
     }
-    .card-front.joker { 
-      background: linear-gradient(145deg, #f39c12, #e67e22); 
-      color: white; 
-      animation: jokerGlow 2s ease-in-out infinite alternate;
+    .card-front.hearts, .card-front.diamonds {
+      color: #ff5252;
+      background: linear-gradient(135deg, #1a1a2e, #0a0a1a);
+      border-color: #ff5252;
     }
-
-    @keyframes jokerGlow {
-      from { box-shadow: 0 15px 35px rgba(243,156,18,0.4); }
-      to { box-shadow: 0 15px 35px rgba(243,156,18,0.8), 0 0 30px rgba(243,156,18,0.6); }
+    .card-front.clubs, .card-front.spades {
+      color: #e0e0e0;
+      background: linear-gradient(135deg, #1a1a2e, #0a0a1a);
+      border-color: #e0e0e0;
     }
-
+    .card-front.joker {
+      color: #ff9800;
+      background: linear-gradient(135deg, #1a1a2e, #0a0a1a);
+      border-color: #ff9800;
+    }
+    .card-symbol {
+      font-size: 120px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
     .status-message {
+      margin-top: 15px;
       text-align: center;
-      padding: 12px;
-      border-radius: 15px;
-      font-weight: bold;
-      margin-bottom: 15px;
-      background: linear-gradient(145deg, #ecf0f1, #bdc3c7);
-      color: #2c3e50;
-      transition: all 0.3s;
+      font-size: 18px;
+      padding: 10px;
+      border-radius: 5px;
+      width: 100%;
     }
-
-    .status-message.playing {
-      background: linear-gradient(145deg, #3498db, #2980b9);
-      color: white;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
     .status-message.win {
-      background: linear-gradient(145deg, #2ecc71, #27ae60);
-      color: white;
-      animation: celebrate 0.6s ease-in-out;
+      color: #4CAF50;
     }
-
     .status-message.lose {
-      background: linear-gradient(145deg, #e74c3c, #c0392b);
-      color: white;
+      color: #f44336;
     }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+    .result-display {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      display: none;
+      width: 100%;
+      box-sizing: border-box;
     }
-
-    @keyframes celebrate {
-      0%, 100% { transform: scale(1); }
-      25% { transform: scale(1.1) rotate(-2deg); }
-      75% { transform: scale(1.1) rotate(2deg); }
+    .result-display.win {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: #4CAF50;
+      border: 1px solid #2E7D32;
     }
-
-    .bet-options {
+    .result-display.lose {
+      background-color: rgba(244, 67, 54, 0.2);
+      color: #f44336;
+      border: 1px solid #c62828;
+    }
+    .bet-area {
+      flex: 1;
+      min-width: 300px;
+      background-color: #1e1e1e;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      border: 1px solid #333;
+    }
+    .bet-area h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #ff9800;
+      text-shadow: 0 0 5px rgba(255, 152, 0, 0.3);
+    }
+    .suit-options {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin-bottom: 15px;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
     }
-
-    .bet-option {
-      padding: 12px 6px;
-      border: 2px solid rgba(102,126,234,0.2);
-      border-radius: 15px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    .suit-option {
+      position: relative;
+      padding: 15px;
+      border: 2px solid #444;
+      border-radius: 8px;
+      background-color: #2a2a2a;
       cursor: pointer;
       text-align: center;
-      position: relative;
+      transition: all 0.3s;
     }
-
-    .bet-option:hover {
-      border-color: #667eea;
-      background: linear-gradient(145deg, #f8f9ff, #ffffff);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(102,126,234,0.2);
+    .suit-option:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
-
-    .bet-option.selected {
-      border-color: #667eea;
-      background: linear-gradient(145deg, #667eea, #5a6fd8);
-      color: white;
-      box-shadow: 0 8px 20px rgba(102,126,234,0.4);
+    .suit-option.selected {
+      border-color: #2196F3;
+      background-color: rgba(33, 150, 243, 0.2);
+      box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
     }
-
-    .bet-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
+    .suit-option.hearts, .suit-option.diamonds {
+      color: #ff5252;
     }
-
-    .bet-symbol {
-      font-size: 1.5em;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    .suit-option.clubs, .suit-option.spades {
+      color: #e0e0e0;
     }
-
-    .bet-name {
-      font-weight: 600;
-      font-size: 0.8em;
+    .suit-option.joker {
+      color: #ff9800;
     }
-
-    .bet-payout {
-      font-size: 0.7em;
-      opacity: 0.8;
+    .suit-symbol {
+      font-size: 36px;
+      margin-bottom: 5px;
     }
-
-    .bet-amount-badge {
+    .suit-name {
+      font-size: 14px;
+    }
+    .odds-info {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+    .bet-amount {
       position: absolute;
-      top: -8px;
-      right: -8px;
-      background-color: #e74c3c;
+      top: -10px;
+      right: -10px;
+      background-color: #2196F3;
       color: white;
       border-radius: 50%;
       width: 24px;
       height: 24px;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       font-size: 12px;
       font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       opacity: 0;
       transition: opacity 0.3s;
     }
-
-    .bet-amount-badge.visible {
+    .suit-option.has-bet .bet-amount {
       opacity: 1;
     }
-
-    .play-btn {
-      background: linear-gradient(145deg, #2ecc71, #27ae60);
-      color: white;
-      border: none;
-      padding: 15px 30px;
-      border-radius: 25px;
-      font-size: 1.2em;
+    .chip-options {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    .chip {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       font-weight: bold;
       cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 25px rgba(46,204,113,0.4);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .play-btn:hover:not(:disabled) {
-      background: linear-gradient(145deg, #27ae60, #2ecc71);
-      transform: translateY(-3px);
-      box-shadow: 0 12px 35px rgba(46,204,113,0.6);
-    }
-
-    .play-btn:disabled {
-      background: linear-gradient(145deg, #95a5a6, #7f8c8d);
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: 0 4px 15px rgba(149,165,166,0.3);
-    }
-
-    .chip-selection {
-      margin-top: 10px;
-    }
-
-    .chip-title {
-      font-weight: 600;
-      margin-bottom: 8px;
-      text-align: center;
-      color: #667eea;
-      font-size: 0.9em;
-    }
-
-    .chip-buttons {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-    }
-
-    .chip-btn {
-      padding: 8px 4px;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
       transition: all 0.3s;
-      font-size: 0.9em;
-      position: relative;
-      overflow: hidden;
+      border: 3px solid rgba(255, 255, 255, 0.2);
     }
-
-    .chip-btn.selected {
-      transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    .chip:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     }
-
-    .chip-1 { background: linear-gradient(145deg, #95a5a6, #7f8c8d); color: white; }
-    .chip-5 { background: linear-gradient(145deg, #2ecc71, #27ae60); color: white; }
-    .chip-10 { background: linear-gradient(145deg, #3498db, #2980b9); color: white; }
-    .chip-50 { background: linear-gradient(145deg, #f1c40f, #f39c12); color: white; }
-    .chip-100 { background: linear-gradient(145deg, #e67e22, #d35400); color: white; }
-
-    .chip-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    .chip.selected {
+      border-color: #fff;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
     }
-
+    .chip-1 {
+      background: linear-gradient(135deg, #90CAF9, #2196F3);
+      color: white;
+    }
+    .chip-5 {
+      background: linear-gradient(135deg, #80CBC4, #009688);
+      color: white;
+    }
+    .chip-10 {
+      background: linear-gradient(135deg, #FFD54F, #FFC107);
+      color: #333;
+    }
+    .chip-50 {
+      background: linear-gradient(135deg, #E57373, #F44336);
+      color: white;
+    }
+    .chip-100 {
+      background: linear-gradient(135deg, #9575CD, #673AB7);
+      color: white;
+    }
     .total-bet {
       text-align: center;
-      font-size: 1.1em;
+      margin-bottom: 20px;
+      font-size: 18px;
       font-weight: bold;
-      color: #667eea;
-      margin: 10px 0;
     }
-
-    .clear-btn {
-      background: linear-gradient(145deg, #e74c3c, #c0392b);
+    .play-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
       color: white;
       border: none;
-      padding: 10px 20px;
-      border-radius: 20px;
+      border-radius: 6px;
+      font-size: 20px;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s;
-      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
-
-    .clear-btn:hover {
-      background: linear-gradient(145deg, #c0392b, #e74c3c);
+    .play-btn:hover {
+      background: linear-gradient(135deg, #43A047, #2E7D32);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
       transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(231,76,60,0.4);
     }
-
-    .history-content {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
+    .play-btn:disabled {
+      background: linear-gradient(135deg, #9E9E9E, #757575);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
-
-    #historyList {
+    .history-area {
       flex: 1;
-      overflow: auto;
-      min-height: 0;
-      max-height: calc(100% - 50px);
+      min-width: 300px;
+      max-height: 600px;
+      overflow-y: auto;
+      background-color: #1e1e1e;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      border: 1px solid #333;
     }
-
+    .history-area h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #ff9800;
+      text-shadow: 0 0 5px rgba(255, 152, 0, 0.3);
+    }
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
     .history-item {
-      padding: 8px;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      font-size: 12px;
-      border-radius: 8px;
-      margin-bottom: 5px;
-      background: linear-gradient(145deg, #ffffff, #f8f9fa);
-      transition: all 0.3s;
-    }
-
-    .history-item:hover {
-      background: linear-gradient(145deg, #f8f9fa, #ffffff);
-      transform: translateX(3px);
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-
-    .history-result {
-      font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 13px;
+      padding: 15px;
+      border-bottom: 1px solid #333;
       display: flex;
       align-items: center;
     }
-
-    .history-result.win {
-      color: #27ae60;
+    .history-item:last-child {
+      border-bottom: none;
     }
-
-    .history-result.lose {
-      color: #e74c3c;
+    .history-suit-icon {
+      font-size: 30px;
+      margin-right: 15px;
+      width: 40px;
+      text-align: center;
     }
-
     .history-details {
-      color: #666;
-      font-size: 10px;
-      line-height: 1.3;
+      flex: 1;
     }
-
-    .pagination {
-      margin-top: 10px;
+    .history-time {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 5px;
+    }
+    .history-result {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
-      border-top: 1px solid rgba(0,0,0,0.1);
     }
-
-    .page-btn {
-      background: linear-gradient(145deg, #667eea, #5a6fd8);
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 11px;
+    .history-bet {
+      font-size: 14px;
+    }
+    .history-win {
+      color: #4CAF50;
       font-weight: bold;
+    }
+    .history-lose {
+      color: #f44336;
+      font-weight: bold;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-left-color: #ff9800;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 10px;
+    }
+    .pagination button {
+      padding: 8px 15px;
+      background-color: #2a2a2a;
+      color: #ddd;
+      border: 1px solid #444;
+      border-radius: 4px;
+      cursor: pointer;
       transition: all 0.3s;
     }
-
-    .page-btn:hover:not(:disabled) {
-      background: linear-gradient(145deg, #5a6fd8, #667eea);
-      transform: translateY(-1px);
+    .pagination button:hover:not(:disabled) {
+      background-color: #333;
+      border-color: #666;
     }
-
-    .page-btn:disabled {
+    .pagination button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-
-    .page-info {
-      font-size: 11px;
-      color: #666;
-      font-weight: 500;
-    }
-
-    .suit-icon {
-      font-size: 24px;
-      margin-right: 8px;
-      display: inline-block;
-    }
-
-    .result-display {
-      text-align: center;
-      font-size: 1.5em;
-      font-weight: bold;
-      margin: 15px 0;
-      padding: 10px;
-      border-radius: 10px;
-      display: none;
-    }
-
-    .result-display.win {
-      background-color: rgba(46, 204, 113, 0.2);
-      color: #27ae60;
-      border: 1px solid #27ae60;
-    }
-
-    .result-display.lose {
-      background-color: rgba(231, 76, 60, 0.2);
-      color: #e74c3c;
-      border: 1px solid #e74c3c;
-    }
-
-    @media (max-width: 1600px) {
-      .container {
-        grid-template-columns: 1fr 2.5fr 1fr;
-        gap: 12px;
-      }
-    }
-
-    @media (max-width: 1200px) {
-      .container {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto;
-        height: auto;
-        overflow-y: auto;
-      }
+    .pagination button.active {
+      background-color: #2196F3;
+      color: white;
+      border-color: #1976D2;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="user-info">
-      欢迎，<span id="username">用户</span> | 余额: <span id="balance" class="balance">0</span>
-    </div>
-    <button id="logout-btn" class="logout-btn">退出登录</button>
-  </div>
-
   <div class="container">
-    <!-- 游戏控制区域 -->
-    <div class="game-area">
-      <h1 class="title">卡牌游戏</h1>
-      
-      <div class="card-container">
-        <div id="card-display" class="card-display">
-          <div class="card-front">
-            <span id="card-symbol">?</span>
-          </div>
-          <div class="card-back">
-            <span>?</span>
-          </div>
-        </div>
+    <header>
+      <h1>卡牌游戏</h1>
+      <div class="user-info">
+        <div class="balance">余额: <span id="balance">0</span></div>
+        <button id="logout-btn" class="logout-btn">退出登录</button>
       </div>
-      
-      <div id="result-display" class="result-display">
-        <!-- 结果将在这里显示 -->
-      </div>
-      
-      <div id="status-message" class="status-message">选择筹码和花色，点击开始游戏</div>
-      
-      <button id="play-btn" class="play-btn" disabled>开始游戏</button>
-    </div>
+    </header>
 
-    <!-- 押注区域 -->
-    <div class="bet-area">
-      <h2 class="section-title">押注选择</h2>
-      
-      <div class="bet-options">
-        <div class="bet-option" data-suit="hearts">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #dc3545;">♥</span>
-            <span class="bet-name">红桃</span>
-            <span class="bet-payout">(1:3.5)</span>
+    <div class="main-content">
+      <div class="game-area">
+        <div class="card-container">
+          <div id="card-display" class="card-display">
+            <div class="card-front">
+              <span id="card-symbol" class="card-symbol">?</span>
+            </div>
+            <div class="card-back">
+              <div class="card-pattern">
+                <div class="card-logo">♠♥♦♣</div>
+              </div>
+            </div>
           </div>
-          <div class="bet-amount-badge" id="hearts-badge">0</div>
         </div>
-        
-        <div class="bet-option" data-suit="diamonds">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #dc3545;">♦</span>
-            <span class="bet-name">方块</span>
-            <span class="bet-payout">(1:3.6)</span>
-          </div>
-          <div class="bet-amount-badge" id="diamonds-badge">0</div>
-        </div>
-        
-        <div class="bet-option" data-suit="clubs">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #212529;">♣</span>
-            <span class="bet-name">梅花</span>
-            <span class="bet-payout">(1:3.7)</span>
-          </div>
-          <div class="bet-amount-badge" id="clubs-badge">0</div>
-        </div>
-        
-        <div class="bet-option" data-suit="spades">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #212529;">♠</span>
-            <span class="bet-name">黑桃</span>
-            <span class="bet-payout">(1:3.8)</span>
-          </div>
-          <div class="bet-amount-badge" id="spades-badge">0</div>
-        </div>
-        
-        <div class="bet-option" data-suit="joker">
-          <div class="bet-content">
-            <span class="bet-symbol" style="color: #feca57;">🃏</span>
-            <span class="bet-name">小丑</span>
-            <span class="bet-payout">(1:100)</span>
-          </div>
-          <div class="bet-amount-badge" id="joker-badge">0</div>
-        </div>
+        <div id="status-message" class="status-message">选择筹码和花色，点击开始游戏</div>
+        <div id="result-display" class="result-display"></div>
       </div>
 
-      <div class="chip-selection">
-        <div class="chip-title">选择筹码金额</div>
-        <div class="chip-buttons">
-          <button class="chip-btn chip-1" data-value="1">1</button>
-          <button class="chip-btn chip-5" data-value="5">5</button>
-          <button class="chip-btn chip-10 selected" data-value="10">10</button>
-          <button class="chip-btn chip-50" data-value="50">50</button>
-          <button class="chip-btn chip-100" data-value="100">100</button>
+      <div class="bet-area">
+        <h2>选择下注</h2>
+        <div class="suit-options">
+          <div class="suit-option hearts" data-suit="hearts">
+            <div class="bet-amount">0</div>
+            <div class="suit-symbol">♥</div>
+            <div class="suit-name">红桃</div>
+            <div class="odds-info">赔率 x3.5</div>
+          </div>
+          <div class="suit-option diamonds" data-suit="diamonds">
+            <div class="bet-amount">0</div>
+            <div class="suit-symbol">♦</div>
+            <div class="suit-name">方块</div>
+            <div class="odds-info">赔率 x3.6</div>
+          </div>
+          <div class="suit-option clubs" data-suit="clubs">
+            <div class="bet-amount">0</div>
+            <div class="suit-symbol">♣</div>
+            <div class="suit-name">梅花</div>
+            <div class="odds-info">赔率 x3.7</div>
+          </div>
+          <div class="suit-option spades" data-suit="spades">
+            <div class="bet-amount">0</div>
+            <div class="suit-symbol">♠</div>
+            <div class="suit-name">黑桃</div>
+            <div class="odds-info">赔率 x3.8</div>
+          </div>
+          <div class="suit-option joker" data-suit="joker">
+            <div class="bet-amount">0</div>
+            <div class="suit-symbol">🃏</div>
+            <div class="suit-name">小丑</div>
+            <div class="odds-info">赔率 x100</div>
+          </div>
         </div>
-      </div>
-      
-      <div class="total-bet">
-        总押注: <span id="total-bet">0</span>
-      </div>
-      
-      <button id="clear-btn" class="clear-btn">清空押注</button>
-    </div>
 
-    <!-- 历史记录 -->
-    <div class="history-area">
-      <h2 class="section-title">游戏记录</h2>
-      <div class="history-content">
-        <div id="historyList">
-          <!-- 历史记录将在这里动态添加 -->
+        <div class="chip-options">
+          <div class="chip chip-1" data-value="1">1</div>
+          <div class="chip chip-5" data-value="5">5</div>
+          <div class="chip chip-10 selected" data-value="10">10</div>
+          <div class="chip chip-50" data-value="50">50</div>
+          <div class="chip chip-100" data-value="100">100</div>
         </div>
+
+        <div class="total-bet">总下注: <span id="total-bet">0</span></div>
+        <button id="play-btn" class="play-btn" disabled>开始游戏</button>
+      </div>
+
+      <div class="history-area">
+        <h2>游戏历史</h2>
         <div id="loading" class="loading">
           <div class="spinner"></div>
           <p>加载中...</p>
         </div>
-        <div id="pagination" class="pagination" style="display: none;">
-          <button class="page-btn" id="prevBtn">上一页</button>
-          <span class="page-info">
-            第 <span id="currentPage">1</span> 页，共 <span id="totalPages">1</span> 页
-          </span>
-          <button class="page-btn" id="nextBtn">下一页</button>
+        <ul id="history-list" class="history-list">
+          <!-- 历史记录将在这里动态添加 -->
+        </ul>
+        <div id="pagination" class="pagination">
+          <!-- 分页控件将在这里动态添加 -->
         </div>
       </div>
     </div>
@@ -657,95 +547,69 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       // 元素引用
-      const usernameEl = document.getElementById('username');
       const balanceEl = document.getElementById('balance');
       const logoutBtn = document.getElementById('logout-btn');
       const cardDisplay = document.getElementById('card-display');
       const cardSymbol = document.getElementById('card-symbol');
       const statusMessage = document.getElementById('status-message');
       const resultDisplay = document.getElementById('result-display');
-      const playBtn = document.getElementById('play-btn');
-      const betOptions = document.querySelectorAll('.bet-option');
-      const chipButtons = document.querySelectorAll('.chip-btn');
+      const suitOptions = document.querySelectorAll('.suit-option');
+      const chipOptions = document.querySelectorAll('.chip');
       const totalBetEl = document.getElementById('total-bet');
-      const clearBtn = document.getElementById('clear-btn');
-      const historyList = document.getElementById('historyList');
+      const playBtn = document.getElementById('play-btn');
+      const historyList = document.getElementById('history-list');
       const loadingEl = document.getElementById('loading');
       const paginationEl = document.getElementById('pagination');
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      const currentPageEl = document.getElementById('currentPage');
-      const totalPagesEl = document.getElementById('totalPages');
+
+      // 花色符号和名称
+      const suitSymbols = {
+        'hearts': '♥',
+        'diamonds': '♦',
+        'clubs': '♣',
+        'spades': '♠',
+        'joker': '🃏'
+      };
+      
+      const suitNames = {
+        'hearts': '红桃',
+        'diamonds': '方块',
+        'clubs': '梅花',
+        'spades': '黑桃',
+        'joker': '小丑'
+      };
 
       // 状态变量
       let userBalance = 0;
-      let username = '';
-      let selectedChipValue = 10; // 默认筹码值
-      let bets = {
-        hearts: 0,
-        diamonds: 0,
-        clubs: 0,
-        spades: 0,
-        joker: 0
+      let currentChipValue = 10; // 默认筹码值
+      let currentBets = {
+        'hearts': 0,
+        'diamonds': 0,
+        'clubs': 0,
+        'spades': 0,
+        'joker': 0
       };
       let totalBet = 0;
       let isPlaying = false;
       let currentPage = 1;
+      let totalPages = 1;
       let pageSize = 8;
       let allRecords = [];
-      let totalPages = 1;
 
-      // 花色符号和名称映射
-      const suitSymbols = {
-        hearts: '♥',
-        diamonds: '♦',
-        clubs: '♣',
-        spades: '♠',
-        joker: '🃏'
-      };
-
-      const suitNames = {
-        hearts: '红桃',
-        diamonds: '方块',
-        clubs: '梅花',
-        spades: '黑桃',
-        joker: '小丑'
-      };
-
-      // 赔率设置
-      const payoutRates = {
-        hearts: 3.5,
-        diamonds: 3.6,
-        clubs: 3.7,
-        spades: 3.8,
-        joker: 100
-      };
-
-      // 概率设置 (总和为100)
-      const probabilities = {
-        hearts: 28,    // 28%
-        diamonds: 27,   // 27%
-        clubs: 26,     // 26%
-        spades: 18,    // 18%
-        joker: 1       // 1%
-      };
+      // 从localStorage加载筹码选择
+      const savedChipValue = localStorage.getItem('selectedChipValue');
+      if (savedChipValue) {
+        currentChipValue = parseInt(savedChipValue);
+        chipOptions.forEach(chip => {
+          chip.classList.remove('selected');
+          if (parseInt(chip.dataset.value) === currentChipValue) {
+            chip.classList.add('selected');
+          }
+        });
+      }
 
       // 初始化
-      init();
-
-      // 初始化函数
-      async function init() {
-        // 从localStorage加载默认筹码
-        const savedChip = localStorage.getItem('selectedChip');
-        if (savedChip) {
-          selectedChipValue = parseInt(savedChip);
-          updateChipSelection();
-        }
-
-        await checkAuth();
-        loadHistory();
-        setupEventListeners();
-      }
+      checkAuth();
+      loadHistory();
 
       // 检查用户是否已登录
       async function checkAuth() {
@@ -764,10 +628,8 @@
             return;
           }
 
-          // 更新用户信息
-          username = data.username;
+          // 更新用户余额
           userBalance = data.balance;
-          usernameEl.textContent = username;
           balanceEl.textContent = userBalance;
         } catch (error) {
           console.error('检查认证失败:', error);
@@ -775,128 +637,215 @@
         }
       }
 
-      // 设置事件监听器
-      function setupEventListeners() {
-        // 退出登录按钮
-        logoutBtn.addEventListener('click', async () => {
-          try {
-            await fetch('/api/logout', { method: 'POST' });
-            window.location.href = '/login.html';
-          } catch (error) {
-            console.error('退出登录失败:', error);
+      // 加载游戏历史
+      async function loadHistory() {
+        try {
+          loadingEl.style.display = 'block';
+          historyList.style.display = 'none';
+          paginationEl.style.display = 'none';
+          
+          const response = await fetch('/api/game_records');
+          
+          if (!response.ok) {
+            throw new Error('加载历史记录失败');
           }
+
+          const data = await response.json();
+          allRecords = data.records || [];
+          totalPages = Math.ceil(allRecords.length / pageSize);
+          renderHistory();
+          renderPagination();
+        } catch (error) {
+          console.error('加载历史记录错误:', error);
+        } finally {
+          loadingEl.style.display = 'none';
+          historyList.style.display = 'block';
+          paginationEl.style.display = 'flex';
+        }
+      }
+
+      // 渲染历史记录
+      function renderHistory() {
+        historyList.innerHTML = '';
+        
+        if (!allRecords || allRecords.length === 0) {
+          const emptyItem = document.createElement('li');
+          emptyItem.className = 'history-item';
+          emptyItem.textContent = '暂无游戏记录';
+          historyList.appendChild(emptyItem);
+          return;
+        }
+
+        // 计算当前页的记录
+        const startIndex = (currentPage - 1) * pageSize;
+        const endIndex = Math.min(startIndex + pageSize, allRecords.length);
+        const currentRecords = allRecords.slice(startIndex, endIndex);
+
+        currentRecords.forEach(record => {
+          const item = document.createElement('li');
+          item.className = 'history-item';
+          
+          // 格式化时间
+          const date = new Date(record.created_at);
+          const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+          
+          // 花色颜色
+          const suitColors = {
+            'hearts': '#ff5252',
+            'diamonds': '#ff5252',
+            'clubs': '#e0e0e0',
+            'spades': '#e0e0e0',
+            'joker': '#ff9800'
+          };
+          
+          // 结果类名
+          const resultClass = record.win_amount > 0 ? 'history-win' : 'history-lose';
+          const resultText = record.win_amount > 0 ? `赢 +${record.win_amount}` : `输 -${record.amount}`;
+          
+          item.innerHTML = `
+            <div class="history-suit-icon" style="color: ${suitColors[record.result_suit]}">${suitSymbols[record.result_suit]}</div>
+            <div class="history-details">
+              <div class="history-time">${formattedDate}</div>
+              <div class="history-result">
+                <div class="history-bet">下注: ${record.bet_suit.split(',').map(suit => suitNames[suit]).join(', ')} (${record.amount})</div>
+                <div class="${resultClass}">${resultText}</div>
+              </div>
+            </div>
+          `;
+          
+          historyList.appendChild(item);
         });
+      }
 
-        // 筹码按钮
-        chipButtons.forEach(btn => {
-          btn.addEventListener('click', () => {
-            selectedChipValue = parseInt(btn.dataset.value);
-            localStorage.setItem('selectedChip', selectedChipValue);
-            updateChipSelection();
-          });
-        });
-
-        // 花色选择
-        betOptions.forEach(option => {
-          option.addEventListener('click', () => {
-            if (isPlaying) return;
-            
-            const suit = option.dataset.suit;
-            bets[suit] += selectedChipValue;
-            
-            // 更新显示
-            updateBetDisplay();
-          });
-        });
-
-        // 清空押注按钮
-        clearBtn.addEventListener('click', () => {
-          if (isPlaying) return;
-          resetBets();
-        });
-
-        // 开始游戏按钮
-        playBtn.addEventListener('click', startGame);
-
-        // 分页按钮
+      // 渲染分页
+      function renderPagination() {
+        paginationEl.innerHTML = '';
+        
+        if (totalPages <= 1) {
+          return;
+        }
+        
+        // 上一页按钮
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '上一页';
+        prevBtn.disabled = currentPage === 1;
         prevBtn.addEventListener('click', () => {
           if (currentPage > 1) {
             currentPage--;
             renderHistory();
-            updatePagination();
+            renderPagination();
           }
         });
-
+        paginationEl.appendChild(prevBtn);
+        
+        // 页码按钮
+        const maxButtons = 5;
+        const startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        const endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        
+        for (let i = startPage; i <= endPage; i++) {
+          const pageBtn = document.createElement('button');
+          pageBtn.textContent = i;
+          pageBtn.className = i === currentPage ? 'active' : '';
+          pageBtn.addEventListener('click', () => {
+            currentPage = i;
+            renderHistory();
+            renderPagination();
+          });
+          paginationEl.appendChild(pageBtn);
+        }
+        
+        // 下一页按钮
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = '下一页';
+        nextBtn.disabled = currentPage === totalPages;
         nextBtn.addEventListener('click', () => {
           if (currentPage < totalPages) {
             currentPage++;
             renderHistory();
-            updatePagination();
+            renderPagination();
           }
         });
+        paginationEl.appendChild(nextBtn);
       }
 
-      // 更新筹码选择
-      function updateChipSelection() {
-        chipButtons.forEach(btn => {
-          if (parseInt(btn.dataset.value) === selectedChipValue) {
-            btn.classList.add('selected');
-          } else {
-            btn.classList.remove('selected');
-          }
+      // 筹码选择事件
+      chipOptions.forEach(chip => {
+        chip.addEventListener('click', function() {
+          chipOptions.forEach(c => c.classList.remove('selected'));
+          this.classList.add('selected');
+          currentChipValue = parseInt(this.dataset.value);
+          localStorage.setItem('selectedChipValue', currentChipValue);
         });
-      }
+      });
 
-      // 更新押注显示
-      function updateBetDisplay() {
-        totalBet = 0;
-        
-        for (const suit in bets) {
-          const badge = document.getElementById(`${suit}-badge`);
-          if (bets[suit] > 0) {
-            badge.textContent = bets[suit];
-            badge.classList.add('visible');
-          } else {
-            badge.classList.remove('visible');
-          }
-          totalBet += bets[suit];
-        }
-        
+      // 花色选择事件
+      suitOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          const suit = this.dataset.suit;
+          
+          // 添加当前筹码值到下注
+          currentBets[suit] += currentChipValue;
+          
+          // 更新下注显示
+          this.querySelector('.bet-amount').textContent = currentBets[suit];
+          this.classList.add('has-bet');
+          
+          // 更新总下注
+          updateTotalBet();
+        });
+      });
+
+      // 更新总下注
+      function updateTotalBet() {
+        totalBet = Object.values(currentBets).reduce((sum, bet) => sum + bet, 0);
         totalBetEl.textContent = totalBet;
         
-        // 更新开始按钮状态
-        playBtn.disabled = totalBet === 0 || totalBet > userBalance;
+        // 启用/禁用开始按钮
+        playBtn.disabled = totalBet === 0 || isPlaying || totalBet > userBalance;
       }
 
-      // 重置押注
+      // 重置下注
       function resetBets() {
-        for (const suit in bets) {
-          bets[suit] = 0;
-        }
-        updateBetDisplay();
+        Object.keys(currentBets).forEach(suit => {
+          currentBets[suit] = 0;
+        });
+        
+        suitOptions.forEach(option => {
+          option.querySelector('.bet-amount').textContent = '0';
+          option.classList.remove('has-bet');
+        });
+        
+        totalBet = 0;
+        totalBetEl.textContent = '0';
+        playBtn.disabled = true;
       }
 
       // 开始游戏
+      playBtn.addEventListener('click', startGame);
+
       async function startGame() {
-        if (isPlaying || totalBet === 0 || totalBet > userBalance) return;
+        if (isPlaying || totalBet === 0) return;
         
         isPlaying = true;
         playBtn.disabled = true;
-        statusMessage.textContent = '游戏进行中...';
-        statusMessage.className = 'status-message playing';
         resultDisplay.style.display = 'none';
+        statusMessage.textContent = '游戏进行中...';
+        statusMessage.className = 'status-message';
         
         try {
-          // 准备请求数据
+          // 准备下注数据
           const betData = {
-            bets: bets
+            bet_suit: Object.keys(currentBets).filter(suit => currentBets[suit] > 0).join(','),
+            amount: totalBet
           };
           
-          // 发送请求
-          const response = await fetch('/api/play_game', {
+          // 发送游戏请求
+          const response = await fetch('/api/game', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify(betData)
           });
@@ -944,11 +893,6 @@
         
         // 翻转卡牌
         cardDisplay.classList.add('flipped');
-        
-        // 翻转完成后保持正面朝上
-        cardDisplay.addEventListener('transitionend', function onTransitionEnd() {
-          cardDisplay.removeEventListener('transitionend', onTransitionEnd);
-        });
       }
 
       // 显示游戏结果
@@ -983,90 +927,11 @@
         playBtn.disabled = totalBet === 0;
       }
 
-      // 加载游戏历史
-      async function loadHistory() {
-        try {
-          loadingEl.style.display = 'block';
-          historyList.style.display = 'none';
-          paginationEl.style.display = 'none';
-          
-          const response = await fetch('/api/game_records');
-          
-          if (!response.ok) {
-            throw new Error('加载历史记录失败');
-          }
-
-          const data = await response.json();
-          allRecords = data.records || [];
-          totalPages = Math.ceil(allRecords.length / pageSize) || 1;
-          
-          renderHistory();
-          updatePagination();
-          
-          loadingEl.style.display = 'none';
-          historyList.style.display = 'block';
-          paginationEl.style.display = 'flex';
-        } catch (error) {
-          console.error('加载历史记录错误:', error);
-          loadingEl.style.display = 'none';
-        }
-      }
-
-      // 渲染历史记录
-      function renderHistory() {
-        historyList.innerHTML = '';
-        
-        if (!allRecords || allRecords.length === 0) {
-          historyList.innerHTML = '<div class="history-item">暂无游戏记录</div>';
-          return;
-        }
-
-        // 计算当前页的记录
-        const startIndex = (currentPage - 1) * pageSize;
-        const endIndex = Math.min(startIndex + pageSize, allRecords.length);
-        const currentRecords = allRecords.slice(startIndex, endIndex);
-
-        currentRecords.forEach(record => {
-          const isWin = record.win_amount > 0;
-          const item = document.createElement('div');
-          item.className = 'history-item';
-          
-          // 格式化时间
-          const date = new Date(record.created_at);
-          const formattedDate = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-          
-          // 花色颜色
-          const suitColors = {
-            hearts: '#dc3545',
-            diamonds: '#dc3545',
-            clubs: '#212529',
-            spades: '#212529',
-            joker: '#feca57'
-          };
-          
-          item.innerHTML = `
-            <div class="history-result ${isWin ? 'win' : 'lose'}">
-              <span class="suit-icon" style="color: ${suitColors[record.result_suit]}">${suitSymbols[record.result_suit]}</span>
-              ${isWin ? `赢得 ${record.win_amount} 金币` : `输了 ${record.bet_amount} 金币`}
-            </div>
-            <div class="history-details">
-              时间: ${formattedDate} | 
-              下注: ${record.bet_suit ? `${suitNames[record.bet_suit]} ${record.bet_amount}` : '多重押注'}
-            </div>
-          `;
-          
-          historyList.appendChild(item);
-        });
-      }
-
-      // 更新分页
-      function updatePagination() {
-        currentPageEl.textContent = currentPage;
-        totalPagesEl.textContent = totalPages;
-        
-        prevBtn.disabled = currentPage <= 1;
-        nextBtn.disabled = currentPage >= totalPages;
-      }
+      // 退出登录
+      logoutBtn.addEventListener('click', function() {
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+      });
     });
   </script>
 </body>
