@@ -1,18 +1,10 @@
-const { MongoClient, ObjectId } = require("mongodb");
-const jwt = require("jsonwebtoken");
+// 导入所需模块
+const { MongoClient } = require("mongodb");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 
-// MongoDB连接
-const uri =
-  process.env.MONGODB_URI ||
-  "mongodb+srv://1033326818:Ykswj1bYj6FqCzT1@cluster0.ghauger.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const client = new MongoClient(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-});
-
-// 数据库和集合名称
+// 数据库配置
+const uri = process.env.MONGODB_URI;
 const dbName = "card_game";
 const usersCollection = "users";
 const gameRecordsCollection = "game_records";
@@ -20,18 +12,47 @@ const gameRecordsCollection = "game_records";
 // JWT密钥
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// 连接到MongoDB
+// 连接到数据库
 async function connectToDatabase() {
-  if (!client.topology || !client.topology.isConnected()) {
-    try {
-      await client.connect();
-      console.log("Connected to MongoDB");
-    } catch (error) {
-      console.error("MongoDB连接错误:", error);
-      throw error;
-    }
+  try {
+    const client = new MongoClient(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    await client.connect();
+    return client.db(dbName);
+  } catch (error) {
+    console.error("数据库连接失败:", error);
+    throw error;
   }
-  return client.db(dbName);
+}
+
+// 从请求中获取用户信息
+async function getUserFromRequest(req) {
+  try {
+    // 从请求头中获取token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return null;
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return null;
+    }
+
+    // 验证token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const username = decoded.username;
+
+    // 从数据库获取用户信息
+    const db = await connectToDatabase();
+    const user = await db.collection(usersCollection).findOne({ username });
+    return user;
+  } catch (error) {
+    console.error("获取用户信息错误:", error);
+    return null;
+  }
 }
 
 // 初始化数据库
@@ -39,31 +60,38 @@ async function initializeDatabase() {
   try {
     const db = await connectToDatabase();
 
-    // 检查users集合是否存在
-    const collections = await db.listCollections().toArray();
-    const collectionNames = collections.map(c => c.name);
-
-    // 如果users集合不存在，创建它并添加管理员用户
-    if (!collectionNames.includes(usersCollection)) {
-      await db.createCollection(usersCollection);
-
+    // 检查管理员用户是否存在
+    const adminExists = await db
+      .collection(usersCollection)
+      .findOne({ username: "admin" });
+    if (!adminExists) {
       // 创建管理员用户
-      const adminUser = {
+      const hashedPassword = await bcrypt.hash("068162", 10);
+      await db.collection(usersCollection).insertOne({
         username: "admin",
-        password: await bcrypt.hash("068162", 10),
+        password: hashedPassword,
         is_admin: true,
         balance: 10000,
         created_at: new Date()
-      };
-
-      await db.collection(usersCollection).insertOne(adminUser);
+      });
       console.log("管理员用户已创建");
     }
 
-    // 如果game_records集合不存在，创建它
-    if (!collectionNames.includes(gameRecordsCollection)) {
-      await db.createCollection(gameRecordsCollection);
-      console.log("游戏记录集合已创建");
+    // 检查测试用户是否存在
+    const testUserExists = await db
+      .collection(usersCollection)
+      .findOne({ username: "test" });
+    if (!testUserExists) {
+      // 创建测试用户
+      const hashedPassword = await bcrypt.hash("test123", 10);
+      await db.collection(usersCollection).insertOne({
+        username: "test",
+        password: hashedPassword,
+        is_admin: false,
+        balance: 1000,
+        created_at: new Date()
+      });
+      console.log("测试用户已创建");
     }
 
     return { success: true, message: "数据库初始化成功" };
@@ -73,7 +101,7 @@ async function initializeDatabase() {
   }
 }
 
-// 用户注册
+// 注册用户
 async function registerUser(username, password) {
   try {
     const db = await connectToDatabase();
@@ -88,32 +116,17 @@ async function registerUser(username, password) {
 
     // 创建新用户
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = {
+    await db.collection(usersCollection).insertOne({
       username,
       password: hashedPassword,
       is_admin: false,
       balance: 1000, // 初始余额
       created_at: new Date()
-    };
-
-    await db.collection(usersCollection).insertOne(newUser);
-
-    // 生成JWT
-    const token = jwt.sign({ username, is_admin: false }, JWT_SECRET, {
-      expiresIn: "24h"
     });
 
-    return {
-      success: true,
-      token,
-      user: {
-        username,
-        is_admin: false,
-        balance: 1000
-      }
-    };
+    return { success: true };
   } catch (error) {
-    console.error("注册错误:", error);
+    console.error("注册用户错误:", error);
     return { success: false, error: error.message };
   }
 }
@@ -126,28 +139,24 @@ async function loginUser(username, password) {
     // 查找用户
     const user = await db.collection(usersCollection).findOne({ username });
     if (!user) {
-      return { success: false, error: "用户名或密码不正确" };
+      return { success: false, error: "用户名或密码错误" };
     }
 
     // 验证密码
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return { success: false, error: "用户名或密码不正确" };
+      return { success: false, error: "用户名或密码错误" };
     }
 
-    // 生成JWT
-    const token = jwt.sign({ username, is_admin: user.is_admin }, JWT_SECRET, {
+    // 生成JWT token
+    const token = jwt.sign({ username: user.username }, JWT_SECRET, {
       expiresIn: "24h"
     });
 
     return {
       success: true,
       token,
-      user: {
-        username,
-        is_admin: user.is_admin,
-        balance: user.balance
-      }
+      is_admin: user.is_admin
     };
   } catch (error) {
     console.error("登录错误:", error);
@@ -155,40 +164,13 @@ async function loginUser(username, password) {
   }
 }
 
-// 从请求中获取用户信息
-async function getUserFromRequest(req) {
-  try {
-    // 从请求头中获取token
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return null;
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    // 验证token
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    // 从数据库获取用户信息
-    const db = await connectToDatabase();
-    const user = await db
-      .collection(usersCollection)
-      .findOne({ username: decoded.username });
-
-    return user;
-  } catch (error) {
-    console.error("获取用户信息错误:", error);
-    return null;
-  }
-}
-
 // 更新用户余额
-async function updateUserBalance(username, newBalance) {
+async function updateUserBalance(username, balance) {
   try {
     const db = await connectToDatabase();
     await db
       .collection(usersCollection)
-      .updateOne({ username }, { $set: { balance: newBalance } });
+      .updateOne({ username }, { $set: { balance } });
     return true;
   } catch (error) {
     console.error("更新余额错误:", error);

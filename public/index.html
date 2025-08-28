@@ -66,7 +66,20 @@
       // 页面加载时检查登录状态
       window.addEventListener('load', async () => {
         try {
-          const response = await fetch('/api/user');
+          // 获取token
+          const token = localStorage.getItem('token');
+          if (!token) {
+            // 如果没有token，保持在当前页面
+            return;
+          }
+          
+          // 发送请求，包含Authorization头
+          const response = await fetch('/api/user', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
           if (response.ok) {
             const data = await response.json();
             // 如果已登录，根据用户类型重定向
@@ -75,9 +88,14 @@
             } else {
               window.location.href = '/game.html';
             }
+          } else {
+            // 如果请求失败，清除token
+            localStorage.removeItem('token');
           }
         } catch (error) {
           console.error('检查登录状态失败:', error);
+          // 出错时清除token
+          localStorage.removeItem('token');
         }
       });
     </script>

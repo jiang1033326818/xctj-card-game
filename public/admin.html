@@ -348,10 +348,24 @@
     // 页面加载时检查登录状态并加载数据
     window.addEventListener('load', async () => {
       try {
-        // 检查登录状态
-        const userResponse = await fetch('/api/user');
-        if (!userResponse.ok) {
+        // 获取token
+        const token = localStorage.getItem('token');
+        if (!token) {
           // 未登录，重定向到登录页面
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        // 检查登录状态
+        const userResponse = await fetch('/api/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!userResponse.ok) {
+          // 未登录或token无效，重定向到登录页面
+          localStorage.removeItem('token');
           window.location.href = '/login.html';
           return;
         }
@@ -386,9 +400,25 @@
     // 加载统计数据
     async function loadStats() {
       try {
-        const response = await fetch('/api/house_stats');
+        // 获取token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        const response = await fetch('/api/house_stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+            return;
+          }
           throw new Error('获取统计数据失败');
         }
         
@@ -423,9 +453,25 @@
     // 加载用户列表
     async function loadUsers() {
       try {
-        const response = await fetch('/api/users');
+        // 获取token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        const response = await fetch('/api/admin/users', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+            return;
+          }
           throw new Error('获取用户列表失败');
         }
         
@@ -478,9 +524,25 @@
     // 加载游戏记录
     async function loadGameRecords() {
       try {
-        const response = await fetch('/api/game_records');
+        // 获取token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        const response = await fetch('/api/game_records', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         
         if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+            return;
+          }
           throw new Error('获取游戏记录失败');
         }
         
@@ -575,14 +637,22 @@
           return;
         }
         
+        // 获取token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+        
         // 发送请求
         const response = await fetch('/api/update_balance', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            userId: editingUserId,
+            username: document.getElementById('modal-username').value,
             balance: newBalance
           })
         });
@@ -614,14 +684,11 @@
     }
 
     // 登出
-    async function logout() {
-      try {
-        await fetch('/api/logout', { method: 'POST' });
-        window.location.href = '/login.html';
-      } catch (error) {
-        console.error('登出失败:', error);
-        alert('登出失败，请重试');
-      }
+    function logout() {
+      // 清除token
+      localStorage.removeItem('token');
+      // 重定向到登录页面
+      window.location.href = '/login.html';
     }
 
     // 点击模态框外部关闭模态框
