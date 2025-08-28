@@ -187,7 +187,7 @@
         }
 
         .balance {
-            color: #27ae60;
+            color: #e74c3c;
         }
 
         .status-message {
@@ -691,10 +691,19 @@
             selectedSuit = suit;
             
             // 更新选中状态
-            document.querySelectorAll('.bet-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            document.querySelector(`[data-suit="${suit}"]`).classList.add('selected');
+            const element = document.querySelector(`[data-suit="${suit}"]`);
+            element.classList.toggle('selected');
+            
+            // 如果取消选中，则清除该花色的选择
+            if (!element.classList.contains('selected')) {
+                selectedSuit = null;
+                
+                // 检查是否还有其他选中的花色
+                const selectedElements = document.querySelectorAll('.bet-option.selected');
+                if (selectedElements.length > 0) {
+                    selectedSuit = selectedElements[0].getAttribute('data-suit');
+                }
+            }
             
             // 更新筹码选择标题
             const suitNames = {
@@ -704,7 +713,16 @@
                 spades: '黑桃',
                 joker: '王牌'
             };
-            document.getElementById('selectedSuitName').textContent = `（当前选择：${suitNames[suit]}）`;
+            
+            const selectedElements = document.querySelectorAll('.bet-option.selected');
+            if (selectedElements.length === 0) {
+                document.getElementById('selectedSuitName').textContent = '（请先选择押注项目）';
+            } else if (selectedElements.length === 1) {
+                const selectedSuit = selectedElements[0].getAttribute('data-suit');
+                document.getElementById('selectedSuitName').textContent = `（当前选择：${suitNames[selectedSuit]}）`;
+            } else {
+                document.getElementById('selectedSuitName').textContent = `（已选择${selectedElements.length}项）`;
+            }
             
             // 启用筹码按钮
             updateChipButtons();
@@ -717,7 +735,8 @@
 
         // 添加筹码到选中的项目
         function addChipToSelected(amount) {
-            if (!selectedSuit) {
+            const selectedElements = document.querySelectorAll('.bet-option.selected');
+            if (selectedElements.length === 0) {
                 alert('请先选择押注项目');
                 return;
             }
@@ -725,7 +744,7 @@
             const currentTotal = getCurrentTotalBet();
             
             // 检查是否超过余额
-            if (currentTotal + amount > currentUser.balance) {
+            if (currentTotal + amount * selectedElements.length > currentUser.balance) {
                 // 显示余额不足提示
                 const statusMessage = document.getElementById('status-message');
                 statusMessage.innerHTML = '余额不足，请联系老姜获取筹码';
@@ -741,19 +760,21 @@
                 return;
             }
             
-            // 添加押注
-            bets[selectedSuit] += amount;
+            // 为每个选中的花色添加押注
+            selectedElements.forEach(element => {
+                const suit = element.getAttribute('data-suit');
+                bets[suit] += amount;
+                document.getElementById(suit + 'Amount').textContent = bets[suit];
+                
+                // 为每个选中的花色创建筹码飞行动画
+                createChipAnimation(event.target, amount, element);
+            });
             
-            // 更新显示
-            document.getElementById(selectedSuit + 'Amount').textContent = bets[selectedSuit];
             updateTotalBet();
-            
-            // 添加筹码飞行动画
-            createChipAnimation(event.target, amount);
         }
 
         // 创建筹码飞行动画
-        function createChipAnimation(chipBtn, amount) {
+        function createChipAnimation(chipBtn, amount, targetElement) {
             const chip = document.createElement('div');
             chip.textContent = amount;
             chip.style.position = 'absolute';
@@ -770,9 +791,33 @@
             chip.style.justifyContent = 'center';
             chip.style.fontWeight = 'bold';
             chip.style.zIndex = '100';
-            chip.style.animation = 'chipFly 0.8s ease-out forwards';
             
             document.body.appendChild(chip);
+            
+            // 计算目标位置
+            const targetRect = targetElement.getBoundingClientRect();
+            const targetX = targetRect.left + targetRect.width / 2;
+            const targetY = targetRect.top + targetRect.height / 2;
+            
+            // 设置动画
+            chip.animate([
+                { 
+                    left: `${chipBtn.offsetLeft + chipBtn.offsetWidth / 2}px`,
+                    top: `${chipBtn.offsetTop + chipBtn.offsetHeight / 2}px`,
+                    opacity: 1,
+                    transform: 'translate(-50%, -50%) scale(1)'
+                },
+                { 
+                    left: `${targetX}px`,
+                    top: `${targetY}px`,
+                    opacity: 0,
+                    transform: 'translate(-50%, -50%) scale(0.5)'
+                }
+            ], {
+                duration: 800,
+                easing: 'ease-out',
+                fill: 'forwards'
+            });
             
             // 动画结束后移除元素
             setTimeout(() => {
@@ -784,12 +829,13 @@
         function updateChipButtons() {
             const chipAmounts = [1, 5, 10, 25, 50, 100];
             const currentTotal = getCurrentTotalBet();
+            const selectedElements = document.querySelectorAll('.bet-option.selected');
             
             chipAmounts.forEach(amount => {
                 const button = document.querySelector(`.chip-${amount}`);
-                if (!selectedSuit) {
+                if (selectedElements.length === 0) {
                     button.disabled = true;
-                } else if (currentTotal + amount > currentUser.balance) {
+                } else if (currentTotal + amount * selectedElements.length > currentUser.balance) {
                     button.disabled = true;
                 } else {
                     button.disabled = false;
@@ -888,10 +934,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ 
-                        bet_suit: Object.keys(bets).find(suit => bets[suit] > 0),
-                        amount: getCurrentTotalBet()
-                    })
+                    body: JSON.stringify({ bets })
                 });
                 
                 if (response.ok) {
@@ -946,16 +989,27 @@
                         // 清空押注
                         clearBets();
                         
-                        // 8秒后重置游戏状态
-                        setTimeout(() => {
-                            cardDisplay.className = 'card-display';
-                            gameInProgress = false;
-                            
-                            if (currentUser.balance > 0) {
-                                statusMessage.textContent = '选择押注金额，点击开始游戏';
-                                statusMessage.className = 'status-message';
-                            }
-                        }, 8000); // 增加显示时间到8秒
+                        // 8秒后重置游戏状态，或者在用户操作筹码时立即重置
+                        const resetTimeout = setTimeout(() => {
+                            resetGameState();
+                        }, 8000); // 显示时间为8秒
+                        
+                        // 添加筹码按钮的点击事件，立即重置游戏状态
+                        document.querySelectorAll('.chip-btn, .bet-option').forEach(element => {
+                            const originalClickHandler = element.onclick;
+                            element.onclick = function(event) {
+                                // 如果游戏已经结束但卡片还在显示，立即重置
+                                if (!gameInProgress && cardDisplay.classList.contains('flipped')) {
+                                    clearTimeout(resetTimeout);
+                                    resetGameState();
+                                }
+                                
+                                // 调用原始的点击处理函数
+                                if (originalClickHandler) {
+                                    return originalClickHandler.call(this, event);
+                                }
+                            };
+                        });
                     }, 2000);
                 } else {
                     const error = await response.json();
@@ -1002,6 +1056,19 @@
             }
         }
 
+        // 重置游戏状态
+        function resetGameState() {
+            const cardDisplay = document.getElementById('card-display');
+            cardDisplay.className = 'card-display';
+            gameInProgress = false;
+            
+            if (currentUser.balance > 0) {
+                const statusMessage = document.getElementById('status-message');
+                statusMessage.textContent = '选择押注金额，点击开始游戏';
+                statusMessage.className = 'status-message';
+            }
+        }
+        
         // 更新历史记录显示
         function updateHistoryDisplay() {
             const historyList = document.getElementById('historyList');

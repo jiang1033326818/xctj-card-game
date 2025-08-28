@@ -268,9 +268,21 @@ function weightedRandom(items, weights) {
 async function handleGame(req, res) {
   try {
     // 验证请求体
-    const { bet_suit, amount } = req.body;
-    if (!bet_suit || !amount || isNaN(amount) || amount <= 0) {
+    const { bets } = req.body;
+    if (!bets || typeof bets !== 'object') {
       return res.status(400).json({ error: "无效的请求参数" });
+    }
+    
+    // 计算总押注金额
+    let totalAmount = 0;
+    for (const suit in bets) {
+      if (bets[suit] > 0) {
+        totalAmount += bets[suit];
+      }
+    }
+    
+    if (totalAmount <= 0) {
+      return res.status(400).json({ error: "押注金额必须大于0" });
     }
 
     // 获取用户信息
@@ -280,7 +292,7 @@ async function handleGame(req, res) {
     }
 
     // 检查余额
-    if (user.balance < amount) {
+    if (user.balance < totalAmount) {
       return res.status(400).json({ error: "余额不足" });
     }
 
@@ -291,21 +303,21 @@ async function handleGame(req, res) {
 
     // 计算赢取金额
     let win_amount = 0;
-    if (result_suit === bet_suit) {
+    if (bets[result_suit] > 0) {
       // 如果猜中
       if (result_suit === "joker") {
-        win_amount = amount * 10; // 小丑赔率10倍
+        win_amount = bets[result_suit] * 20; // 小丑赔率20倍
       } else {
-        win_amount = amount * 4; // 其他花色赔率4倍
+        win_amount = bets[result_suit] * 3.5; // 其他花色赔率3.5倍
       }
     }
 
     // 更新余额
-    const new_balance = user.balance - amount + win_amount;
+    const new_balance = user.balance - totalAmount + win_amount;
     await updateUserBalance(user.username, new_balance);
 
     // 记录游戏结果
-    await recordGame(user.username, bet_suit, result_suit, amount, win_amount);
+    await recordGame(user.username, JSON.stringify(bets), result_suit, totalAmount, win_amount);
 
     // 返回结果
     res.json({
