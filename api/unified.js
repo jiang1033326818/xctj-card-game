@@ -214,6 +214,106 @@ async function getUserGameRecords(username) {
   }
 }
 
+// 获取所有游戏记录（管理员用）
+async function getAllGameRecords() {
+  try {
+    const db = await connectToDatabase();
+    const records = await db
+      .collection(gameRecordsCollection)
+      .find({})
+      .sort({ created_at: -1 })
+      .toArray();
+    return { success: true, records };
+  } catch (error) {
+    console.error("获取所有游戏记录错误:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// 获取系统统计数据
+async function getHouseStats() {
+  try {
+    const db = await connectToDatabase();
+    
+    // 获取所有游戏记录
+    const records = await db
+      .collection(gameRecordsCollection)
+      .find({})
+      .toArray();
+    
+    if (records.length === 0) {
+      return {
+        success: true,
+        stats: {
+          totalGames: 0,
+          totalBets: 0,
+          totalPayouts: 0,
+          houseProfit: 0,
+          heartsCount: 0,
+          diamondsCount: 0,
+          clubsCount: 0,
+          spadesCount: 0,
+          jokerCount: 0
+        }
+      };
+    }
+    
+    // 计算统计数据
+    let totalGames = records.length;
+    let totalBets = 0;
+    let totalPayouts = 0;
+    let heartsCount = 0;
+    let diamondsCount = 0;
+    let clubsCount = 0;
+    let spadesCount = 0;
+    let jokerCount = 0;
+    
+    records.forEach(record => {
+      totalBets += record.amount || 0;
+      totalPayouts += record.win_amount || 0;
+      
+      // 统计各花色出现次数
+      switch (record.result_suit) {
+        case 'hearts':
+          heartsCount++;
+          break;
+        case 'diamonds':
+          diamondsCount++;
+          break;
+        case 'clubs':
+          clubsCount++;
+          break;
+        case 'spades':
+          spadesCount++;
+          break;
+        case 'joker':
+          jokerCount++;
+          break;
+      }
+    });
+    
+    const houseProfit = totalBets - totalPayouts;
+    
+    return {
+      success: true,
+      stats: {
+        totalGames,
+        totalBets,
+        totalPayouts,
+        houseProfit,
+        heartsCount,
+        diamondsCount,
+        clubsCount,
+        spadesCount,
+        jokerCount
+      }
+    };
+  } catch (error) {
+    console.error("获取系统统计错误:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 // 获取所有用户
 async function getAllUsers() {
   try {
@@ -441,7 +541,24 @@ module.exports = async (req, res) => {
       if (!user) {
         return res.status(401).json({ error: "未授权" });
       }
-      const result = await getUserGameRecords(user.username);
+      
+      // 如果是管理员，返回所有记录；否则只返回用户自己的记录
+      let result;
+      if (user.is_admin) {
+        result = await getAllGameRecords();
+      } else {
+        result = await getUserGameRecords(user.username);
+      }
+      return res.json(result);
+    }
+
+    // 管理员：获取系统统计
+    if (path === "/api/house_stats" && req.method === "GET") {
+      const user = await getUserFromRequest(req);
+      if (!user || !user.is_admin) {
+        return res.status(401).json({ error: "未授权" });
+      }
+      const result = await getHouseStats();
       return res.json(result);
     }
 
