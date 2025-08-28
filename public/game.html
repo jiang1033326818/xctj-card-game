@@ -909,10 +909,17 @@
         showGameResult(result);
         
         // 更新余额
-        updateBalance(result.new_balance);
+        updateBalance(result.newBalance);
+        
+        // 创建历史记录对象
+        const historyItem = {
+          result: result.result,
+          bets: filteredBets,
+          timestamp: new Date().toISOString()
+        };
         
         // 添加到历史记录
-        allHistory.unshift(result);
+        allHistory.unshift(historyItem);
         renderHistory();
         
       } catch (error) {
