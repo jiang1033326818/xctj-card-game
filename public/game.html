@@ -882,7 +882,7 @@
             
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/game/play', {
+                const response = await fetch('/api/play', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -986,7 +986,7 @@
         async function loadHistory() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/game/history', {
+                const response = await fetch('/api/history', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
