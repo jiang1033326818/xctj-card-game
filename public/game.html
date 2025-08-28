@@ -365,6 +365,12 @@
             transform: none;
         }
 
+        .chip-btn.selected {
+            border: 3px solid #667eea;
+            box-shadow: 0 0 15px rgba(102,126,234,0.6);
+            transform: scale(1.1);
+        }
+
         .total-bet {
             text-align: center;
             font-size: 1.1em;
@@ -625,7 +631,7 @@
         // 变量声明
         let currentUser = null;
         let gameInProgress = false;
-        let selectedSuit = null;
+        let selectedChipAmount = 10; // 默认选中10元筹码
         let bets = {
             hearts: 0,
             diamonds: 0,
@@ -659,6 +665,9 @@
                     updateBalance(user.balance);
                     loadHistory();
                     
+                    // 设置默认选中的筹码
+                    addChipToSelected(10);
+                    
                     // 如果是管理员，跳转到管理页面
                     if (user.is_admin) {
                         window.location.href = 'admin.html';
@@ -678,44 +687,12 @@
             }
         });
 
-        // 选择押注项目并直接添加筹码
+        // 直接为花色添加筹码
         function selectSuit(suit) {
-            selectedSuit = suit;
-            
-            // 更新筹码选择标题
-            const suitNames = {
-                hearts: '红桃',
-                diamonds: '方块',
-                clubs: '梅花',
-                spades: '黑桃',
-                joker: '王牌'
-            };
-            
-            document.getElementById('selectedSuitName').textContent = `（当前选择：${suitNames[suit]}）`;
-            
-            // 显示筹码选择区域
-            document.querySelector('.chip-selection').style.display = 'block';
-            
-            // 启用筹码按钮
-            updateChipButtons();
-        }
-
-        // 获取当前总押注
-        function getCurrentTotalBet() {
-            return bets.hearts + bets.diamonds + bets.clubs + bets.spades + bets.joker;
-        }
-
-        // 添加筹码到选中的项目
-        function addChipToSelected(amount) {
-            if (!selectedSuit) {
-                alert('请先选择押注项目');
-                return;
-            }
-            
             const currentTotal = getCurrentTotalBet();
             
             // 检查是否超过余额
-            if (currentTotal + amount > currentUser.balance) {
+            if (currentTotal + selectedChipAmount > currentUser.balance) {
                 // 显示余额不足提示
                 const statusMessage = document.getElementById('status-message');
                 statusMessage.innerHTML = '余额不足，请联系老姜获取筹码';
@@ -732,15 +709,35 @@
             }
             
             // 添加押注
-            bets[selectedSuit] += amount;
+            bets[suit] += selectedChipAmount;
             
             // 更新显示
-            document.getElementById(selectedSuit + 'Amount').textContent = bets[selectedSuit];
+            document.getElementById(suit + 'Amount').textContent = bets[suit];
             updateTotalBet();
             
             // 添加筹码飞行动画
-            const targetElement = document.querySelector(`[data-suit="${selectedSuit}"]`);
-            createChipAnimation(event.target, amount, targetElement);
+            const targetElement = document.querySelector(`[data-suit="${suit}"]`);
+            createChipAnimation(event.target, selectedChipAmount, targetElement);
+        }
+
+        // 获取当前总押注
+        function getCurrentTotalBet() {
+            return bets.hearts + bets.diamonds + bets.clubs + bets.spades + bets.joker;
+        }
+
+        // 选择筹码金额
+        function addChipToSelected(amount) {
+            // 更新选中的筹码金额
+            selectedChipAmount = amount;
+            
+            // 更新筹码按钮的选中状态
+            document.querySelectorAll('.chip-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.querySelector(`.chip-${amount}`).classList.add('selected');
+            
+            // 更新筹码选择标题
+            document.getElementById('selectedSuitName').textContent = `（当前筹码：${amount}元）`;
         }
 
         // 创建筹码飞行动画
@@ -797,18 +794,11 @@
 
         // 更新筹码按钮状态
         function updateChipButtons() {
+            // 筹码按钮始终可用，不需要禁用
             const chipAmounts = [1, 5, 10, 25, 50, 100];
-            const currentTotal = getCurrentTotalBet();
-            
             chipAmounts.forEach(amount => {
                 const button = document.querySelector(`.chip-${amount}`);
-                if (!selectedSuit) {
-                    button.disabled = true;
-                } else if (currentTotal + amount > currentUser.balance) {
-                    button.disabled = true;
-                } else {
-                    button.disabled = false;
-                }
+                button.disabled = false;
             });
         }
 
@@ -934,12 +924,16 @@
                         const loseAmount = totalBet - winAmount;
                         
                         // 显示结果消息
-                        if (winAmount > 0) {
-                            statusMessage.innerHTML = `恭喜！你赢得了 <strong>${winAmount}</strong> 筹码！`;
+                        const netResult = winAmount - totalBet;
+                        if (netResult > 0) {
+                            statusMessage.innerHTML = `恭喜！你净赢了 <strong>${netResult}</strong> 筹码！`;
                             statusMessage.className = 'status-message win';
-                        } else {
-                            statusMessage.innerHTML = `很遗憾，你输了 <strong>${loseAmount}</strong> 筹码。`;
+                        } else if (netResult < 0) {
+                            statusMessage.innerHTML = `很遗憾，你净输了 <strong>${Math.abs(netResult)}</strong> 筹码。`;
                             statusMessage.className = 'status-message lose';
+                        } else {
+                            statusMessage.innerHTML = `平局！你的押注全部返还。`;
+                            statusMessage.className = 'status-message';
                         }
                         
                         // 添加到历史记录
@@ -1014,11 +1008,13 @@
                             bets = { [item.bet_suit]: item.amount };
                         }
                         
+                        const netResult = item.win_amount - item.amount;
                         return {
                             suit: item.result_suit,
                             bets: bets,
                             winAmount: item.win_amount,
-                            loseAmount: item.amount - item.win_amount,
+                            netResult: netResult,
+                            totalBet: item.amount,
                             timestamp: new Date(item.created_at).toLocaleString()
                         };
                     });
@@ -1073,8 +1069,9 @@
                     joker: '🃏'
                 };
                 
-                const resultClass = item.winAmount > 0 ? 'win' : 'lose';
-                const resultText = item.winAmount > 0 ? `赢得 ${item.winAmount}` : `输了 ${item.loseAmount}`;
+                const resultClass = item.netResult > 0 ? 'win' : (item.netResult < 0 ? 'lose' : '');
+                const resultText = item.netResult > 0 ? `净赢 ${item.netResult}` : 
+                                 (item.netResult < 0 ? `净输 ${Math.abs(item.netResult)}` : '平局');
                 
                 historyItem.innerHTML = `
                     <div class="history-result ${resultClass}">
@@ -1084,7 +1081,7 @@
                         押注: ${Object.entries(item.bets)
                             .filter(([_, amount]) => amount > 0)
                             .map(([suit, amount]) => `${suitNames[suit]} ${amount}`)
-                            .join(', ')}
+                            .join(', ')} (总计: ${item.totalBet})
                         <br>
                         时间: ${item.timestamp || new Date().toLocaleString()}
                     </div>

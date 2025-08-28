@@ -296,12 +296,26 @@ async function handleGame(req, res) {
       return res.status(400).json({ error: "余额不足" });
     }
 
-    // 随机生成结果
+    // 随机生成结果，调整概率以增加庄家优势
     const suits = ["hearts", "diamonds", "clubs", "spades", "joker"];
-    const weights = [0.225, 0.225, 0.225, 0.225, 0.1]; // 小丑出现概率较低
+    // 调整权重，降低玩家押注较多花色的出现概率
+    let weights = [0.2, 0.2, 0.2, 0.2, 0.2]; // 基础权重
+    
+    // 根据押注情况调整权重，押注越多的花色出现概率越低
+    const totalBetAmount = totalAmount;
+    suits.forEach((suit, index) => {
+      if (bets[suit] > 0) {
+        const betRatio = bets[suit] / totalBetAmount;
+        weights[index] = weights[index] * (1 - betRatio * 0.3); // 降低押注花色的权重
+      }
+    });
+    
+    // 小丑特殊处理，保持较低概率
+    weights[4] = 0.08; // 小丑固定8%概率
+    
     const result_suit = weightedRandom(suits, weights);
 
-    // 计算赢取金额
+    // 计算赢取金额 - 只计算中奖花色的赔付
     let win_amount = 0;
     if (bets[result_suit] > 0) {
       // 如果猜中
@@ -312,7 +326,7 @@ async function handleGame(req, res) {
       }
     }
 
-    // 更新余额
+    // 更新余额：扣除所有押注，加上赢取金额
     const new_balance = user.balance - totalAmount + win_amount;
     await updateUserBalance(user.username, new_balance);
 
