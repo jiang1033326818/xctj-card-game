@@ -956,7 +956,7 @@
                             // 8秒后重置游戏状态，或者在用户操作筹码时立即重置
                             const resetTimeout = setTimeout(() => {
                                 resetGameState();
-                            }, 8000);
+                            }, 3000);
                             
                             // 添加筹码按钮的点击事件，立即重置游戏状态
                             document.querySelectorAll('.chip-btn, .bet-option').forEach(element => {
