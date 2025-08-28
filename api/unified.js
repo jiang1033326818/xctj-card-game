@@ -526,8 +526,8 @@ function getRandomSuit() {
 // 计算赢取金额
 function calculateWinnings(betSuit, resultSuit, betAmount) {
   if (betSuit === resultSuit) {
-    // 赔率：红桃、方块、梅花、黑桃 = 4倍，小丑 = 10倍
-    const multiplier = betSuit === "joker" ? 10 : 4;
+    // 赔率：红桃、方块、梅花、黑桃 = 5倍，小丑 = 15倍
+    const multiplier = betSuit === "joker" ? 15 : 5;
     return {
       win: true,
       winAmount: betAmount * multiplier
