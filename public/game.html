@@ -882,13 +882,16 @@
             
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/play', {
+                const response = await fetch('/api/game', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ bets })
+                    body: JSON.stringify({ 
+                        bet_suit: Object.keys(bets).find(suit => bets[suit] > 0),
+                        amount: getCurrentTotalBet()
+                    })
                 });
                 
                 if (response.ok) {
@@ -908,31 +911,17 @@
                             spades: '♠',
                             joker: '🃏'
                         };
-                        cardSymbol.textContent = symbols[result.suit];
+                        cardSymbol.textContent = symbols[result.result_suit];
                         
                         // 添加花色类
-                        cardDisplay.className = `card-display ${result.suit} flipped`;
+                        cardDisplay.className = `card-display ${result.result_suit} flipped`;
                         
                         // 计算赢得金额
                         let winAmount = 0;
                         let loseAmount = getCurrentTotalBet();
                         
-                        // 修复多个押注时结果计算的问题
-                        if (result.suit === 'hearts' && bets.hearts > 0) {
-                            winAmount += bets.hearts * 3.5;
-                        }
-                        if (result.suit === 'diamonds' && bets.diamonds > 0) {
-                            winAmount += bets.diamonds * 3.5;
-                        }
-                        if (result.suit === 'clubs' && bets.clubs > 0) {
-                            winAmount += bets.clubs * 3.5;
-                        }
-                        if (result.suit === 'spades' && bets.spades > 0) {
-                            winAmount += bets.spades * 3.5;
-                        }
-                        if (result.suit === 'joker' && bets.joker > 0) {
-                            winAmount += bets.joker * 20;
-                        }
+                        // 使用后端返回的赢取金额
+                        winAmount = result.win_amount;
                         
                         // 显示结果消息
                         if (winAmount > 0) {
@@ -945,10 +934,10 @@
                         
                         // 添加到历史记录
                         const historyItem = {
-                            suit: result.suit,
-                            bets: {...bets},
+                            suit: result.result_suit,
+                            bets: { [result.result_suit]: getCurrentTotalBet() },
                             winAmount,
-                            loseAmount,
+                            loseAmount: getCurrentTotalBet() - winAmount,
                             timestamp: new Date().toLocaleString()
                         };
                         allHistory.unshift(historyItem);
@@ -986,39 +975,25 @@
         async function loadHistory() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/history', {
+                const response = await fetch('/api/game_records', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 
                 if (response.ok) {
-                    const history = await response.json();
-                    allHistory = history.map(item => {
-                        // 计算赢得金额和输掉金额
-                        let winAmount = 0;
-                        let loseAmount = 0;
-                        
-                        if (item.bets) {
-                            Object.keys(item.bets).forEach(suit => {
-                                loseAmount += item.bets[suit];
-                                
-                                if (suit === item.suit) {
-                                    if (suit === 'joker') {
-                                        winAmount = item.bets[suit] * 20;
-                                    } else {
-                                        winAmount = item.bets[suit] * 3.5;
-                                    }
-                                }
-                            });
-                        }
-                        
-                        return {
-                            ...item,
-                            winAmount,
-                            loseAmount
-                        };
-                    });
+                    const result = await response.json();
+                    if (result.success && result.records) {
+                        allHistory = result.records.map(item => {
+                            return {
+                                suit: item.result_suit,
+                                bets: { [item.bet_suit]: item.amount },
+                                winAmount: item.win_amount,
+                                loseAmount: item.amount - item.win_amount,
+                                timestamp: new Date(item.created_at).toLocaleString()
+                            };
+                        });
+                    }
                     
                     updateHistoryDisplay();
                 }
