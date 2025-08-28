@@ -692,6 +692,95 @@ async function handleGetUsers(req, res) {
   }
 }
 
+// 处理更新用户余额请求
+async function handleUpdateBalance(req, res) {
+  // 检查请求方法
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "方法不允许" });
+  }
+
+  try {
+    // 解析请求体
+    let body;
+    if (typeof req.body === "object") {
+      body = req.body;
+    } else if (req.body) {
+      try {
+        body = JSON.parse(req.body);
+      } catch (e) {
+        console.error("解析请求体失败:", e);
+        return res.status(400).json({ error: "无效的JSON格式" });
+      }
+    } else {
+      // 尝试从请求流中读取
+      const buffers = [];
+      for await (const chunk of req) {
+        buffers.push(chunk);
+      }
+      const data = Buffer.concat(buffers).toString();
+      try {
+        body = data ? JSON.parse(data) : {};
+      } catch (e) {
+        console.error("从请求流解析JSON失败:", e);
+        return res.status(400).json({ error: "无效的JSON格式" });
+      }
+    }
+
+    // 检查请求体
+    if (!body || !body.userId || body.balance === undefined) {
+      return res.status(400).json({ error: "请求缺少必要字段" });
+    }
+
+    const { userId, balance } = body;
+    const newBalance = parseInt(balance);
+
+    // 验证余额
+    if (isNaN(newBalance) || newBalance < 0) {
+      return res.status(400).json({ error: "无效的余额" });
+    }
+
+    // 连接数据库
+    const { db } = await connectToDatabase();
+
+    // 获取当前用户
+    const currentUser = await getCurrentUser(req, db);
+
+    if (!currentUser) {
+      return res.status(401).json({ error: "未登录" });
+    }
+
+    // 检查是否为管理员
+    if (!currentUser.is_admin) {
+      return res.status(403).json({ error: "权限不足" });
+    }
+
+    // 更新用户余额
+    const result = await db
+      .collection("users")
+      .updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { balance: newBalance } }
+      );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "用户不存在" });
+    }
+
+    // 返回成功响应
+    res.status(200).json({
+      success: true,
+      message: "余额更新成功"
+    });
+  } catch (error) {
+    console.error("更新余额失败:", error);
+    res.status(500).json({
+      success: false,
+      error: "更新余额失败",
+      message: error.message
+    });
+  }
+}
+
 // 处理初始化数据库请求
 async function handleInitDb(req, res) {
   try {
@@ -782,6 +871,11 @@ module.exports = async (req, res) => {
       await handleGetHouseStats(req, res);
     } else if (path === "/api/users" || path === "/api/game/users") {
       await handleGetUsers(req, res);
+    } else if (
+      path === "/api/update_balance" ||
+      path === "/api/game/update_balance"
+    ) {
+      await handleUpdateBalance(req, res);
     } else if (path === "/api/init_db" || path === "/api/game/init_db") {
       await handleInitDb(req, res);
     } else if (

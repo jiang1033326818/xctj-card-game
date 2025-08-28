@@ -51,6 +51,18 @@
     .btn:hover {
       background-color: #0D47A1;
     }
+    .btn-edit {
+      background-color: #4CAF50;
+    }
+    .btn-edit:hover {
+      background-color: #388E3C;
+    }
+    .btn-save {
+      background-color: #FF9800;
+    }
+    .btn-save:hover {
+      background-color: #F57C00;
+    }
     .card {
       background-color: white;
       border-radius: 5px;
@@ -120,6 +132,80 @@
       border-radius: 4px;
       margin-bottom: 15px;
     }
+    .success-message {
+      color: #4CAF50;
+      padding: 10px;
+      background-color: #E8F5E9;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      display: none;
+    }
+    .balance-input {
+      width: 100px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    /* 模态框样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 5px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      color: #2196F3;
+    }
+    .close-btn {
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #aaa;
+    }
+    .close-btn:hover {
+      color: #333;
+    }
+    .modal-body {
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .modal-footer {
+      text-align: right;
+    }
   </style>
 </head>
 <body>
@@ -181,6 +267,7 @@
       <h2>用户列表</h2>
       <div id="users-loading" class="loading">加载用户数据中...</div>
       <div id="users-error" class="error-message" style="display: none;"></div>
+      <div id="users-success" class="success-message" style="display: none;"></div>
       <div id="users-container" style="display: none;">
         <table id="users-table">
           <thead>
@@ -190,6 +277,7 @@
               <th>角色</th>
               <th>创建时间</th>
               <th>最后登录</th>
+              <th>操作</th>
             </tr>
           </thead>
           <tbody id="users-tbody">
@@ -224,7 +312,39 @@
     </div>
   </div>
 
+  <!-- 修改余额模态框 -->
+  <div id="edit-balance-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>修改用户余额</h3>
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>用户名:</label>
+          <input type="text" id="modal-username" readonly>
+        </div>
+        <div class="form-group">
+          <label>当前余额:</label>
+          <input type="text" id="modal-current-balance" readonly>
+        </div>
+        <div class="form-group">
+          <label>新余额:</label>
+          <input type="number" id="modal-new-balance" min="0" step="100">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal()">取消</button>
+        <button class="btn btn-save" onclick="saveBalance()">保存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // 全局变量
+    let currentUsers = [];
+    let editingUserId = null;
+
     // 页面加载时检查登录状态并加载数据
     window.addEventListener('load', async () => {
       try {
@@ -315,6 +435,9 @@
           throw new Error('用户数据格式错误');
         }
         
+        // 保存用户数据到全局变量
+        currentUsers = data.users;
+        
         // 清空表格
         const tbody = document.getElementById('users-tbody');
         tbody.innerHTML = '';
@@ -333,6 +456,9 @@
             <td>${user.is_admin ? '管理员' : '普通用户'}</td>
             <td>${createdAt}</td>
             <td>${lastLogin}</td>
+            <td>
+              <button class="btn btn-edit" onclick="openEditBalanceModal('${user._id}')">修改余额</button>
+            </td>
           `;
           
           tbody.appendChild(tr);
@@ -411,6 +537,82 @@
       }
     }
 
+    // 打开修改余额模态框
+    function openEditBalanceModal(userId) {
+      // 查找用户
+      const user = currentUsers.find(u => u._id === userId);
+      if (!user) {
+        alert('找不到用户信息');
+        return;
+      }
+      
+      // 设置模态框数据
+      document.getElementById('modal-username').value = user.username;
+      document.getElementById('modal-current-balance').value = user.balance;
+      document.getElementById('modal-new-balance').value = user.balance;
+      
+      // 保存当前编辑的用户ID
+      editingUserId = userId;
+      
+      // 显示模态框
+      document.getElementById('edit-balance-modal').style.display = 'block';
+    }
+
+    // 关闭模态框
+    function closeModal() {
+      document.getElementById('edit-balance-modal').style.display = 'none';
+      editingUserId = null;
+    }
+
+    // 保存余额修改
+    async function saveBalance() {
+      try {
+        const newBalance = parseInt(document.getElementById('modal-new-balance').value);
+        
+        // 验证输入
+        if (isNaN(newBalance) || newBalance < 0) {
+          alert('请输入有效的余额');
+          return;
+        }
+        
+        // 发送请求
+        const response = await fetch('/api/update_balance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: editingUserId,
+            balance: newBalance
+          })
+        });
+        
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || '修改余额失败');
+        }
+        
+        // 关闭模态框
+        closeModal();
+        
+        // 显示成功消息
+        const successMsg = document.getElementById('users-success');
+        successMsg.textContent = '余额修改成功';
+        successMsg.style.display = 'block';
+        
+        // 3秒后隐藏成功消息
+        setTimeout(() => {
+          successMsg.style.display = 'none';
+        }, 3000);
+        
+        // 重新加载用户列表
+        loadUsers();
+      } catch (error) {
+        console.error('修改余额失败:', error);
+        alert('修改余额失败: ' + error.message);
+      }
+    }
+
     // 登出
     async function logout() {
       try {
@@ -419,6 +621,14 @@
       } catch (error) {
         console.error('登出失败:', error);
         alert('登出失败，请重试');
+      }
+    }
+
+    // 点击模态框外部关闭模态框
+    window.onclick = function(event) {
+      const modal = document.getElementById('edit-balance-modal');
+      if (event.target === modal) {
+        closeModal();
       }
     }
   </script>
