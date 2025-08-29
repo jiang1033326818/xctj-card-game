@@ -15,7 +15,8 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden; /* 只禁止水平滚动 */
+            overflow-y: auto;   /* 允许垂直滚动 */
         }
 
         .header {
@@ -610,7 +611,89 @@
             .container {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto auto auto;
+                gap: 20px;
+                padding: 20px 10px;
+                min-height: auto;
+            }
+            
+            body {
                 overflow-y: auto;
+                min-height: auto;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .game-control-area, .bet-area, .history-area {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .card-display {
+                width: 140px;
+                height: 180px;
+                font-size: 3em;
+            }
+            
+            .bet-options {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .chip-selection {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px 5px;
+                gap: 15px;
+            }
+            
+            .header {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            
+            .user-info {
+                font-size: 0.8em;
+            }
+            
+            .card-display {
+                width: 120px;
+                height: 160px;
+                font-size: 2.5em;
+            }
+            
+            .title {
+                font-size: 1.5em;
+            }
+            
+            .section-title {
+                font-size: 1.2em;
+            }
+            
+            .bet-options {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .chip-selection {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+            
+            .chip-btn {
+                padding: 8px;
+                font-size: 0.8em;
+            }
+            
+            .play-btn {
+                padding: 12px 20px;
+                font-size: 1em;
             }
         }
     </style>
