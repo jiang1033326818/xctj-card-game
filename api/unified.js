@@ -152,7 +152,9 @@ async function getUserFromRequest(req) {
     const decoded = jwt.verify(token, JWT_SECRET);
     const username = decoded.username;
 
-    const user = await db.users.findOne({ username });
+    // 确保db已初始化
+    const database = db || (await connectDB());
+    const user = await database.users.findOne({ username });
     return user;
   } catch (error) {
     console.error("获取用户信息错误:", error);
@@ -163,7 +165,9 @@ async function getUserFromRequest(req) {
 // 用户登录
 async function loginUser(username, password) {
   try {
-    const user = await db.users.findOne({ username });
+    // 确保db已初始化
+    const database = db || (await connectDB());
+    const user = await database.users.findOne({ username });
     if (!user) {
       return { success: false, error: "用户名或密码错误" };
     }
@@ -191,13 +195,15 @@ async function loginUser(username, password) {
 // 注册用户
 async function registerUser(username, password) {
   try {
-    const existingUser = await db.users.findOne({ username });
+    // 确保db已初始化
+    const database = db || (await connectDB());
+    const existingUser = await database.users.findOne({ username });
     if (existingUser) {
       return { success: false, error: "用户名已存在" };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.users.insertOne({
+    await database.users.insertOne({
       username,
       password: hashedPassword,
       is_admin: false,
@@ -278,13 +284,15 @@ async function handleGame(req, res) {
     }
 
     const new_balance = user.balance - totalAmount + win_amount;
-    await db.users.updateOne(
+    // 确保db已初始化
+    const database = db || (await connectDB());
+    await database.users.updateOne(
       { username: user.username },
       { $set: { balance: new_balance } }
     );
 
     // 记录游戏结果
-    await db.game_records.insertOne({
+    await database.game_records.insertOne({
       username: user.username,
       bet_suit: JSON.stringify(bets),
       result_suit,
@@ -405,13 +413,15 @@ async function handleAnimalsGame(req, res) {
     net_win = win_amount - totalAmount; // 赢得金额 - 总投注 = 净赢
 
     const new_balance = user.balance + net_win;
-    await db.users.updateOne(
+    // 确保db已初始化
+    const database = db || (await connectDB());
+    await database.users.updateOne(
       { username: user.username },
       { $set: { balance: new_balance } }
     );
 
     // 记录游戏结果
-    await db.game_records.insertOne({
+    await database.game_records.insertOne({
       username: user.username,
       game_type: "animals",
       bet_data: JSON.stringify(bets),
@@ -517,10 +527,12 @@ module.exports = async (req, res) => {
       }
 
       let records;
+      // 确保db已初始化
+      const database = db || (await connectDB());
       if (user.is_admin) {
-        records = await db.game_records.find({});
+        records = await database.game_records.find({});
       } else {
-        records = await db.game_records.find({ username: user.username });
+        records = await database.game_records.find({ username: user.username });
       }
 
       res.setHeader("Content-Type", "application/json");
@@ -541,7 +553,9 @@ module.exports = async (req, res) => {
         return res.end(JSON.stringify({ error: "未授权" }));
       }
 
-      const users = await db.users.find(
+      // 确保db已初始化
+      const database = db || (await connectDB());
+      const users = await database.users.find(
         { is_admin: false },
         { projection: { password: 0 } }
       );
@@ -560,7 +574,12 @@ module.exports = async (req, res) => {
         return res.end(JSON.stringify({ error: "未授权" }));
       }
 
-      const users = await db.users.find({}, { projection: { password: 0 } });
+      // 确保db已初始化
+      const database = db || (await connectDB());
+      const users = await database.users.find(
+        {},
+        { projection: { password: 0 } }
+      );
       res.setHeader("Content-Type", "application/json");
       return res.end(JSON.stringify({ success: true, users }));
     }
