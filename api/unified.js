@@ -425,7 +425,6 @@ async function handleGame(req, res) {
         win_amount = bets[result_suit] * 3.5; // 其他花色3.5倍赔率
       }
     }
-    }
 
     // 更新余额：扣除所有押注，加上赢取金额
     const new_balance = user.balance - totalAmount + win_amount;
