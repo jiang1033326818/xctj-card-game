@@ -622,21 +622,6 @@
             欢迎，<span id="username">加载中...</span> | 余额: <span id="balance" class="balance">0</span>
         </div>
 
-        <!-- 押注区域 -->
-        <div class="bet-area">
-            <h2 class="section-title">押注选择</h2>
-            
-            <!-- 押注选项 -->
-            <div class="bet-options">
-                <div class="bet-option" data-suit="hearts" onclick="selectSuit('hearts')">
-                    <div class="bet-content">
-                        <span class="bet-symbol" style="color: #dc3545;">♥</span>
-                        <span class="bet-name">红桃</span>
-                        <span class="bet-payout">(1:3.5)</span>
-                        <span class="bet-amount" id="heartsAmount">0</span>
-        </div>
-    </div>
-
     <script>
         // 变量声明
         let currentUser = null;
@@ -737,7 +722,7 @@
                 playerItem.className = 'player-item';
                 
                 playerItem.innerHTML = `
-                    <div class="player-rank ${rankClasses[index]}">${rankIcons[index]}</div>
+                    <div class="player-rank ${rankClasses[index]}\">${rankIcons[index]}</div>
                     <div class="player-info">
                         <div class="player-name">${player.username}</div>
                         <div class="player-balance">${player.balance}</div>
@@ -792,7 +777,7 @@
             
             // 添加筹码飞行动画
             const selectedChipBtn = document.querySelector('.chip-btn.selected');
-            const targetElement = document.querySelector(`[data-suit="${suit}"]`);
+            const targetElement = document.querySelector(`[data-suit=\"${suit}\"]`);
             createChipAnimation(selectedChipBtn, selectedChipAmount, targetElement);
         }
 
@@ -894,15 +879,6 @@
             
             updateTotalBet();
         }
-
-        // 开始游戏
-        document.getElementById('play-btn').addEventListener('click', playGame);
-
-        // 退出登录
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            localStorage.removeItem('token');
-            window.location.href = 'login.html';
-        });
 
         // 游戏逻辑
         async function playGame() {
@@ -1156,7 +1132,55 @@
                 updateHistoryDisplay();
             }
         }
+
+        // 添加事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 开始游戏按钮
+            document.getElementById('play-btn').addEventListener('click', playGame);
+            
+            // 退出登录按钮
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+            });
+        });
     </script>
+        <button class="logout-btn" id="logout-btn">退出登录</button>
+    </div>
+
+    <div class="container">
+        <!-- 游戏控制区域 -->
+        <div class="game-control-area">
+            <h1 class="title">喜从天降</h1>
+            
+            <div class="card-display" id="card-display">
+                <div class="card-front">
+                    <span id="card-symbol">?</span>
+                </div>
+                <div class="card-back">
+                    <span>?</span>
+                </div>
+            </div>
+            
+            <div class="status-message" id="status-message">选择押注金额，点击开始游戏</div>
+            
+            <button class="play-btn" id="play-btn" disabled>开始游戏</button>
+        </div>
+
+        <!-- 押注区域 -->
+        <div class="bet-area">
+            <h2 class="section-title">押注选择</h2>
+            
+            <!-- 押注选项 -->
+            <div class="bet-options">
+                <div class="bet-option" data-suit="hearts" onclick="selectSuit('hearts')">
+                    <div class="bet-content">
+                        <span class="bet-symbol" style="color: #dc3545;">♥</span>
+                        <span class="bet-name">红桃</span>
+                        <span class="bet-payout">(1:3.5)</span>
+                        <span class="bet-amount" id="heartsAmount">0</span>
+                    </div>
+                </div>
                 
                 <div class="bet-option" data-suit="diamonds" onclick="selectSuit('diamonds')">
                     <div class="bet-content">
@@ -1246,24 +1270,4 @@
                 </div>
             </div>
         </div>
-        <button class="logout-btn" id="logout-btn">退出登录</button>
     </div>
-
-    <div class="container">
-        <!-- 游戏控制区域 -->
-        <div class="game-control-area">
-            <h1 class="title">喜从天降</h1>
-            
-            <div class="card-display" id="card-display">
-                <div class="card-front">
-                    <span id="card-symbol">?</span>
-                </div>
-                <div class="card-back">
-                    <span>?</span>
-                </div>
-            </div>
-            
-            <div class="status-message" id="status-message">选择押注金额，点击开始游戏</div>
-            
-            <button class="play-btn" id="play-btn" disabled>开始游戏</button>
-        </div>
