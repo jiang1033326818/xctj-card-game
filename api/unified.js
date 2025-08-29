@@ -165,22 +165,35 @@ async function getUserFromRequest(req) {
 // 用户登录
 async function loginUser(username, password) {
   try {
+    console.log("loginUser函数开始执行", { username });
+
     // 确保db已初始化
+    console.log("检查数据库连接:", { db: db ? "exists" : "null" });
     const database = db || (await connectDB());
+    console.log("数据库连接已准备好");
+
+    console.log("查找用户:", username);
     const user = await database.users.findOne({ username });
+    console.log("用户查找结果:", user ? "找到用户" : "未找到用户");
+
     if (!user) {
       return { success: false, error: "用户名或密码错误" };
     }
 
+    console.log("验证密码");
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log("密码验证结果:", isPasswordValid);
+
     if (!isPasswordValid) {
       return { success: false, error: "用户名或密码错误" };
     }
 
+    console.log("生成JWT token");
     const token = jwt.sign({ username: user.username }, JWT_SECRET, {
       expiresIn: "24h",
     });
 
+    console.log("登录成功");
     return {
       success: true,
       token,
@@ -470,13 +483,20 @@ module.exports = async (req, res) => {
   try {
     // 登录
     if (path === "/api/login" && req.method === "POST") {
+      console.log("登录请求开始");
       const { username, password } = req.body;
+      console.log("请求参数:", { username, password: password ? "***" : "empty" });
+
       if (!username || !password) {
         res.statusCode = 400;
         res.setHeader("Content-Type", "application/json");
         return res.end(JSON.stringify({ error: "用户名和密码不能为空" }));
       }
+
+      console.log("准备调用loginUser函数");
       const result = await loginUser(username, password);
+      console.log("登录结果:", result);
+
       res.setHeader("Content-Type", "application/json");
       return res.end(JSON.stringify(result));
     }
