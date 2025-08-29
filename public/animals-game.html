@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飞禽走兽 - 动物王国</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #2c3e50 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .user-info {
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 20px;
+            height: calc(100vh - 80px);
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .left-panel, .right-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .main-game-area {
+            background: rgba(255,255,255,0.95);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .game-title {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .game-wheel {
+            width: 400px;
+            height: 400px;
+            position: relative;
+            margin: 20px auto;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            border: 3px solid #333;
+            border-radius: 15px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 2px;
+            padding: 10px;
+        }
+
+
+
+        .wheel-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ffd700, #ffaa00);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 25px solid #ff0000;
+            z-index: 20;
+            filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.8));
+        }
+
+        .animal-block {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+            position: relative;
+            font-size: 0.7em;
+        }
+
+        .animal-block.highlight {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(1.1);
+        }
+
+        .animal-block.winning {
+            border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            background: rgba(0, 255, 0, 0.3);
+            transform: scale(1.2);
+        }
+
+        .animal-icon {
+            font-size: 1.2em;
+            margin-bottom: 1px;
+        }
+
+        .animal-multiplier {
+            font-size: 0.5em;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* 7x8网格布局 - 按照要求重新定义 */
+        /* 第一行：狮子 狮子 狮子 金鲨 熊猫 熊猫 熊猫 */
+        .lion-1 { grid-column: 1; grid-row: 1; background: linear-gradient(45deg, #e74c3c, #c0392b); }
+        .lion-2 { grid-column: 2; grid-row: 1; background: linear-gradient(45deg, #e74c3c, #c0392b); }
+        .lion-3 { grid-column: 3; grid-row: 1; background: linear-gradient(45deg, #e74c3c, #c0392b); }
+        .gold-shark-1 { grid-column: 4; grid-row: 1; background: linear-gradient(45deg, #ffd700, #ffaa00); }
+        .panda-1 { grid-column: 5; grid-row: 1; background: linear-gradient(45deg, #f39c12, #e67e22); }
+        .panda-2 { grid-column: 6; grid-row: 1; background: linear-gradient(45deg, #f39c12, #e67e22); }
+        .panda-3 { grid-column: 7; grid-row: 1; background: linear-gradient(45deg, #f39c12, #e67e22); }
+
+        /* 第二行：孔雀 空 空 空 空 空 老鹰 */
+        .peacock-1 { grid-column: 1; grid-row: 2; background: linear-gradient(45deg, #1abc9c, #16a085); }
+        .eagle-1 { grid-column: 7; grid-row: 2; background: linear-gradient(45deg, #2ecc71, #27ae60); }
+
+        /* 第三行：孔雀 空 空 空 空 空 老鹰 */
+        .peacock-2 { grid-column: 1; grid-row: 3; background: linear-gradient(45deg, #1abc9c, #16a085); }
+        .eagle-2 { grid-column: 7; grid-row: 3; background: linear-gradient(45deg, #2ecc71, #27ae60); }
+
+        /* 第四行：孔雀 空 空 空 空 空 老鹰 */
+        .peacock-3 { grid-column: 1; grid-row: 4; background: linear-gradient(45deg, #1abc9c, #16a085); }
+        .eagle-3 { grid-column: 7; grid-row: 4; background: linear-gradient(45deg, #2ecc71, #27ae60); }
+
+        /* 第五行：鸽子 空 空 空 空 空 燕子 */
+        .pigeon-1 { grid-column: 1; grid-row: 5; background: linear-gradient(45deg, #f1c40f, #f39c12); }
+        .swallow-1 { grid-column: 7; grid-row: 5; background: linear-gradient(45deg, #8e44ad, #9b59b6); }
+
+        /* 第六行：鸽子 空 空 空 空 空 燕子 */
+        .pigeon-2 { grid-column: 1; grid-row: 6; background: linear-gradient(45deg, #f1c40f, #f39c12); }
+        .swallow-2 { grid-column: 7; grid-row: 6; background: linear-gradient(45deg, #8e44ad, #9b59b6); }
+
+        /* 第七行：鸽子 空 空 空 空 空 燕子 */
+        .pigeon-3 { grid-column: 1; grid-row: 7; background: linear-gradient(45deg, #f1c40f, #f39c12); }
+        .swallow-3 { grid-column: 7; grid-row: 7; background: linear-gradient(45deg, #8e44ad, #9b59b6); }
+
+        /* 第八行：猴子 猴子 猴子 银鲨 兔子 兔子 兔子 */
+        .monkey-1 { grid-column: 1; grid-row: 8; background: linear-gradient(45deg, #3498db, #2980b9); }
+        .monkey-2 { grid-column: 2; grid-row: 8; background: linear-gradient(45deg, #3498db, #2980b9); }
+        .monkey-3 { grid-column: 3; grid-row: 8; background: linear-gradient(45deg, #3498db, #2980b9); }
+        .silver-shark-1 { grid-column: 4; grid-row: 8; background: linear-gradient(45deg, #bdc3c7, #95a5a6); }
+        .rabbit-1 { grid-column: 5; grid-row: 8; background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+        .rabbit-2 { grid-column: 6; grid-row: 8; background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+        .rabbit-3 { grid-column: 7; grid-row: 8; background: linear-gradient(45deg, #9b59b6, #8e44ad); }
+
+        .bet-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .bet-option {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 8px 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .bet-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-color: #3498db;
+        }
+
+        .bet-option .animal-emoji {
+            font-size: 1.4em;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .bet-option .animal-name {
+            font-size: 0.7em;
+            font-weight: bold;
+            margin-bottom: 1px;
+        }
+
+        .bet-option .multiplier {
+            font-size: 0.7em;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+
+
+        .bet-total {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6em;
+            font-weight: bold;
+        }
+
+        .quick-bet-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .quick-bet-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.3s;
+        }
+
+        .quick-bet-btn.selected {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+            transform: scale(1.1);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .game-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .spin-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .spin-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .history-item {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 6px;
+            font-size: 0.8em;
+            border-left: 3px solid #3498db;
+        }
+
+        .history-item.win {
+            border-left-color: #2ecc71;
+            background: linear-gradient(145deg, #e8f5e8, #d4edda);
+        }
+
+        .history-item.lose {
+            border-left-color: #e74c3c;
+            background: linear-gradient(145deg, #fce8e8, #f8d7da);
+        }
+
+        .result-announcement {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            font-size: 1.3em;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .ranking-area {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .ranking-title {
+            font-size: 1.1em;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .player-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+
+        .player-item:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .player-rank {
+            margin-right: 8px;
+            font-size: 1.2em;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .rank-1 {
+            background: linear-gradient(145deg, #f1c40f, #f39c12);
+            color: white;
+        }
+
+        .rank-2 {
+            background: linear-gradient(145deg, #bdc3c7, #95a5a6);
+            color: white;
+        }
+
+        .rank-3 {
+            background: linear-gradient(145deg, #d35400, #e67e22);
+            color: white;
+        }
+
+        .player-info {
+            flex: 1;
+        }
+
+        .player-name {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 0.8em;
+        }
+
+        .player-balance {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 0.7em;
+        }
+        .history-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px 0;
+        }
+
+        .page-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.7em;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover {
+            background: linear-gradient(135deg, #2980b9, #1c5a7b);
+            transform: translateY(-1px);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-info {
+            font-size: 0.7em;
+            color: #666;
+            font-weight: 500;
+        }
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+            
+            .game-wheel {
+                width: 280px;
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="color: white; font-size: 1.5em; font-weight: bold;">🦅🐼 飞禽走兽</div>
+        <div class="user-info">
+            <span id="username">加载中...</span>
+            <span id="balance">余额: 加载中...</span>
+            <button class="nav-btn" onclick="goHome()">🏠 游戏大厅</button>
+            <button class="nav-btn" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 左侧面板 -->
+        <div class="left-panel">
+            <div class="section-title">🎯 押注选项</div>
+            <div class="quick-bet-buttons">
+                <button class="quick-bet-btn" onclick="quickBet(1)">1</button>
+                <button class="quick-bet-btn" onclick="quickBet(10)">10</button>
+                <button class="quick-bet-btn" onclick="quickBet(50)">50</button>
+                <button class="quick-bet-btn" onclick="quickBet(100)">100</button>
+                <button class="quick-bet-btn" onclick="quickBet(500)">500</button>
+            </div>
+
+            <div class="bet-options">
+                <div class="bet-option" data-animal="lion" onclick="selectAnimal('lion')">
+                    <span class="animal-emoji">🦁</span>
+                    <div class="animal-name">狮子</div>
+                    <div class="multiplier">×12</div>
+                </div>
+                
+                <div class="bet-option" data-animal="panda" onclick="selectAnimal('panda')">
+                    <span class="animal-emoji">🐼</span>
+                    <div class="animal-name">熊猫</div>
+                    <div class="multiplier">×8</div>
+                </div>
+                
+                <div class="bet-option" data-animal="eagle" onclick="selectAnimal('eagle')">
+                    <span class="animal-emoji">🦅</span>
+                    <div class="animal-name">老鹰</div>
+                    <div class="multiplier">×15</div>
+                </div>
+                
+                <div class="bet-option" data-animal="monkey" onclick="selectAnimal('monkey')">
+                    <span class="animal-emoji">🐵</span>
+                    <div class="animal-name">猴子</div>
+                    <div class="multiplier">×6</div>
+                </div>
+                
+                <div class="bet-option" data-animal="rabbit" onclick="selectAnimal('rabbit')">
+                    <span class="animal-emoji">🐰</span>
+                    <div class="animal-name">兔子</div>
+                    <div class="multiplier">×4</div>
+                </div>
+                
+                <div class="bet-option" data-animal="peacock" onclick="selectAnimal('peacock')">
+                    <span class="animal-emoji">🦚</span>
+                    <div class="animal-name">孔雀</div>
+                    <div class="multiplier">×10</div>
+                </div>
+                
+                <div class="bet-option" data-animal="pigeon" onclick="selectAnimal('pigeon')">
+                    <span class="animal-emoji">🕊️</span>
+                    <div class="animal-name">鸽子</div>
+                    <div class="multiplier">×3</div>
+                </div>
+                
+                <div class="bet-option" data-animal="swallow" onclick="selectAnimal('swallow')">
+                    <span class="animal-emoji">🐦</span>
+                    <div class="animal-name">燕子</div>
+                    <div class="multiplier">×5</div>
+                </div>
+                
+                <div class="bet-option" data-animal="gold_shark" onclick="selectAnimal('gold_shark')">
+                    <span class="animal-emoji">🏆🦈</span>
+                    <div class="animal-name">金鲨</div>
+                    <div class="multiplier">×100</div>
+                </div>
+                
+                <div class="bet-option" data-animal="silver_shark" onclick="selectAnimal('silver_shark')">
+                    <span class="animal-emoji">🥈🦈</span>
+                    <div class="animal-name">银鲨</div>
+                    <div class="multiplier">×24</div>
+                </div>
+                
+                <div class="bet-option" data-animal="birds" onclick="selectAnimal('birds')">
+                    <span class="animal-emoji">🦅🐦</span>
+                    <div class="animal-name">飞禽</div>
+                    <div class="multiplier">×2</div>
+                </div>
+                
+                <div class="bet-option" data-animal="beasts" onclick="selectAnimal('beasts')">
+                    <span class="animal-emoji">🦁🐵</span>
+                    <div class="animal-name">走兽</div>
+                    <div class="multiplier">×2</div>
+                </div>
+            </div>
+
+            <div class="control-buttons">
+                <button class="game-btn spin-btn" id="spinBtn" onclick="spinWheel()">开始转动</button>
+                <button class="game-btn clear-btn" onclick="clearAllBets()">清空押注</button>
+            </div>
+        </div>
+
+        <!-- 中间游戏区域 -->
+        <div class="main-game-area">
+            <!-- 排行榜 -->
+            <div class="ranking-area" style="margin-bottom: 20px; padding: 10px; border-radius: 15px;">
+                <div class="ranking-title">🏆 赌王排行榜</div>
+                <div class="player-list" id="topPlayersList" style="flex-direction: row; justify-content: space-around;">
+                    <div class="player-item" style="flex-direction: column; text-align: center; margin: 0; padding: 5px;">
+                        <div class="player-rank rank-1">🏆</div>
+                        <div class="player-info">
+                            <div class="player-name">加载中...</div>
+                            <div class="player-balance">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-wheel" id="gameWheel">
+                <!-- 第一行：狮子 狮子 狮子 金鲨 熊猫 熊猫 熊猫 -->
+                <div class="animal-block lion-1" data-animal="lion"><div class="animal-icon">🦁</div><div class="animal-multiplier">×12</div></div>
+                <div class="animal-block lion-2" data-animal="lion"><div class="animal-icon">🦁</div><div class="animal-multiplier">×12</div></div>
+                <div class="animal-block lion-3" data-animal="lion"><div class="animal-icon">🦁</div><div class="animal-multiplier">×12</div></div>
+                <div class="animal-block gold-shark-1" data-animal="gold_shark"><div class="animal-icon">🏆🦈</div><div class="animal-multiplier">×100</div></div>
+                <div class="animal-block panda-1" data-animal="panda"><div class="animal-icon">🐼</div><div class="animal-multiplier">×8</div></div>
+                <div class="animal-block panda-2" data-animal="panda"><div class="animal-icon">🐼</div><div class="animal-multiplier">×8</div></div>
+                <div class="animal-block panda-3" data-animal="panda"><div class="animal-icon">🐼</div><div class="animal-multiplier">×8</div></div>
+                
+                <!-- 第二行：孔雀 空 空 空 空 空 老鹰 -->
+                <div class="animal-block peacock-1" data-animal="peacock"><div class="animal-icon">🦚</div><div class="animal-multiplier">×10</div></div>
+                <div class="animal-block eagle-1" data-animal="eagle"><div class="animal-icon">🦅</div><div class="animal-multiplier">×15</div></div>
+                
+                <!-- 第三行：孔雀 空 空 空 空 空 老鹰 -->
+                <div class="animal-block peacock-2" data-animal="peacock"><div class="animal-icon">🦚</div><div class="animal-multiplier">×10</div></div>
+                <div class="animal-block eagle-2" data-animal="eagle"><div class="animal-icon">🦅</div><div class="animal-multiplier">×15</div></div>
+                
+                <!-- 第四行：孔雀 空 空 空 空 空 老鹰 -->
+                <div class="animal-block peacock-3" data-animal="peacock"><div class="animal-icon">🦚</div><div class="animal-multiplier">×10</div></div>
+                <div class="animal-block eagle-3" data-animal="eagle"><div class="animal-icon">🦅</div><div class="animal-multiplier">×15</div></div>
+                
+                <!-- 第五行：鸽子 空 空 空 空 空 燕子 -->
+                <div class="animal-block pigeon-1" data-animal="pigeon"><div class="animal-icon">🕊️</div><div class="animal-multiplier">×3</div></div>
+                <div class="animal-block swallow-1" data-animal="swallow"><div class="animal-icon">🐦</div><div class="animal-multiplier">×5</div></div>
+                
+                <!-- 第六行：鸽子 空 空 空 空 空 燕子 -->
+                <div class="animal-block pigeon-2" data-animal="pigeon"><div class="animal-icon">🕊️</div><div class="animal-multiplier">×3</div></div>
+                <div class="animal-block swallow-2" data-animal="swallow"><div class="animal-icon">🐦</div><div class="animal-multiplier">×5</div></div>
+                
+                <!-- 第七行：鸽子 空 空 空 空 空 燕子 -->
+                <div class="animal-block pigeon-3" data-animal="pigeon"><div class="animal-icon">🕊️</div><div class="animal-multiplier">×3</div></div>
+                <div class="animal-block swallow-3" data-animal="swallow"><div class="animal-icon">🐦</div><div class="animal-multiplier">×5</div></div>
+                
+                <!-- 第八行：猴子 猴子 猴子 银鲨 兔子 兔子 兔子 -->
+                <div class="animal-block monkey-1" data-animal="monkey"><div class="animal-icon">🐵</div><div class="animal-multiplier">×6</div></div>
+                <div class="animal-block monkey-2" data-animal="monkey"><div class="animal-icon">🐵</div><div class="animal-multiplier">×6</div></div>
+                <div class="animal-block monkey-3" data-animal="monkey"><div class="animal-icon">🐵</div><div class="animal-multiplier">×6</div></div>
+                <div class="animal-block silver-shark-1" data-animal="silver_shark"><div class="animal-icon">🥈🦈</div><div class="animal-multiplier">×24</div></div>
+                <div class="animal-block rabbit-1" data-animal="rabbit"><div class="animal-icon">🐰</div><div class="animal-multiplier">×4</div></div>
+                <div class="animal-block rabbit-2" data-animal="rabbit"><div class="animal-icon">🐰</div><div class="animal-multiplier">×4</div></div>
+                <div class="animal-block rabbit-3" data-animal="rabbit"><div class="animal-icon">🐰</div><div class="animal-multiplier">×4</div></div>
+            </div>
+
+            <div class="result-announcement" id="resultAnnouncement">
+                <div id="resultText"></div>
+                <div id="winAmount"></div>
+            </div>
+        </div>
+
+        <!-- 右侧面板 -->
+        <div class="right-panel">
+            <div class="section-title">📋 游戏记录</div>
+            <div id="gameHistory">
+                <div class="history-item">
+                    欢迎来到飞禽走兽游戏！
+                </div>
+            </div>
+            <div class="history-pagination">
+                <button class="page-btn" id="prevPageBtn" onclick="changePage(-1)" disabled>上一页</button>
+                <span class="page-info">
+                    第 <span id="currentPage">1</span> 页，共 <span id="totalPages">1</span> 页
+                </span>
+                <button class="page-btn" id="nextPageBtn" onclick="changePage(1)">下一页</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameData = {
+            currentBets: {},
+            isSpinning: false,
+            balance: 0,
+            selectedChip: 1, // 默认选中1元筹码
+            topPlayers: [], // 排行榜数据
+            gameHistory: [], // 游戏记录
+            currentPage: 1,
+            itemsPerPage: 5 // 每页显示5条记录
+        };
+
+        const animals = {
+            lion: { name: '狮子', emoji: '🦁', multiplier: 12, sector: 1 },
+            panda: { name: '熊猫', emoji: '🐼', multiplier: 8, sector: 2 },
+            eagle: { name: '老鹰', emoji: '🦅', multiplier: 15, sector: 3 },
+            monkey: { name: '猴子', emoji: '🐵', multiplier: 6, sector: 4 },
+            rabbit: { name: '兔子', emoji: '🐰', multiplier: 4, sector: 5 },
+            peacock: { name: '孔雀', emoji: '🦚', multiplier: 10, sector: 6 },
+            pigeon: { name: '鸽子', emoji: '🕊️', multiplier: 3, sector: 7 },
+            swallow: { name: '燕子', emoji: '🐦', multiplier: 5, sector: 8 },
+            gold_shark: { name: '金鲨', emoji: '🏆🦈', multiplier: 100, sector: 9 },
+            silver_shark: { name: '银鲨', emoji: '🥈🦈', multiplier: 24, sector: 10 },
+            birds: { name: '飞禽', emoji: '🦅🐦', multiplier: 2, sector: 11 },
+            beasts: { name: '走兽', emoji: '🦁🐵', multiplier: 2, sector: 12 }
+        };
+
+        window.addEventListener('load', async () => {
+            await loadUserInfo();
+            await loadTopPlayers();
+            updateBetDisplay();
+            selectChip(1); // 默认选中1元筹码
+        });
+
+        async function loadTopPlayers() {
+            try {
+                const response = await fetch('/api/top_players', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    gameData.topPlayers = data.users || [];
+                    updateTopPlayersDisplay();
+                }
+            } catch (error) {
+                console.error('获取排行榜失败:', error);
+            }
+        }
+
+        function updateTopPlayersDisplay() {
+            const topPlayersList = document.getElementById('topPlayersList');
+            topPlayersList.innerHTML = '';
+            
+            const rankIcons = ['🏆', '🥈', '🥉'];
+            const rankClasses = ['rank-1', 'rank-2', 'rank-3'];
+            
+            if (gameData.topPlayers.length === 0) {
+                topPlayersList.innerHTML = '<div style="text-align: center; color: #666;">暂无数据</div>';
+                return;
+            }
+            
+            gameData.topPlayers.forEach((player, index) => {
+                const playerItem = document.createElement('div');
+                playerItem.className = 'player-item';
+                playerItem.style.cssText = 'flex-direction: column; text-align: center; margin: 0; padding: 5px;';
+                
+                playerItem.innerHTML = `
+                    <div class="player-rank ${rankClasses[index]}">${rankIcons[index]}</div>
+                    <div class="player-info">
+                        <div class="player-name">${player.username}</div>
+                        <div class="player-balance">${player.balance}</div>
+                    </div>
+                `;
+                
+                topPlayersList.appendChild(playerItem);
+            });
+        }
+
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/user', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('username').textContent = `欢迎，${data.username}`;
+                    document.getElementById('balance').textContent = `余额: ${data.balance}`;
+                    gameData.balance = data.balance;
+                } else {
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        function selectAnimal(animal) {
+            if (gameData.isSpinning) return;
+            
+            // 直接增加选中筹码数到该动物
+            const currentAmount = gameData.currentBets[animal] || 0;
+            gameData.currentBets[animal] = currentAmount + gameData.selectedChip;
+            updateBetDisplay();
+        }
+
+        function selectChip(amount) {
+            gameData.selectedChip = amount;
+            
+            // 更新筹码按钮高亮状态
+            document.querySelectorAll('.quick-bet-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // 高亮当前选中的筹码
+            document.querySelectorAll('.quick-bet-btn').forEach(btn => {
+                if (parseInt(btn.textContent) === amount) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+
+        function quickBet(amount) {
+            selectChip(amount);
+        }
+
+        function updateBets() {
+            // 无需操作，因为gameData.currentBets已经在selectAnimal中直接更新
+            updateBetDisplay();
+        }
+
+        function updateBetDisplay() {
+            Object.keys(animals).forEach(animal => {
+                const option = document.querySelector(`[data-animal="${animal}"]`);
+                const amount = gameData.currentBets[animal] || 0;
+                
+                let totalElement = option.querySelector('.bet-total');
+                if (amount > 0) {
+                    if (!totalElement) {
+                        totalElement = document.createElement('div');
+                        totalElement.className = 'bet-total';
+                        option.appendChild(totalElement);
+                    }
+                    totalElement.textContent = amount;
+                } else if (totalElement) {
+                    totalElement.remove();
+                }
+            });
+        }
+
+        async function spinWheel() {
+            if (gameData.isSpinning) return;
+            
+            updateBets();
+            const totalBet = Object.values(gameData.currentBets).reduce((sum, amount) => sum + amount, 0);
+            if (totalBet === 0) {
+                alert('请至少押注一个动物！');
+                return;
+            }
+            
+            if (totalBet > gameData.balance) {
+                alert('余额不足！');
+                return;
+            }
+
+            gameData.isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('spinBtn').textContent = '转动中...';
+
+            try {
+                const response = await fetch('/api/animals-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ bets: gameData.currentBets })
+                });
+
+                const result = await response.json();
+                
+                // 开始依次高亮动画
+                await startHighlightAnimation(result.result_animal);
+
+                setTimeout(() => {
+                    showResult(result);
+                    updateGameHistory(result);
+                    loadUserInfo();
+                    loadTopPlayers(); // 更新排行榜
+                    clearAllBets();
+                    
+                    gameData.isSpinning = false;
+                    document.getElementById('spinBtn').disabled = false;
+                    document.getElementById('spinBtn').textContent = '开始转动';
+                }, 1000);
+
+            } catch (error) {
+                console.error('游戏请求失败:', error);
+                gameData.isSpinning = false;
+                document.getElementById('spinBtn').disabled = false;
+                document.getElementById('spinBtn').textContent = '开始转动';
+                alert('游戏请求失败，请稍后重试！');
+            }
+        }
+
+        async function startHighlightAnimation(winningAnimal) {
+            // 获取所有动物块
+            const allBlocks = document.querySelectorAll('.animal-block');
+            const blockOrder = [
+                // 第一行：从左到右
+                'lion-1', 'lion-2', 'lion-3', 'gold-shark-1', 'panda-1', 'panda-2', 'panda-3',
+                // 右侧：从上到下
+                'eagle-1', 'eagle-2', 'eagle-3', 'swallow-1', 'swallow-2', 'swallow-3',
+                // 第八行：从右到左
+                'rabbit-3', 'rabbit-2', 'rabbit-1', 'silver-shark-1', 'monkey-3', 'monkey-2', 'monkey-1',
+                // 左侧：从下到上
+                'pigeon-3', 'pigeon-2', 'pigeon-1', 'peacock-3', 'peacock-2', 'peacock-1'
+            ];
+            
+            // 清除所有高亮
+            allBlocks.forEach(block => {
+                block.classList.remove('highlight', 'winning');
+            });
+            
+            // 多轮高亮动画
+            const totalRounds = 3; // 转3轮
+            const finalPosition = blockOrder.findIndex(className => {
+                const block = document.querySelector(`.${className}`);
+                return block && block.dataset.animal === winningAnimal;
+            });
+            
+            for (let round = 0; round < totalRounds; round++) {
+                for (let i = 0; i < blockOrder.length; i++) {
+                    const block = document.querySelector(`.${blockOrder[i]}`);
+                    if (block) {
+                        // 清除上一个高亮
+                        if (i > 0) {
+                            const prevBlock = document.querySelector(`.${blockOrder[i-1]}`);
+                            if (prevBlock) prevBlock.classList.remove('highlight');
+                        }
+                        
+                        // 高亮当前块
+                        block.classList.add('highlight');
+                        
+                        // 等待时间
+                        await new Promise(resolve => setTimeout(resolve, 80));
+                    }
+                }
+                
+                // 清除最后一个高亮
+                const lastBlock = document.querySelector(`.${blockOrder[blockOrder.length - 1]}`);
+                if (lastBlock) lastBlock.classList.remove('highlight');
+            }
+            
+            // 最终停在获胜位置
+            if (finalPosition !== -1) {
+                for (let i = 0; i <= finalPosition; i++) {
+                    const block = document.querySelector(`.${blockOrder[i]}`);
+                    if (block) {
+                        // 清除上一个高亮
+                        if (i > 0) {
+                            const prevBlock = document.querySelector(`.${blockOrder[i-1]}`);
+                            if (prevBlock) prevBlock.classList.remove('highlight');
+                        }
+                        
+                        if (i === finalPosition) {
+                            // 最终获胜位置
+                            block.classList.add('winning');
+                            // 高亮所有同种动物块
+                            document.querySelectorAll(`[data-animal="${winningAnimal}"]`).forEach(animalBlock => {
+                                animalBlock.classList.add('winning');
+                            });
+                        } else {
+                            block.classList.add('highlight');
+                        }
+                        
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                }
+            }
+            
+            // 3秒后清除所有高亮
+            setTimeout(() => {
+                allBlocks.forEach(block => {
+                    block.classList.remove('highlight', 'winning');
+                });
+            }, 3000);
+        }
+
+
+
+        function showResult(result) {
+            const announcement = document.getElementById('resultAnnouncement');
+            const resultText = document.getElementById('resultText');
+            const winAmount = document.getElementById('winAmount');
+            
+            const animal = animals[result.result_animal];
+            resultText.innerHTML = `🎉 ${animal.emoji} ${animal.name} 获胜！`;
+            
+            if (result.net_win > 0) {
+                winAmount.innerHTML = `🎊 恭喜您净赢 <span style="color: #2ecc71; font-size: 1.2em;">${result.net_win}</span> 金币！`;
+            } else if (result.net_win < 0) {
+                winAmount.innerHTML = `😔 很遗憾，您净输 <span style="color: #e74c3c; font-size: 1.2em;">${Math.abs(result.net_win)}</span> 金币`;
+            } else {
+                winAmount.innerHTML = `🤔 打平，没有输赢！`;
+            }
+            
+            announcement.style.display = 'block';
+            
+            setTimeout(() => {
+                announcement.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateGameHistory(result) {
+            const animal = animals[result.result_animal];
+            const isWin = result.net_win > 0;
+            
+            // 构建押注信息字符串，包括飞禽走兽选项
+            const betInfo = Object.keys(gameData.currentBets)
+                .filter(key => gameData.currentBets[key] > 0)
+                .map(key => {
+                    if (animals[key]) {
+                        return `${animals[key].name}:${gameData.currentBets[key]}`;
+                    } else {
+                        return `${key === 'birds' ? '飞禽' : (key === 'beasts' ? '走兽' : key)}:${gameData.currentBets[key]}`;
+                    }
+                })
+                .join(', ');
+            
+            const historyRecord = {
+                animal: animal,
+                betInfo: betInfo,
+                totalBet: result.total_bet,
+                netWin: result.net_win,
+                isWin: isWin,
+                timestamp: new Date().toLocaleTimeString()
+            };
+            
+            // 添加到历史记录数组开头
+            gameData.gameHistory.unshift(historyRecord);
+            
+            // 限制最多100条记录
+            if (gameData.gameHistory.length > 100) {
+                gameData.gameHistory = gameData.gameHistory.slice(0, 100);
+            }
+            
+            // 更新显示
+            displayHistoryPage();
+            updatePaginationControls();
+        }
+
+        function displayHistoryPage() {
+            const historyContainer = document.getElementById('gameHistory');
+            historyContainer.innerHTML = '<div class="history-item">欢迎来到飞禽走兽游戏！</div>';
+            
+            const startIndex = (gameData.currentPage - 1) * gameData.itemsPerPage;
+            const endIndex = startIndex + gameData.itemsPerPage;
+            const pageItems = gameData.gameHistory.slice(startIndex, endIndex);
+            
+            pageItems.forEach(record => {
+                const historyItem = document.createElement('div');
+                historyItem.className = `history-item ${record.isWin ? 'win' : (record.netWin < 0 ? 'lose' : 'draw')}`;
+                historyItem.innerHTML = `
+                    <div style="margin-bottom: 5px; font-weight: bold; color: #2c3e50;">
+                        中奖: ${record.animal.emoji} ${record.animal.name} <span style="font-size: 0.6em; color: #999;">${record.timestamp}</span>
+                    </div>
+                    <div style="font-size: 0.7em; color: #666; margin-bottom: 3px;">
+                        押注: ${record.betInfo}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.7em; color: #666;">总押注: ${record.totalBet}</span>
+                        <span style="color: ${record.isWin ? '#2ecc71' : (record.netWin < 0 ? '#e74c3c' : '#f39c12')}; font-weight: bold;">
+                            ${record.netWin > 0 ? '+' : ''}${record.netWin}
+                        </span>
+                    </div>
+                `;
+                
+                historyContainer.appendChild(historyItem);
+            });
+        }
+
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(gameData.gameHistory.length / gameData.itemsPerPage);
+            document.getElementById('currentPage').textContent = gameData.currentPage;
+            document.getElementById('totalPages').textContent = Math.max(1, totalPages);
+            
+            document.getElementById('prevPageBtn').disabled = gameData.currentPage <= 1;
+            document.getElementById('nextPageBtn').disabled = gameData.currentPage >= totalPages || totalPages === 0;
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(gameData.gameHistory.length / gameData.itemsPerPage);
+            const newPage = gameData.currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                gameData.currentPage = newPage;
+                displayHistoryPage();
+                updatePaginationControls();
+            }
+        }
+
+        function clearAllBets() {
+            gameData.currentBets = {};
+            updateBetDisplay();
+        }
+
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        // 监听输入框变化
+        Object.keys(animals).forEach(animal => {
+            document.getElementById(`bet-${animal}`).addEventListener('input', updateBets);
+        });
+    </script>
+</body>
+</html>

@@ -1,36 +1,144 @@
-// 导入所需模块
-const { MongoClient } = require("mongodb");
+// 简化版API处理器 - 使用内存数据库
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
-// 数据库配置
-const uri = process.env.MONGODB_URI;
-const dbName = "card_game";
-const usersCollection = "users";
-const gameRecordsCollection = "game_records";
+const { MongoClient } = require("mongodb");
 
 // JWT密钥
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const JWT_SECRET = process.env.JWT_SECRET || "xctj-card-game-secret-key-2024";
 
-// 连接到数据库
-async function connectToDatabase() {
-  try {
-    const client = new MongoClient(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-    await client.connect();
-    return client.db(dbName);
-  } catch (error) {
-    console.error("数据库连接失败:", error);
-    throw error;
+// 数据库连接
+let db;
+let client;
+
+// 连接数据库
+async function connectDB() {
+  if (db) {
+    return db;
   }
+
+  try {
+    // 如果有MongoDB URI环境变量，使用MongoDB
+    if (process.env.MONGODB_URI) {
+      console.log("连接MongoDB数据库...");
+      client = new MongoClient(process.env.MONGODB_URI);
+      await client.connect();
+      db = client.db();
+      console.log("MongoDB连接成功");
+      return db;
+    } else {
+      // 本地开发使用内存数据库
+      console.log("使用内存数据库模式（本地开发）");
+      db = createMemoryDB();
+      return db;
+    }
+  } catch (error) {
+    console.error("数据库连接错误:", error);
+    // 如果MongoDB连接失败，回退到内存数据库
+    console.log("回退到内存数据库模式");
+    db = createMemoryDB();
+    return db;
+  }
+}
+
+// 创建内存数据库模拟
+function createMemoryDB() {
+  let memoryDatabase = {
+    users: [
+      {
+        username: "admin",
+        password:
+          "$2a$10$b.L8Ny3JLByTCDgdtlc53O5uA8.vyjY9QYCpirGzHZ2oVGoLRWKjm", // 密码: 068162
+        is_admin: true,
+        balance: 10000,
+        created_at: new Date(),
+      },
+      {
+        username: "test",
+        password:
+          "$2a$10$IS/22uJqZYLHBZ9oXZW1F.axJ5KgXgzCI4opLPax.YtXrEg6rLzq2", // 密码: test123
+        is_admin: false,
+        balance: 1000,
+        created_at: new Date(),
+      },
+    ],
+    game_records: [],
+  };
+
+  return {
+    users: {
+      findOne: async query => {
+        return (
+          memoryDatabase.users.find(user => {
+            return Object.keys(query).every(key => user[key] === query[key]);
+          }) || null
+        );
+      },
+      find: async (query = {}, options = {}) => {
+        let users = [...memoryDatabase.users];
+
+        // 应用过滤
+        if (Object.keys(query).length > 0) {
+          users = users.filter(user => {
+            return Object.keys(query).every(key => user[key] === query[key]);
+          });
+        }
+
+        // 应用projection
+        if (options.projection) {
+          users = users.map(user => {
+            const newUser = { ...user };
+            Object.keys(options.projection).forEach(key => {
+              if (options.projection[key] === 0) {
+                delete newUser[key];
+              }
+            });
+            return newUser;
+          });
+        }
+
+        return users;
+      },
+      insertOne: async doc => {
+        const newUser = { ...doc, _id: Date.now().toString() };
+        memoryDatabase.users.push(newUser);
+        return { insertedId: newUser._id };
+      },
+      updateOne: async (query, update) => {
+        const index = memoryDatabase.users.findIndex(user => {
+          return Object.keys(query).every(key => user[key] === query[key]);
+        });
+        if (index !== -1 && update.$set) {
+          memoryDatabase.users[index] = {
+            ...memoryDatabase.users[index],
+            ...update.$set,
+          };
+        }
+      },
+    },
+    game_records: {
+      find: async (query = {}) => {
+        let records = [...memoryDatabase.game_records];
+        if (Object.keys(query).length > 0) {
+          records = records.filter(record => {
+            return Object.keys(query).every(key => record[key] === query[key]);
+          });
+        }
+        return records.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+      },
+      insertOne: async doc => {
+        const newRecord = { ...doc, _id: Date.now().toString() };
+        memoryDatabase.game_records.push(newRecord);
+        return { insertedId: newRecord._id };
+      },
+    },
+  };
 }
 
 // 从请求中获取用户信息
 async function getUserFromRequest(req) {
   try {
-    // 从请求头中获取token
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return null;
@@ -41,13 +149,10 @@ async function getUserFromRequest(req) {
       return null;
     }
 
-    // 验证token
     const decoded = jwt.verify(token, JWT_SECRET);
     const username = decoded.username;
 
-    // 从数据库获取用户信息
-    const db = await connectToDatabase();
-    const user = await db.collection(usersCollection).findOne({ username });
+    const user = await db.users.findOne({ username });
     return user;
   } catch (error) {
     console.error("获取用户信息错误:", error);
@@ -55,48 +160,30 @@ async function getUserFromRequest(req) {
   }
 }
 
-// 初始化数据库
-async function initializeDatabase() {
+// 用户登录
+async function loginUser(username, password) {
   try {
-    const db = await connectToDatabase();
-
-    // 检查管理员用户是否存在
-    const adminExists = await db
-      .collection(usersCollection)
-      .findOne({ username: "admin" });
-    if (!adminExists) {
-      // 创建管理员用户
-      const hashedPassword = await bcrypt.hash("068162", 10);
-      await db.collection(usersCollection).insertOne({
-        username: "admin",
-        password: hashedPassword,
-        is_admin: true,
-        balance: 10000,
-        created_at: new Date()
-      });
-      console.log("管理员用户已创建");
+    const user = await db.users.findOne({ username });
+    if (!user) {
+      return { success: false, error: "用户名或密码错误" };
     }
 
-    // 检查测试用户是否存在
-    const testUserExists = await db
-      .collection(usersCollection)
-      .findOne({ username: "test" });
-    if (!testUserExists) {
-      // 创建测试用户
-      const hashedPassword = await bcrypt.hash("test123", 10);
-      await db.collection(usersCollection).insertOne({
-        username: "test",
-        password: hashedPassword,
-        is_admin: false,
-        balance: 1000,
-        created_at: new Date()
-      });
-      console.log("测试用户已创建");
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return { success: false, error: "用户名或密码错误" };
     }
 
-    return { success: true, message: "数据库初始化成功" };
+    const token = jwt.sign({ username: user.username }, JWT_SECRET, {
+      expiresIn: "24h",
+    });
+
+    return {
+      success: true,
+      token,
+      is_admin: user.is_admin,
+    };
   } catch (error) {
-    console.error("数据库初始化错误:", error);
+    console.error("登录错误:", error);
     return { success: false, error: error.message };
   }
 }
@@ -104,24 +191,18 @@ async function initializeDatabase() {
 // 注册用户
 async function registerUser(username, password) {
   try {
-    const db = await connectToDatabase();
-
-    // 检查用户名是否已存在
-    const existingUser = await db
-      .collection(usersCollection)
-      .findOne({ username });
+    const existingUser = await db.users.findOne({ username });
     if (existingUser) {
       return { success: false, error: "用户名已存在" };
     }
 
-    // 创建新用户
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.collection(usersCollection).insertOne({
+    await db.users.insertOne({
       username,
       password: hashedPassword,
       is_admin: false,
-      balance: 1000, // 初始余额
-      created_at: new Date()
+      balance: 1000,
+      created_at: new Date(),
     });
 
     return { success: true };
@@ -131,249 +212,16 @@ async function registerUser(username, password) {
   }
 }
 
-// 用户登录
-async function loginUser(username, password) {
-  try {
-    const db = await connectToDatabase();
-
-    // 查找用户
-    const user = await db.collection(usersCollection).findOne({ username });
-    if (!user) {
-      return { success: false, error: "用户名或密码错误" };
-    }
-
-    // 验证密码
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return { success: false, error: "用户名或密码错误" };
-    }
-
-    // 生成JWT token
-    const token = jwt.sign({ username: user.username }, JWT_SECRET, {
-      expiresIn: "24h"
-    });
-
-    return {
-      success: true,
-      token,
-      is_admin: user.is_admin
-    };
-  } catch (error) {
-    console.error("登录错误:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// 更新用户余额
-async function updateUserBalance(username, balance) {
-  try {
-    const db = await connectToDatabase();
-    await db
-      .collection(usersCollection)
-      .updateOne({ username }, { $set: { balance } });
-    return true;
-  } catch (error) {
-    console.error("更新余额错误:", error);
-    return false;
-  }
-}
-
-// 记录游戏结果
-async function recordGame(username, bet_suit, result_suit, amount, win_amount) {
-  try {
-    const db = await connectToDatabase();
-    const record = {
-      username,
-      bet_suit,
-      result_suit,
-      amount,
-      win_amount,
-      created_at: new Date()
-    };
-    await db.collection(gameRecordsCollection).insertOne(record);
-    return true;
-  } catch (error) {
-    console.error("记录游戏结果错误:", error);
-    return false;
-  }
-}
-
-// 获取用户游戏记录
-async function getUserGameRecords(username) {
-  try {
-    const db = await connectToDatabase();
-    const records = await db
-      .collection(gameRecordsCollection)
-      .find({ username })
-      .sort({ created_at: -1 })
-      .toArray();
-    return { success: true, records };
-  } catch (error) {
-    console.error("获取游戏记录错误:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// 获取所有游戏记录（管理员用）
-async function getAllGameRecords() {
-  try {
-    const db = await connectToDatabase();
-    const records = await db
-      .collection(gameRecordsCollection)
-      .find({})
-      .sort({ created_at: -1 })
-      .toArray();
-    return { success: true, records };
-  } catch (error) {
-    console.error("获取所有游戏记录错误:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// 获取系统统计数据
-async function getHouseStats() {
-  try {
-    const db = await connectToDatabase();
-
-    // 获取所有游戏记录
-    const records = await db
-      .collection(gameRecordsCollection)
-      .find({})
-      .toArray();
-
-    if (records.length === 0) {
-      return {
-        success: true,
-        stats: {
-          totalGames: 0,
-          totalBets: 0,
-          totalPayouts: 0,
-          houseProfit: 0,
-          heartsCount: 0,
-          diamondsCount: 0,
-          clubsCount: 0,
-          spadesCount: 0,
-          jokerCount: 0
-        }
-      };
-    }
-
-    // 计算统计数据
-    let totalGames = records.length;
-    let totalBets = 0;
-    let totalPayouts = 0;
-    let heartsCount = 0;
-    let diamondsCount = 0;
-    let clubsCount = 0;
-    let spadesCount = 0;
-    let jokerCount = 0;
-
-    records.forEach(record => {
-      totalBets += record.amount || 0;
-      totalPayouts += record.win_amount || 0;
-
-      // 统计各花色出现次数
-      switch (record.result_suit) {
-        case "hearts":
-          heartsCount++;
-          break;
-        case "diamonds":
-          diamondsCount++;
-          break;
-        case "clubs":
-          clubsCount++;
-          break;
-        case "spades":
-          spadesCount++;
-          break;
-        case "joker":
-          jokerCount++;
-          break;
-      }
-    });
-
-    const houseProfit = totalBets - totalPayouts;
-
-    return {
-      success: true,
-      stats: {
-        totalGames,
-        totalBets,
-        totalPayouts,
-        houseProfit,
-        heartsCount,
-        diamondsCount,
-        clubsCount,
-        spadesCount,
-        jokerCount
-      }
-    };
-  } catch (error) {
-    console.error("获取系统统计错误:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// 获取所有用户
-async function getAllUsers() {
-  try {
-    const db = await connectToDatabase();
-    const users = await db
-      .collection(usersCollection)
-      .find({}, { projection: { password: 0 } })
-      .toArray();
-    return { success: true, users };
-  } catch (error) {
-    console.error("获取用户列表错误:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// 更新用户信息
-async function updateUser(username, updates) {
-  try {
-    const db = await connectToDatabase();
-    await db
-      .collection(usersCollection)
-      .updateOne({ username }, { $set: updates });
-    return { success: true };
-  } catch (error) {
-    console.error("更新用户信息错误:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-// 加权随机函数
-function weightedRandom(items, weights) {
-  const cumulativeWeights = [];
-  let sum = 0;
-
-  for (let i = 0; i < weights.length; i++) {
-    sum += weights[i];
-    cumulativeWeights[i] = sum;
-  }
-
-  const random = Math.random() * sum;
-
-  for (let i = 0; i < cumulativeWeights.length; i++) {
-    if (random < cumulativeWeights[i]) {
-      return items[i];
-    }
-  }
-
-  return items[0]; // 默认返回第一个
-}
-
-// 处理游戏请求
+// 处理游戏逻辑
 async function handleGame(req, res) {
   try {
-    // 验证请求体
     const { bets } = req.body;
     if (!bets || typeof bets !== "object") {
-      return res.status(400).json({ error: "无效的请求参数" });
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "无效的请求参数" }));
     }
 
-    // 计算总押注金额
     let totalAmount = 0;
     for (const suit in bets) {
       if (bets[suit] > 0) {
@@ -382,106 +230,220 @@ async function handleGame(req, res) {
     }
 
     if (totalAmount <= 0) {
-      return res.status(400).json({ error: "押注金额必须大于0" });
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "押注金额必须大于0" }));
     }
 
-    // 获取用户信息
     const user = await getUserFromRequest(req);
     if (!user) {
-      return res.status(401).json({ error: "未授权" });
+      res.statusCode = 401;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "未授权" }));
     }
 
-    // 检查余额
     if (user.balance < totalAmount) {
-      return res.status(400).json({ error: "余额不足" });
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "余额不足" }));
     }
 
-    // 随机生成结果，调整概率以增加庄家优势
+    // 游戏逻辑
     const suits = ["hearts", "diamonds", "clubs", "spades", "joker"];
-    // 调整权重，降低玩家押注较多花色的出现概率
-    let weights = [0.2, 0.2, 0.2, 0.2, 0.2]; // 基础权重
+    const weights = [0.2, 0.2, 0.2, 0.2, 0.2];
 
-    // 根据押注情况调整权重，押注越多的花色出现概率越低
-    const totalBetAmount = totalAmount;
-    suits.forEach((suit, index) => {
-      if (bets[suit] > 0) {
-        const betRatio = bets[suit] / totalBetAmount;
-        weights[index] = weights[index] * (1 - betRatio * 0.3); // 降低押注花色的权重
+    // 小丑特殊处理
+    weights[4] = 0.01;
+
+    const random = Math.random();
+    let cumulative = 0;
+    let result_suit = suits[0];
+
+    for (let i = 0; i < weights.length; i++) {
+      cumulative += weights[i];
+      if (random < cumulative) {
+        result_suit = suits[i];
+        break;
       }
-    });
+    }
 
-    // 小丑特殊处理，保持较低概率
-    // 小丑特殊处理，保持极低概率（100倍赔率）
-    weights[4] = 0.01; // 小丑固定1%概率
-
-    const result_suit = weightedRandom(suits, weights);
-
-    // 计算赢取金额 - 只计算中奖花色的赔付
+    // 计算赢取金额
     let win_amount = 0;
     if (bets[result_suit] > 0) {
       if (result_suit === "joker") {
-        win_amount = bets[result_suit] * 100; // 小丑100倍赔率
+        win_amount = bets[result_suit] * 100;
       } else {
-        win_amount = bets[result_suit] * 3.5; // 其他花色3.5倍赔率
+        win_amount = bets[result_suit] * 3.5;
       }
     }
 
-    // 更新余额：扣除所有押注，加上赢取金额
     const new_balance = user.balance - totalAmount + win_amount;
-    await updateUserBalance(user.username, new_balance);
-
-    // 记录游戏结果
-    await recordGame(
-      user.username,
-      JSON.stringify(bets),
-      result_suit,
-      totalAmount,
-      win_amount
+    await db.users.updateOne(
+      { username: user.username },
+      { $set: { balance: new_balance } }
     );
 
-    // 返回结果
-    res.json({
+    // 记录游戏结果
+    await db.game_records.insertOne({
+      username: user.username,
+      bet_suit: JSON.stringify(bets),
       result_suit,
+      amount: totalAmount,
       win_amount,
-      new_balance,
-      total_bet: totalAmount
+      created_at: new Date(),
     });
+
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify({
+        result_suit,
+        win_amount,
+        new_balance,
+        total_bet: totalAmount,
+      })
+    );
   } catch (error) {
     console.error("游戏错误:", error);
-    res.status(500).json({ error: "服务器错误" });
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
   }
 }
 
-// 处理更新用户余额请求
-async function handleUpdateBalance(req, res) {
+// 处理飞禽走兽游戏逻辑
+async function handleAnimalsGame(req, res) {
   try {
-    // 验证请求体
-    const { username, balance } = req.body;
-    if (!username || balance === undefined || isNaN(balance)) {
-      return res.status(400).json({ error: "无效的请求参数" });
+    const { bets } = req.body;
+    if (!bets || typeof bets !== "object") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "无效的请求参数" }));
     }
 
-    // 获取管理员信息
-    const admin = await getUserFromRequest(req);
-    if (!admin || !admin.is_admin) {
-      return res.status(401).json({ error: "未授权" });
+    let totalAmount = 0;
+    for (const animal in bets) {
+      if (bets[animal] > 0) {
+        totalAmount += bets[animal];
+      }
     }
 
-    // 更新用户余额
-    const result = await updateUser(username, { balance: Number(balance) });
-    if (!result.success) {
-      return res.status(500).json({ error: result.error });
+    if (totalAmount <= 0) {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "押注金额必须大于0" }));
     }
 
-    res.json({ success: true });
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      res.statusCode = 401;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "未授权" }));
+    }
+
+    if (user.balance < totalAmount) {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "余额不足" }));
+    }
+
+    // 飞禽走兽游戏逻辑
+    const animals = [
+      { name: "lion", multiplier: 12, weight: 12.0 }, // 狮子 12% (3个块)
+      { name: "panda", multiplier: 8, weight: 12.0 }, // 熊猫 12% (3个块)
+      { name: "eagle", multiplier: 15, weight: 12.0 }, // 老鹰 12% (3个块)
+      { name: "monkey", multiplier: 6, weight: 12.0 }, // 猴子 12% (3个块)
+      { name: "rabbit", multiplier: 4, weight: 12.0 }, // 兔子 12% (3个块)
+      { name: "peacock", multiplier: 10, weight: 12.0 }, // 孔雀 12% (3个块)
+      { name: "pigeon", multiplier: 3, weight: 12.0 }, // 鸽子 12% (3个块)
+      { name: "swallow", multiplier: 5, weight: 12.0 }, // 燕子 12% (3个块)
+      { name: "gold_shark", multiplier: 100, weight: 2.0 }, // 金鲨 2% (1个块)
+      { name: "silver_shark", multiplier: 24, weight: 2.0 }, // 银鲨 2% (1个块)
+    ];
+
+    // 选择结果动物
+    const random = Math.random() * 100;
+    let cumulative = 0;
+    let result_animal = animals[0].name;
+
+    for (let i = 0; i < animals.length; i++) {
+      cumulative += animals[i].weight;
+      if (random < cumulative) {
+        result_animal = animals[i].name;
+        break;
+      }
+    }
+
+    // 计算赢取金额
+    let win_amount = 0;
+    let net_win = 0; // 净赢金额
+
+    // 定义飞禽和走兽分类
+    const birds = ["eagle", "swallow", "pigeon", "peacock"];
+    const beasts = ["lion", "monkey", "panda", "rabbit"];
+
+    console.log("中奖动物:", result_animal);
+    console.log("押注数据:", bets);
+
+    // 直接动物压注结算
+    if (bets[result_animal] > 0) {
+      const animal = animals.find(a => a.name === result_animal);
+      win_amount += Math.floor(bets[result_animal] * animal.multiplier);
+    }
+
+    // 飞禽走兽大类压注结算（鲨鱼不给赔付）
+    if (result_animal !== "gold_shark" && result_animal !== "silver_shark") {
+      if (birds.includes(result_animal) && bets["birds"] > 0) {
+        const birdWin = Math.floor(bets["birds"] * 2);
+        win_amount += birdWin; // 飞禽赔率 1:2
+      }
+      if (beasts.includes(result_animal) && bets["beasts"] > 0) {
+        const beastWin = Math.floor(bets["beasts"] * 2);
+        win_amount += beastWin; // 走兽赔率 1:2
+      }
+    }
+
+    net_win = win_amount - totalAmount; // 赢得金额 - 总投注 = 净赢
+
+    const new_balance = user.balance + net_win;
+    await db.users.updateOne(
+      { username: user.username },
+      { $set: { balance: new_balance } }
+    );
+
+    // 记录游戏结果
+    await db.game_records.insertOne({
+      username: user.username,
+      game_type: "animals",
+      bet_data: JSON.stringify(bets),
+      result_animal,
+      amount: totalAmount,
+      win_amount,
+      created_at: new Date(),
+    });
+
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify({
+        result_animal,
+        win_amount,
+        net_win,
+        new_balance,
+        total_bet: totalAmount,
+      })
+    );
   } catch (error) {
-    console.error("更新余额错误:", error);
-    res.status(500).json({ error: "服务器错误" });
+    console.error("飞禽走兽游戏错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
   }
 }
 
 // 统一API处理函数
 module.exports = async (req, res) => {
+  // 连接数据库
+  db = await connectDB();
+
   // 设置CORS头
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -489,51 +451,55 @@ module.exports = async (req, res) => {
 
   // 处理OPTIONS请求
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.statusCode = 200;
+    return res.end();
   }
 
-  // 获取路径
   const path = req.url.split("?")[0];
 
-  // 根据路径和方法处理请求
   try {
-    // 初始化数据库
-    if (path === "/api/init_db" && req.method === "POST") {
-      const result = await initializeDatabase();
-      return res.json(result);
+    // 登录
+    if (path === "/api/login" && req.method === "POST") {
+      const { username, password } = req.body;
+      if (!username || !password) {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json");
+        return res.end(JSON.stringify({ error: "用户名和密码不能为空" }));
+      }
+      const result = await loginUser(username, password);
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify(result));
     }
 
     // 注册
     if (path === "/api/register" && req.method === "POST") {
       const { username, password } = req.body;
       if (!username || !password) {
-        return res.status(400).json({ error: "用户名和密码不能为空" });
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json");
+        return res.end(JSON.stringify({ error: "用户名和密码不能为空" }));
       }
       const result = await registerUser(username, password);
-      return res.json(result);
-    }
-
-    // 登录
-    if (path === "/api/login" && req.method === "POST") {
-      const { username, password } = req.body;
-      if (!username || !password) {
-        return res.status(400).json({ error: "用户名和密码不能为空" });
-      }
-      const result = await loginUser(username, password);
-      return res.json(result);
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify(result));
     }
 
     // 获取当前用户信息
     if (path === "/api/user" && req.method === "GET") {
       const user = await getUserFromRequest(req);
       if (!user) {
-        return res.status(401).json({ error: "未授权" });
+        res.statusCode = 401;
+        res.setHeader("Content-Type", "application/json");
+        return res.end(JSON.stringify({ error: "未授权" }));
       }
-      return res.json({
-        username: user.username,
-        is_admin: user.is_admin,
-        balance: user.balance
-      });
+      res.setHeader("Content-Type", "application/json");
+      return res.end(
+        JSON.stringify({
+          username: user.username,
+          is_admin: user.is_admin,
+          balance: user.balance,
+        })
+      );
     }
 
     // 游戏
@@ -545,71 +511,68 @@ module.exports = async (req, res) => {
     if (path === "/api/game_records" && req.method === "GET") {
       const user = await getUserFromRequest(req);
       if (!user) {
-        return res.status(401).json({ error: "未授权" });
+        res.statusCode = 401;
+        res.setHeader("Content-Type", "application/json");
+        return res.end(JSON.stringify({ error: "未授权" }));
       }
 
-      // 如果是管理员，返回所有记录；否则只返回用户自己的记录
-      let result;
+      let records;
       if (user.is_admin) {
-        result = await getAllGameRecords();
+        records = await db.game_records.find({});
       } else {
-        result = await getUserGameRecords(user.username);
+        records = await db.game_records.find({ username: user.username });
       }
-      return res.json(result);
+
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ success: true, records }));
     }
 
-    // 管理员：获取系统统计
-    if (path === "/api/house_stats" && req.method === "GET") {
+    // 飞禽走兽游戏
+    if (path === "/api/animals-game" && req.method === "POST") {
+      return handleAnimalsGame(req, res);
+    }
+
+    // 获取排行榜
+    if (path === "/api/top_players" && req.method === "GET") {
       const user = await getUserFromRequest(req);
-      if (!user || !user.is_admin) {
-        return res.status(401).json({ error: "未授权" });
+      if (!user) {
+        res.statusCode = 401;
+        res.setHeader("Content-Type", "application/json");
+        return res.end(JSON.stringify({ error: "未授权" }));
       }
-      const result = await getHouseStats();
-      return res.json(result);
+
+      const users = await db.users.find(
+        { is_admin: false },
+        { projection: { password: 0 } }
+      );
+      const topUsers = users.sort((a, b) => b.balance - a.balance).slice(0, 3);
+
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ success: true, users: topUsers }));
     }
 
     // 管理员：获取所有用户
     if (path === "/api/admin/users" && req.method === "GET") {
       const user = await getUserFromRequest(req);
       if (!user || !user.is_admin) {
-        return res.status(401).json({ error: "未授权" });
-      }
-      const result = await getAllUsers();
-      return res.json(result);
-    }
-
-    // 公共API：获取赌王排行榜（前三名）
-    if (path === "/api/top_players" && req.method === "GET") {
-      const user = await getUserFromRequest(req);
-      if (!user) {
-        return res.status(401).json({ error: "未授权" });
+        res.statusCode = 401;
+        res.setHeader("Content-Type", "application/json");
+        return res.end(JSON.stringify({ error: "未授权" }));
       }
 
-      try {
-        const db = await connectToDatabase();
-        const users = await db
-          .collection(usersCollection)
-          .find({ is_admin: false }, { projection: { password: 0 } })
-          .sort({ balance: -1 })
-          .limit(3)
-          .toArray();
-
-        return res.json({ success: true, users });
-      } catch (error) {
-        console.error("获取赌王排行榜错误:", error);
-        return res.status(500).json({ error: "服务器错误" });
-      }
-    }
-
-    // 管理员：更新用户余额
-    if (path === "/api/update_balance" && req.method === "POST") {
-      return handleUpdateBalance(req, res);
+      const users = await db.users.find({}, { projection: { password: 0 } });
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ success: true, users }));
     }
 
     // 404 - 路径不存在
-    return res.status(404).json({ error: "路径不存在" });
+    res.statusCode = 404;
+    res.setHeader("Content-Type", "application/json");
+    return res.end(JSON.stringify({ error: "路径不存在" }));
   } catch (error) {
     console.error("API错误:", error);
-    return res.status(500).json({ error: "服务器错误" });
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    return res.end(JSON.stringify({ error: "服务器错误" }));
   }
 };

@@ -1,104 +1,267 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>喜从天降 - 卡牌游戏</title>
-  <style>
-    body {
-      font-family: 'Microsoft YaHei', Arial, sans-serif;
-      background-color: #f5f5f5;
-      margin: 0;
-      padding: 0;
-      color: #333;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      max-width: 800px;
-      width: 100%;
-      padding: 30px;
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    h1 {
-      color: #2196F3;
-      margin-bottom: 30px;
-    }
-    .btn {
-      display: inline-block;
-      padding: 12px 24px;
-      margin: 10px;
-      background-color: #2196F3;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background-color 0.3s;
-    }
-    .btn:hover {
-      background-color: #1976D2;
-    }
-    .description {
-      margin-bottom: 30px;
-      font-size: 18px;
-      line-height: 1.6;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏大厅 - 选择您喜欢的游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .logo {
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .user-info {
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px 20px;
+        }
+
+        .game-selection {
+            background: rgba(255,255,255,0.95);
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .title {
+            font-size: 3em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 50px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .game-card {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            border-color: #667eea;
+        }
+
+        .game-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .game-description {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .play-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-selection {
+                padding: 30px 20px;
+            }
+            
+            .title {
+                font-size: 2em;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎮 喜从天降 - 卡牌游戏</h1>
-    
-    <p class="description">
-      欢迎来到喜从天降卡牌游戏！这是一个简单有趣的猜花色游戏，赢取更多金币吧！
-    </p>
-    
-    <a href="/login.html" class="btn">登录游戏</a>
-    
+    <div class="header">
+        <div class="logo">🎮 游戏大厅</div>
+        <div class="user-info">
+            <span id="username">加载中...</span>
+            <span id="balance">余额: 加载中...</span>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="game-selection">
+            <h1 class="title">欢迎来到游戏世界</h1>
+            <p class="subtitle">选择您喜欢的游戏开始您的冒险之旅</p>
+            
+            <div class="games-grid">
+                <div class="game-card" onclick="goToGame('xctj')">
+                    <div class="game-icon">🎆✨</div>
+                    <div class="game-title">喜从天降</div>
+                    <div class="game-description">
+                        经典卡牌游戏，猬测下一张牌的花色。支持多种下注方式，小丑物6倍赔率！
+                    </div>
+                    <button class="play-btn">立即游戏</button>
+                </div>
+                
+                <div class="game-card" onclick="goToGame('animals')">
+                    <div class="game-icon">🦁🐼</div>
+                    <div class="game-title">飞禽走兽</div>
+                    <div class="game-description">
+                        动物世界大冲关！下注您喜欢的动物，不同动物有不同的赔率，运气好的话可以赢得巨奖！
+                    </div>
+                    <button class="play-btn">立即游戏</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-      // 页面加载时检查登录状态
-      window.addEventListener('load', async () => {
-        try {
-          // 获取token
-          const token = localStorage.getItem('token');
-          if (!token) {
-            // 如果没有token，保持在当前页面
-            return;
-          }
-          
-          // 发送请求，包含Authorization头
-          const response = await fetch('/api/user', {
-            headers: {
-              'Authorization': `Bearer ${token}`
+        // 页面加载时检查登录状态
+        window.addEventListener('load', async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const response = await fetch('/api/user', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('username').textContent = `欢迎，${data.username}`;
+                    document.getElementById('balance').textContent = `余额: ${data.balance}`;
+                    
+                    // 如果是管理员，优先跳转到管理页面
+                    if (data.is_admin) {
+                        const adminChoice = confirm('您是管理员，要跳转到管理页面吗？');
+                        if (adminChoice) {
+                            window.location.href = '/admin.html';
+                            return;
+                        }
+                    }
+                } else {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+                window.location.href = '/login.html';
             }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            // 如果已登录，根据用户类型重定向
-            if (data.is_admin) {
-              window.location.href = '/admin.html';
-            } else {
-              window.location.href = '/game-xctj.html';
+        });
+
+        // 跳转到游戏页面
+        function goToGame(gameType) {
+            if (gameType === 'xctj') {
+                window.location.href = '/game-xctj.html';
+            } else if (gameType === 'animals') {
+                window.location.href = '/animals-game.html';
             }
-          } else {
-            // 如果请求失败，清除token
-            localStorage.removeItem('token');
-          }
-        } catch (error) {
-          console.error('检查登录状态失败:', error);
-          // 出错时清除token
-          localStorage.removeItem('token');
         }
-      });
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
     </script>
-  </div>
 </body>
 </html>
