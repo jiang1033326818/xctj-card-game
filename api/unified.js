@@ -302,6 +302,42 @@ async function registerUser(username, password) {
   }
 }
 
+// 处理更新用户余额请求
+async function handleUpdateBalance(req, res) {
+  try {
+    // 验证请求体
+    const { username, balance } = req.body;
+    if (!username || balance === undefined || isNaN(balance)) {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "无效的请求参数" }));
+    }
+
+    // 获取管理员信息
+    const admin = await getUserFromRequest(req);
+    if (!admin || !admin.is_admin) {
+      res.statusCode = 401;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "未授权" }));
+    }
+
+    // 更新用户余额
+    const database = db || (await connectDB());
+    await database.users.updateOne(
+      { username },
+      { $set: { balance: Number(balance) } }
+    );
+
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ success: true }));
+  } catch (error) {
+    console.error("更新余额错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+  }
+}
+
 // 处理游戏逻辑
 async function handleGame(req, res) {
   try {
@@ -701,6 +737,11 @@ module.exports = async (req, res) => {
       );
       res.setHeader("Content-Type", "application/json");
       return res.end(JSON.stringify({ success: true, users }));
+    }
+
+    // 管理员：更新用户余额
+    if (path === "/api/update_balance" && req.method === "POST") {
+      return handleUpdateBalance(req, res);
     }
 
     // 获取统计数据（按游戏类型分类）
