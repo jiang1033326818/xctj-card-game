@@ -39,7 +39,7 @@ const server = http.createServer((req, res) => {
   // 处理静态文件
   let filePath = "." + req.url;
   if (filePath === "./") {
-    filePath = "./public/game.html";
+    filePath = "./public/game-xctj.html";
   } else if (!filePath.includes(".")) {
     filePath = `./public${req.url}.html`;
   } else {
