@@ -234,13 +234,13 @@ async function getAllGameRecords() {
 async function getHouseStats() {
   try {
     const db = await connectToDatabase();
-    
+
     // 获取所有游戏记录
     const records = await db
       .collection(gameRecordsCollection)
       .find({})
       .toArray();
-    
+
     if (records.length === 0) {
       return {
         success: true,
@@ -257,7 +257,7 @@ async function getHouseStats() {
         }
       };
     }
-    
+
     // 计算统计数据
     let totalGames = records.length;
     let totalBets = 0;
@@ -267,33 +267,33 @@ async function getHouseStats() {
     let clubsCount = 0;
     let spadesCount = 0;
     let jokerCount = 0;
-    
+
     records.forEach(record => {
       totalBets += record.amount || 0;
       totalPayouts += record.win_amount || 0;
-      
+
       // 统计各花色出现次数
       switch (record.result_suit) {
-        case 'hearts':
+        case "hearts":
           heartsCount++;
           break;
-        case 'diamonds':
+        case "diamonds":
           diamondsCount++;
           break;
-        case 'clubs':
+        case "clubs":
           clubsCount++;
           break;
-        case 'spades':
+        case "spades":
           spadesCount++;
           break;
-        case 'joker':
+        case "joker":
           jokerCount++;
           break;
       }
     });
-    
+
     const houseProfit = totalBets - totalPayouts;
-    
+
     return {
       success: true,
       stats: {
@@ -369,10 +369,10 @@ async function handleGame(req, res) {
   try {
     // 验证请求体
     const { bets } = req.body;
-    if (!bets || typeof bets !== 'object') {
+    if (!bets || typeof bets !== "object") {
       return res.status(400).json({ error: "无效的请求参数" });
     }
-    
+
     // 计算总押注金额
     let totalAmount = 0;
     for (const suit in bets) {
@@ -380,7 +380,7 @@ async function handleGame(req, res) {
         totalAmount += bets[suit];
       }
     }
-    
+
     if (totalAmount <= 0) {
       return res.status(400).json({ error: "押注金额必须大于0" });
     }
@@ -400,7 +400,7 @@ async function handleGame(req, res) {
     const suits = ["hearts", "diamonds", "clubs", "spades", "joker"];
     // 调整权重，降低玩家押注较多花色的出现概率
     let weights = [0.2, 0.2, 0.2, 0.2, 0.2]; // 基础权重
-    
+
     // 根据押注情况调整权重，押注越多的花色出现概率越低
     const totalBetAmount = totalAmount;
     suits.forEach((suit, index) => {
@@ -409,10 +409,10 @@ async function handleGame(req, res) {
         weights[index] = weights[index] * (1 - betRatio * 0.3); // 降低押注花色的权重
       }
     });
-    
+
     // 小丑特殊处理，保持较低概率
     weights[4] = 0.08; // 小丑固定8%概率
-    
+
     const result_suit = weightedRandom(suits, weights);
 
     // 计算赢取金额 - 只计算中奖花色的赔付
@@ -431,7 +431,13 @@ async function handleGame(req, res) {
     await updateUserBalance(user.username, new_balance);
 
     // 记录游戏结果
-    await recordGame(user.username, JSON.stringify(bets), result_suit, totalAmount, win_amount);
+    await recordGame(
+      user.username,
+      JSON.stringify(bets),
+      result_suit,
+      totalAmount,
+      win_amount
+    );
 
     // 返回结果
     res.json({
@@ -541,7 +547,7 @@ module.exports = async (req, res) => {
       if (!user) {
         return res.status(401).json({ error: "未授权" });
       }
-      
+
       // 如果是管理员，返回所有记录；否则只返回用户自己的记录
       let result;
       if (user.is_admin) {
@@ -570,6 +576,29 @@ module.exports = async (req, res) => {
       }
       const result = await getAllUsers();
       return res.json(result);
+    }
+
+    // 公共API：获取赌王排行榜（前三名）
+    if (path === "/api/top_players" && req.method === "GET") {
+      const user = await getUserFromRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: "未授权" });
+      }
+
+      try {
+        const db = await connectToDatabase();
+        const users = await db
+          .collection(usersCollection)
+          .find({ is_admin: false }, { projection: { password: 0 } })
+          .sort({ balance: -1 })
+          .limit(3)
+          .toArray();
+
+        return res.json({ success: true, users });
+      } catch (error) {
+        console.error("获取赌王排行榜错误:", error);
+        return res.status(500).json({ error: "服务器错误" });
+      }
     }
 
     // 管理员：更新用户余额

@@ -700,7 +700,7 @@
         async function loadTopPlayers() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/admin/users', {
+                const response = await fetch('/api/top_players', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -709,12 +709,7 @@
                 if (response.ok) {
                     const result = await response.json();
                     if (result.success && result.users) {
-                        // 过滤掉admin用户，并按余额排序
-                        topPlayers = result.users
-                            .filter(user => !user.is_admin)
-                            .sort((a, b) => b.balance - a.balance)
-                            .slice(0, 3); // 只取前三名
-                        
+                        topPlayers = result.users;
                         updateTopPlayersDisplay();
                     }
                 }
