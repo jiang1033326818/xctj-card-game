@@ -1,1 +1,0 @@
-[NOTE] Tool Results has been ignored to save space in the context window. Recall if necessary

@@ -411,19 +411,20 @@ async function handleGame(req, res) {
     });
 
     // 小丑特殊处理，保持较低概率
-    weights[4] = 0.08; // 小丑固定8%概率
+    // 小丑特殊处理，保持极低概率（100倍赔率）
+    weights[4] = 0.01; // 小丑固定1%概率
 
     const result_suit = weightedRandom(suits, weights);
 
     // 计算赢取金额 - 只计算中奖花色的赔付
     let win_amount = 0;
     if (bets[result_suit] > 0) {
-      // 如果猜中
       if (result_suit === "joker") {
-        win_amount = bets[result_suit] * 20; // 小丑赔率20倍
+        win_amount = bets[result_suit] * 100; // 小丑100倍赔率
       } else {
-        win_amount = bets[result_suit] * 3.5; // 其他花色赔率3.5倍
+        win_amount = bets[result_suit] * 3.5; // 其他花色3.5倍赔率
       }
+    }
     }
 
     // 更新余额：扣除所有押注，加上赢取金额
