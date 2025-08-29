@@ -220,7 +220,7 @@
     </header>
     
     <div class="card">
-      <h2>系统统计</h2>
+      <h2>📊 系统统计 - 总体数据</h2>
       <div id="stats-loading" class="loading">加载统计数据中...</div>
       <div id="stats-error" class="error-message" style="display: none;"></div>
       <div id="stats-container" class="stats-grid" style="display: none;">
@@ -239,6 +239,28 @@
         <div class="stat-card">
           <div class="stat-label">庄家盈利</div>
           <div id="house-profit" class="stat-value">0</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>🎆 喜从天降游戏统计</h2>
+      <div id="xctj-stats-container" class="stats-grid" style="display: none;">
+        <div class="stat-card">
+          <div class="stat-label">游戏次数</div>
+          <div id="xctj-games" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">投注金额</div>
+          <div id="xctj-bets" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">派彩金额</div>
+          <div id="xctj-payouts" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">庄家盈利</div>
+          <div id="xctj-profit" class="stat-value">0</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">红桃次数</div>
@@ -259,6 +281,68 @@
         <div class="stat-card">
           <div class="stat-label">小丑次数</div>
           <div id="joker-count" class="stat-value">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🦁 飞禽走兽游戏统计</h2>
+      <div id="animals-stats-container" class="stats-grid" style="display: none;">
+        <div class="stat-card">
+          <div class="stat-label">游戏次数</div>
+          <div id="animals-games" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">投注金额</div>
+          <div id="animals-bets" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">派彩金额</div>
+          <div id="animals-payouts" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">庄家盈利</div>
+          <div id="animals-profit" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">狮子 🦁</div>
+          <div id="lion-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">熊猫 🐼</div>
+          <div id="panda-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">老鹰 🦅</div>
+          <div id="eagle-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">猴子 🐵</div>
+          <div id="monkey-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">兔子 🐰</div>
+          <div id="rabbit-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">孔雀 🦚</div>
+          <div id="peacock-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">鸽子 🕊️</div>
+          <div id="pigeon-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">燕子 🐦</div>
+          <div id="swallow-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">金鲨 🦈</div>
+          <div id="gold-shark-count" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">银鲨 🦈</div>
+          <div id="silver-shark-count" class="stat-value">0</div>
         </div>
       </div>
     </div>
@@ -296,8 +380,9 @@
           <thead>
             <tr>
               <th>用户</th>
-              <th>下注花色</th>
-              <th>结果花色</th>
+              <th>游戏类型</th>
+              <th>下注内容</th>
+              <th>结果</th>
               <th>下注金额</th>
               <th>输赢</th>
               <th>赢取金额</th>
@@ -428,20 +513,46 @@
           throw new Error('统计数据格式错误');
         }
         
-        // 显示统计数据
-        document.getElementById('total-games').textContent = data.stats.totalGames;
-        document.getElementById('total-bets').textContent = data.stats.totalBets;
-        document.getElementById('total-payouts').textContent = data.stats.totalPayouts;
-        document.getElementById('house-profit').textContent = data.stats.houseProfit;
-        document.getElementById('hearts-count').textContent = data.stats.heartsCount;
-        document.getElementById('diamonds-count').textContent = data.stats.diamondsCount;
-        document.getElementById('clubs-count').textContent = data.stats.clubsCount;
-        document.getElementById('spades-count').textContent = data.stats.spadesCount;
-        document.getElementById('joker-count').textContent = data.stats.jokerCount;
+        const stats = data.stats;
+        
+        // 显示总体统计数据
+        document.getElementById('total-games').textContent = stats.totalGames;
+        document.getElementById('total-bets').textContent = stats.totalBets;
+        document.getElementById('total-payouts').textContent = stats.totalPayouts;
+        document.getElementById('house-profit').textContent = stats.houseProfit;
+        
+        // 显示喜从天降游戏统计
+        document.getElementById('xctj-games').textContent = stats.xctjStats.totalGames;
+        document.getElementById('xctj-bets').textContent = stats.xctjStats.totalBets;
+        document.getElementById('xctj-payouts').textContent = stats.xctjStats.totalPayouts;
+        document.getElementById('xctj-profit').textContent = stats.xctjStats.houseProfit;
+        document.getElementById('hearts-count').textContent = stats.xctjStats.heartsCount;
+        document.getElementById('diamonds-count').textContent = stats.xctjStats.diamondsCount;
+        document.getElementById('clubs-count').textContent = stats.xctjStats.clubsCount;
+        document.getElementById('spades-count').textContent = stats.xctjStats.spadesCount;
+        document.getElementById('joker-count').textContent = stats.xctjStats.jokerCount;
+        
+        // 显示飞禽走兽游戏统计
+        document.getElementById('animals-games').textContent = stats.animalsStats.totalGames;
+        document.getElementById('animals-bets').textContent = stats.animalsStats.totalBets;
+        document.getElementById('animals-payouts').textContent = stats.animalsStats.totalPayouts;
+        document.getElementById('animals-profit').textContent = stats.animalsStats.houseProfit;
+        document.getElementById('lion-count').textContent = stats.animalsStats.lionCount;
+        document.getElementById('panda-count').textContent = stats.animalsStats.pandaCount;
+        document.getElementById('eagle-count').textContent = stats.animalsStats.eagleCount;
+        document.getElementById('monkey-count').textContent = stats.animalsStats.monkeyCount;
+        document.getElementById('rabbit-count').textContent = stats.animalsStats.rabbitCount;
+        document.getElementById('peacock-count').textContent = stats.animalsStats.peacockCount;
+        document.getElementById('pigeon-count').textContent = stats.animalsStats.pigeonCount;
+        document.getElementById('swallow-count').textContent = stats.animalsStats.swallowCount;
+        document.getElementById('gold-shark-count').textContent = stats.animalsStats.goldSharkCount;
+        document.getElementById('silver-shark-count').textContent = stats.animalsStats.silverSharkCount;
         
         // 隐藏加载提示，显示统计数据
         document.getElementById('stats-loading').style.display = 'none';
         document.getElementById('stats-container').style.display = 'grid';
+        document.getElementById('xctj-stats-container').style.display = 'grid';
+        document.getElementById('animals-stats-container').style.display = 'grid';
       } catch (error) {
         console.error('加载统计数据失败:', error);
         document.getElementById('stats-loading').style.display = 'none';
@@ -563,37 +674,77 @@
           // 格式化日期
           const createdAt = record.created_at ? new Date(record.created_at).toLocaleString() : '未知';
           
-          // 翻译花色
-          // 翻译花色
-          const translateSuit = suit => {
-            switch (suit) {
-              case 'hearts': return '红桃';
-              case 'diamonds': return '方块';
-              case 'clubs': return '梅花';
-              case 'spades': return '黑桃';
-              case 'joker': return '小丑';
-              default: return suit;
+          // 决定游戏类型
+          const gameType = record.game_type === 'animals' ? '🦁 飞禽走兽' : '🎆 喜从天降';
+          
+          // 翻译花色/动物
+          const translateResult = (type, result) => {
+            if (type === 'animals') {
+              const animalNames = {
+                'lion': '狮子 🦁',
+                'panda': '熊猫 🐼',
+                'eagle': '老鹰 🦅',
+                'monkey': '猴子 🐵',
+                'rabbit': '兔子 🐰',
+                'peacock': '孔雀 🦚',
+                'pigeon': '鸽子 🕊️',
+                'swallow': '燕子 🐦',
+                'gold_shark': '金鲨 🦈',
+                'silver_shark': '银鲨 🦈'
+              };
+              return animalNames[result] || result;
+            } else {
+              const suitNames = {
+                'hearts': '红桃 ♥',
+                'diamonds': '方块 ♦',
+                'clubs': '梅花 ♣',
+                'spades': '黑桃 ♠',
+                'joker': '小丑 🃏'
+              };
+              return suitNames[result] || result;
             }
           };
           
-          // 解析押注花色 - 可能是JSON字符串或单个花色
-          let betSuitDisplay = '';
-          try {
-            if (record.bet_suit && record.bet_suit.startsWith('{')) {
-              // JSON格式的多花色押注
-              const bets = JSON.parse(record.bet_suit);
-              const betEntries = Object.entries(bets)
-                .filter(([_, amount]) => amount > 0)
-                .map(([suit, amount]) => `${translateSuit(suit)}:${amount}`)
-                .join(', ');
-              betSuitDisplay = betEntries || translateSuit(record.bet_suit);
-            } else {
-              // 单个花色
-              betSuitDisplay = translateSuit(record.bet_suit);
+          // 解析下注内容
+          let betDisplay = '';
+          if (record.game_type === 'animals') {
+            // 飞禽走兽游戏
+            try {
+              if (record.bet_data && record.bet_data.startsWith('{')) {
+                const bets = JSON.parse(record.bet_data);
+                const betEntries = Object.entries(bets)
+                  .filter(([_, amount]) => amount > 0)
+                  .map(([animal, amount]) => `${translateResult('animals', animal)}:${amount}`)
+                  .join(', ');
+                betDisplay = betEntries || '未知';
+              } else {
+                betDisplay = '未知';
+              }
+            } catch (e) {
+              betDisplay = '解析错误';
             }
-          } catch (e) {
-            betSuitDisplay = translateSuit(record.bet_suit);
+          } else {
+            // 喜从天降游戏
+            try {
+              if (record.bet_suit && record.bet_suit.startsWith('{')) {
+                const bets = JSON.parse(record.bet_suit);
+                const betEntries = Object.entries(bets)
+                  .filter(([_, amount]) => amount > 0)
+                  .map(([suit, amount]) => `${translateResult('xctj', suit)}:${amount}`)
+                  .join(', ');
+                betDisplay = betEntries || translateResult('xctj', record.bet_suit);
+              } else {
+                betDisplay = translateResult('xctj', record.bet_suit);
+              }
+            } catch (e) {
+              betDisplay = translateResult('xctj', record.bet_suit);
+            }
           }
+          
+          // 获取结果
+          const resultDisplay = record.game_type === 'animals' ? 
+            translateResult('animals', record.result_animal) : 
+            translateResult('xctj', record.result_suit);
           
           // 计算输赢状态
           const netResult = (record.win_amount || 0) - (record.amount || 0);
@@ -602,8 +753,9 @@
           
           tr.innerHTML = `
             <td>${record.username}</td>
-            <td>${betSuitDisplay}</td>
-            <td>${translateSuit(record.result_suit)}</td>
+            <td>${gameType}</td>
+            <td>${betDisplay}</td>
+            <td>${resultDisplay}</td>
             <td>${record.amount}</td>
             <td class="${isWin ? 'win' : 'lose'}">${winLoseText}</td>
             <td>${record.win_amount}</td>
