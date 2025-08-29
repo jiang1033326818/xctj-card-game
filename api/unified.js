@@ -22,8 +22,11 @@ async function connectDB() {
       console.log("连接MongoDB数据库...");
       client = new MongoClient(process.env.MONGODB_URI);
       await client.connect();
-      db = client.db();
+      const mongoDb = client.db();
       console.log("MongoDB连接成功");
+
+      // 包装MongoDB为统一接口
+      db = createMongoWrapper(mongoDb);
       return db;
     } else {
       // 本地开发使用内存数据库
@@ -38,6 +41,39 @@ async function connectDB() {
     db = createMemoryDB();
     return db;
   }
+}
+
+// 包装MongoDB为统一接口
+function createMongoWrapper(mongoDb) {
+  return {
+    users: {
+      findOne: async query => {
+        return await mongoDb.collection("users").findOne(query);
+      },
+      find: async (query = {}, options = {}) => {
+        return await mongoDb.collection("users").find(query, options).toArray();
+      },
+      insertOne: async doc => {
+        return await mongoDb.collection("users").insertOne(doc);
+      },
+      updateOne: async (query, update) => {
+        return await mongoDb.collection("users").updateOne(query, update);
+      },
+    },
+    game_records: {
+      find: async (query = {}) => {
+        const records = await mongoDb
+          .collection("game_records")
+          .find(query)
+          .sort({ created_at: -1 })
+          .toArray();
+        return records;
+      },
+      insertOne: async doc => {
+        return await mongoDb.collection("game_records").insertOne(doc);
+      },
+    },
+  };
 }
 
 // 创建内存数据库模拟
