@@ -76,6 +76,41 @@ function createMongoWrapper(mongoDb) {
   };
 }
 
+// 初始化数据库（如果是空的MongoDB）
+async function initializeDatabase(database) {
+  try {
+    // 检查是否已有用户
+    const existingUsers = await database.users.find({});
+    if (existingUsers.length === 0) {
+      console.log("数据库为空，初始化默认用户...");
+
+      // 创建admin用户
+      const adminPassword = await bcrypt.hash("068162", 10);
+      await database.users.insertOne({
+        username: "admin",
+        password: adminPassword,
+        is_admin: true,
+        balance: 10000,
+        created_at: new Date(),
+      });
+
+      // 创建test用户
+      const testPassword = await bcrypt.hash("test123", 10);
+      await database.users.insertOne({
+        username: "test",
+        password: testPassword,
+        is_admin: false,
+        balance: 1000,
+        created_at: new Date(),
+      });
+
+      console.log("默认用户创建完成：admin (密码: 068162), test (密码: test123)");
+    }
+  } catch (error) {
+    console.error("初始化数据库失败:", error);
+  }
+}
+
 // 创建内存数据库模拟
 function createMemoryDB() {
   let memoryDatabase = {
