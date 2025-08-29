@@ -1,8 +1,8 @@
-const { connectToDatabase } = require("../db");
-const { getSessionFromRequest } = require("../session");
+const { connectToDatabase } = require("./db");
+const { getSessionFromRequest } = require("./session");
 const { ObjectId } = require("mongodb");
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "方法不允许" });
   }
@@ -57,10 +57,12 @@ export default async function handler(req, res) {
     // 计算赢得金额
     let winnings = 0;
     if (bets[result]) {
-      winnings = bets[result] * (payouts[result] + 1);
+      // 只返回赢得的部分，不包括本金
+      winnings = bets[result] * payouts[result];
     }
 
-    const newBalance = user.balance - totalBet + winnings;
+    // 计算新余额：原余额 - 总下注 + 赢得的金额 + 中奖的本金
+    const newBalance = user.balance - totalBet + winnings + (bets[result] || 0);
 
     // 更新用户余额
     await db

@@ -214,6 +214,106 @@ async function getUserGameRecords(username) {
   }
 }
 
+// 获取所有游戏记录（管理员用）
+async function getAllGameRecords() {
+  try {
+    const db = await connectToDatabase();
+    const records = await db
+      .collection(gameRecordsCollection)
+      .find({})
+      .sort({ created_at: -1 })
+      .toArray();
+    return { success: true, records };
+  } catch (error) {
+    console.error("获取所有游戏记录错误:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// 获取系统统计数据
+async function getHouseStats() {
+  try {
+    const db = await connectToDatabase();
+    
+    // 获取所有游戏记录
+    const records = await db
+      .collection(gameRecordsCollection)
+      .find({})
+      .toArray();
+    
+    if (records.length === 0) {
+      return {
+        success: true,
+        stats: {
+          totalGames: 0,
+          totalBets: 0,
+          totalPayouts: 0,
+          houseProfit: 0,
+          heartsCount: 0,
+          diamondsCount: 0,
+          clubsCount: 0,
+          spadesCount: 0,
+          jokerCount: 0
+        }
+      };
+    }
+    
+    // 计算统计数据
+    let totalGames = records.length;
+    let totalBets = 0;
+    let totalPayouts = 0;
+    let heartsCount = 0;
+    let diamondsCount = 0;
+    let clubsCount = 0;
+    let spadesCount = 0;
+    let jokerCount = 0;
+    
+    records.forEach(record => {
+      totalBets += record.amount || 0;
+      totalPayouts += record.win_amount || 0;
+      
+      // 统计各花色出现次数
+      switch (record.result_suit) {
+        case 'hearts':
+          heartsCount++;
+          break;
+        case 'diamonds':
+          diamondsCount++;
+          break;
+        case 'clubs':
+          clubsCount++;
+          break;
+        case 'spades':
+          spadesCount++;
+          break;
+        case 'joker':
+          jokerCount++;
+          break;
+      }
+    });
+    
+    const houseProfit = totalBets - totalPayouts;
+    
+    return {
+      success: true,
+      stats: {
+        totalGames,
+        totalBets,
+        totalPayouts,
+        houseProfit,
+        heartsCount,
+        diamondsCount,
+        clubsCount,
+        spadesCount,
+        jokerCount
+      }
+    };
+  } catch (error) {
+    console.error("获取系统统计错误:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 // 获取所有用户
 async function getAllUsers() {
   try {
@@ -268,9 +368,21 @@ function weightedRandom(items, weights) {
 async function handleGame(req, res) {
   try {
     // 验证请求体
-    const { bet_suit, amount } = req.body;
-    if (!bet_suit || !amount || isNaN(amount) || amount <= 0) {
+    const { bets } = req.body;
+    if (!bets || typeof bets !== 'object') {
       return res.status(400).json({ error: "无效的请求参数" });
+    }
+    
+    // 计算总押注金额
+    let totalAmount = 0;
+    for (const suit in bets) {
+      if (bets[suit] > 0) {
+        totalAmount += bets[suit];
+      }
+    }
+    
+    if (totalAmount <= 0) {
+      return res.status(400).json({ error: "押注金额必须大于0" });
     }
 
     // 获取用户信息
@@ -280,38 +392,53 @@ async function handleGame(req, res) {
     }
 
     // 检查余额
-    if (user.balance < amount) {
+    if (user.balance < totalAmount) {
       return res.status(400).json({ error: "余额不足" });
     }
 
-    // 随机生成结果
+    // 随机生成结果，调整概率以增加庄家优势
     const suits = ["hearts", "diamonds", "clubs", "spades", "joker"];
-    const weights = [0.225, 0.225, 0.225, 0.225, 0.1]; // 小丑出现概率较低
+    // 调整权重，降低玩家押注较多花色的出现概率
+    let weights = [0.2, 0.2, 0.2, 0.2, 0.2]; // 基础权重
+    
+    // 根据押注情况调整权重，押注越多的花色出现概率越低
+    const totalBetAmount = totalAmount;
+    suits.forEach((suit, index) => {
+      if (bets[suit] > 0) {
+        const betRatio = bets[suit] / totalBetAmount;
+        weights[index] = weights[index] * (1 - betRatio * 0.3); // 降低押注花色的权重
+      }
+    });
+    
+    // 小丑特殊处理，保持较低概率
+    weights[4] = 0.08; // 小丑固定8%概率
+    
     const result_suit = weightedRandom(suits, weights);
 
-    // 计算赢取金额
+    // 计算赢取金额 - 只计算中奖花色的赔付
     let win_amount = 0;
-    if (result_suit === bet_suit) {
+    if (bets[result_suit] > 0) {
       // 如果猜中
       if (result_suit === "joker") {
-        win_amount = amount * 10; // 小丑赔率10倍
+        win_amount = bets[result_suit] * 20; // 小丑赔率20倍
       } else {
-        win_amount = amount * 4; // 其他花色赔率4倍
+        win_amount = bets[result_suit] * 3.5; // 其他花色赔率3.5倍
       }
     }
 
-    // 更新余额
-    const new_balance = user.balance - amount + win_amount;
+    // 更新余额：扣除所有押注，加上赢取金额
+    const new_balance = user.balance - totalAmount + win_amount;
     await updateUserBalance(user.username, new_balance);
 
     // 记录游戏结果
-    await recordGame(user.username, bet_suit, result_suit, amount, win_amount);
+    await recordGame(user.username, JSON.stringify(bets), result_suit, totalAmount, win_amount);
 
     // 返回结果
     res.json({
       result_suit,
       win_amount,
-      new_balance
+      new_balance,
+      total_bet: totalAmount
     });
   } catch (error) {
     console.error("游戏错误:", error);
@@ -414,7 +541,24 @@ module.exports = async (req, res) => {
       if (!user) {
         return res.status(401).json({ error: "未授权" });
       }
-      const result = await getUserGameRecords(user.username);
+      
+      // 如果是管理员，返回所有记录；否则只返回用户自己的记录
+      let result;
+      if (user.is_admin) {
+        result = await getAllGameRecords();
+      } else {
+        result = await getUserGameRecords(user.username);
+      }
+      return res.json(result);
+    }
+
+    // 管理员：获取系统统计
+    if (path === "/api/house_stats" && req.method === "GET") {
+      const user = await getUserFromRequest(req);
+      if (!user || !user.is_admin) {
+        return res.status(401).json({ error: "未授权" });
+      }
+      const result = await getHouseStats();
       return res.json(result);
     }
 

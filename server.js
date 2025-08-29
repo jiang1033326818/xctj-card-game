@@ -1,63 +1,95 @@
-// 本地测试服务器
-// 用于绕过Vercel的限制，在本地测试API
-
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
+const http = require("http");
+const fs = require("fs");
 const path = require("path");
+const unifiedHandler = require("./api/unified");
 
-// 创建Express应用
-const app = express();
-const port = process.env.PORT || 3000;
+const server = http.createServer((req, res) => {
+  // 处理API请求
+  if (req.url.startsWith("/api/")) {
+    // 解析请求体
+    let body = "";
+    req.on("data", chunk => {
+      body += chunk.toString();
+    });
 
-// 中间件
-app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static("public"));
+    req.on("end", () => {
+      try {
+        if (
+          body &&
+          (req.headers["content-type"] || "").includes("application/json")
+        ) {
+          req.body = JSON.parse(body);
+        } else {
+          req.body = {};
+        }
 
-// 最小化API端点
-app.get("/api/minimal", (req, res) => {
-  res.json({
-    success: true,
-    message: "最小化API响应成功",
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 最小化登录API端点
-app.post("/api/minimal-login", (req, res) => {
-  const { username, password } = req.body;
-
-  // 简单的用户验证
-  if (username === "admin" && password === "068162") {
-    res.json({
-      success: true,
-      token: "test-token-123",
-      user: {
-        username: "admin",
-        role: "admin",
-        balance: 10000
+        // 调用统一处理函数
+        unifiedHandler(req, res);
+      } catch (error) {
+        console.error("处理请求错误:", error);
+        res.statusCode = 500;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "服务器错误" }));
       }
     });
-  } else {
-    res.status(401).json({
-      success: false,
-      error: "用户名或密码错误"
-    });
-  }
-});
 
-// 简化Ping API端点
-app.get("/api/simple-ping", (req, res) => {
-  res.json({
-    status: "success",
-    message: "API连接正常",
-    timestamp: new Date().toISOString()
+    return;
+  }
+
+  // 处理静态文件
+  let filePath = "." + req.url;
+  if (filePath === "./") {
+    filePath = "./public/game.html";
+  } else if (!filePath.includes(".")) {
+    filePath = `./public${req.url}.html`;
+  } else {
+    filePath = `./public${req.url}`;
+  }
+
+  const extname = String(path.extname(filePath)).toLowerCase();
+  const contentType =
+    {
+      ".html": "text/html",
+      ".js": "text/javascript",
+      ".css": "text/css",
+      ".json": "application/json",
+      ".png": "image/png",
+      ".jpg": "image/jpg",
+      ".gif": "image/gif",
+      ".svg": "image/svg+xml",
+      ".wav": "audio/wav",
+      ".mp3": "audio/mpeg",
+      ".mp4": "video/mp4",
+      ".woff": "application/font-woff",
+      ".ttf": "application/font-ttf",
+      ".eot": "application/vnd.ms-fontobject",
+      ".otf": "application/font-otf",
+      ".wasm": "application/wasm"
+    }[extname] || "application/octet-stream";
+
+  fs.readFile(filePath, (error, content) => {
+    if (error) {
+      if (error.code === "ENOENT") {
+        // 文件不存在
+        fs.readFile("./public/404.html", (error, content) => {
+          res.writeHead(404, { "Content-Type": "text/html" });
+          res.end(content, "utf-8");
+        });
+      } else {
+        // 服务器错误
+        res.writeHead(500);
+        res.end(`服务器错误: ${error.code}`);
+      }
+    } else {
+      // 成功
+      res.writeHead(200, { "Content-Type": contentType });
+      res.end(content, "utf-8");
+    }
   });
 });
 
-// 启动服务器
-app.listen(port, () => {
-  console.log(`本地测试服务器运行在 http://localhost:${port}`);
-  console.log(`访问 http://localhost:${port}/minimal-test.html 进行测试`);
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+  console.log(`服务器运行在 http://localhost:${PORT}`);
 });

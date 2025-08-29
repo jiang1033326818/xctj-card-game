@@ -564,6 +564,7 @@
           const createdAt = record.created_at ? new Date(record.created_at).toLocaleString() : '未知';
           
           // 翻译花色
+          // 翻译花色
           const translateSuit = suit => {
             switch (suit) {
               case 'hearts': return '红桃';
@@ -575,12 +576,36 @@
             }
           };
           
+          // 解析押注花色 - 可能是JSON字符串或单个花色
+          let betSuitDisplay = '';
+          try {
+            if (record.bet_suit && record.bet_suit.startsWith('{')) {
+              // JSON格式的多花色押注
+              const bets = JSON.parse(record.bet_suit);
+              const betEntries = Object.entries(bets)
+                .filter(([_, amount]) => amount > 0)
+                .map(([suit, amount]) => `${translateSuit(suit)}:${amount}`)
+                .join(', ');
+              betSuitDisplay = betEntries || translateSuit(record.bet_suit);
+            } else {
+              // 单个花色
+              betSuitDisplay = translateSuit(record.bet_suit);
+            }
+          } catch (e) {
+            betSuitDisplay = translateSuit(record.bet_suit);
+          }
+          
+          // 计算输赢状态
+          const netResult = (record.win_amount || 0) - (record.amount || 0);
+          const isWin = netResult > 0;
+          const winLoseText = isWin ? `赢 ${netResult}` : `输 ${Math.abs(netResult)}`;
+          
           tr.innerHTML = `
             <td>${record.username}</td>
-            <td>${translateSuit(record.bet_suit)}</td>
+            <td>${betSuitDisplay}</td>
             <td>${translateSuit(record.result_suit)}</td>
             <td>${record.amount}</td>
-            <td class="${record.win ? 'win' : 'lose'}">${record.win ? '赢' : '输'}</td>
+            <td class="${isWin ? 'win' : 'lose'}">${winLoseText}</td>
             <td>${record.win_amount}</td>
             <td>${createdAt}</td>
           `;

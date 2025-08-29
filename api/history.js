@@ -1,8 +1,8 @@
-const { connectToDatabase } = require("../db");
-const { getSessionFromRequest } = require("../session");
+const { connectToDatabase } = require("./db");
+const { getSessionFromRequest } = require("./session");
 const { ObjectId } = require("mongodb");
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "方法不允许" });
   }
