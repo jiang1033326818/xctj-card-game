@@ -438,22 +438,23 @@ async function handleAnimalsGame(req, res) {
       return res.end(JSON.stringify({ error: "余额不足" }));
     }
 
-    // 飞禽走兽游戏逻辑
+    // 飞禽走兽游戏逻辑 - 重新平衡概率确保庄家优势
     const animals = [
-      { name: "lion", multiplier: 12, weight: 12.0 }, // 狮子 12% (3个块)
-      { name: "panda", multiplier: 8, weight: 12.0 }, // 熊猫 12% (3个块)
-      { name: "eagle", multiplier: 15, weight: 12.0 }, // 老鹰 12% (3个块)
-      { name: "monkey", multiplier: 6, weight: 12.0 }, // 猴子 12% (3个块)
-      { name: "rabbit", multiplier: 4, weight: 12.0 }, // 兔子 12% (3个块)
-      { name: "peacock", multiplier: 10, weight: 12.0 }, // 孔雀 12% (3个块)
-      { name: "pigeon", multiplier: 3, weight: 12.0 }, // 鸽子 12% (3个块)
-      { name: "swallow", multiplier: 5, weight: 12.0 }, // 燕子 12% (3个块)
-      { name: "gold_shark", multiplier: 100, weight: 2.0 }, // 金鲨 2% (1个块)
-      { name: "silver_shark", multiplier: 24, weight: 2.0 }, // 银鲨 2% (1个块)
+      { name: "lion", multiplier: 12, weight: 7.1 },     // 狮子 7.1% (期望: 0.071×12≈0.85)
+      { name: "panda", multiplier: 8, weight: 10.6 },    // 熊猫 10.6% (期望: 0.106×8≈0.85)
+      { name: "eagle", multiplier: 15, weight: 5.7 },    // 老鹰 5.7% (期望: 0.057×15≈0.85)
+      { name: "monkey", multiplier: 6, weight: 14.2 },   // 猴子 14.2% (期望: 0.142×6≈0.85)
+      { name: "rabbit", multiplier: 4, weight: 21.2 },   // 兔子 21.2% (期望: 0.212×4≈0.85)
+      { name: "peacock", multiplier: 10, weight: 8.5 },  // 孔雀 8.5% (期望: 0.085×10≈0.85)
+      { name: "pigeon", multiplier: 3, weight: 28.3 },   // 鸽子 28.3% (期望: 0.283×3≈0.85)
+      { name: "swallow", multiplier: 5, weight: 17.0 },  // 燕子 17.0% (期望: 0.17×5≈0.85)
+      { name: "gold_shark", multiplier: 100, weight: 0.8 }, // 金鲨 0.8% (期望: 0.008×100=0.8)
+      { name: "silver_shark", multiplier: 24, weight: 3.5 }, // 银鲨 3.5% (期望: 0.035×24≈0.84)
     ];
 
-    // 选择结果动物
-    const random = Math.random() * 100;
+    // 选择结果动物 - 使用重新平衡的概率
+    const totalWeight = animals.reduce((sum, animal) => sum + animal.weight, 0);
+    const random = Math.random() * totalWeight;
     let cumulative = 0;
     let result_animal = animals[0].name;
 
