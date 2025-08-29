@@ -1,3 +1,22 @@
-api/game
+# 排除不需要部署的文件
 node_modules
 .git
+.gitignore
+README.md
+LICENSE
+*.log
+
+# 排除API文件夹中的非入口文件
+api/game
+api/admin
+
+# 排除前端源代码
+frontend/node_modules
+frontend/src
+frontend/.gitignore
+frontend/README.md
+frontend/package-lock.json
+frontend/yarn.lock
+
+# 只保留前端构建后的文件
+!frontend/build

@@ -1,23 +1,41 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "api/unified.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    }
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    { "src": "public/**/*", "use": "@vercel/static" },
+    { "src": "frontend/build/**/*", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/super-simple-login", "dest": "/api/super-simple-login.js" },
+    { "src": "/api/echo", "dest": "/api/echo.js" },
+    { "src": "/api/minimal-login-raw", "dest": "/api/minimal-login-raw.js" },
+    { "src": "/api/login-simple", "dest": "/api/login-simple.js" },
+    { "src": "/api/login", "dest": "/api/login.js" },
+    { "src": "/api/simple-login", "dest": "/api/simple-login.js" },
+    { "src": "/api/minimal-login", "dest": "/api/minimal-login.js" },
+    { "src": "/api/user", "dest": "/api/user.js" },
+    { "src": "/api/ping", "dest": "/api/ping.js" },
+    { "src": "/api/simple-ping", "dest": "/api/simple-ping.js" },
+    { "src": "/api/minimal", "dest": "/api/minimal.js" },
+    { "src": "/api/headers", "dest": "/api/headers.js" },
+    { "src": "/api/(.*)", "dest": "/api/unified.js" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ],
+  "headers": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/unified.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Accept, Authorization"
+        },
+        { "key": "Access-Control-Max-Age", "value": "86400" }
+      ]
     }
   ]
 }

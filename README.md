@@ -1,65 +1,92 @@
-# 喜从天降卡牌游戏
+# XCTJ 卡牌游戏
 
-一个简单的卡牌游戏，使用MongoDB作为数据库，部署在Vercel上。
+## 项目说明
 
-## 项目结构
+这是一个简单的卡牌游戏应用，包含前端和后端代码。
 
-- `/api/unified.js` - 统一API处理所有后端请求
-- `/public/` - 前端静态文件
-  - `index.html` - 首页
-  - `login.html` - 登录/注册页面
-  - `game.html` - 游戏页面
-  - `admin.html` - 管理员页面
+## 解决 431 错误问题
 
-## 功能特性
+在部署到 Vercel 时，可能会遇到 431 Request Header Fields Too Large 错误。这是因为请求头过大导致的。我们提供了多种解决方案：
 
-- 用户认证（登录/注册）
-- 角色区分（管理员/普通用户）
-- 卡牌游戏（猜花色）
-- 游戏记录
-- 管理员统计面板
+### 方案一：使用简化 API
 
-## 技术栈
+我们提供了简化版的 API 端点，减少请求头处理：
 
-- 前端：原生HTML/CSS/JavaScript
-- 后端：Node.js
-- 数据库：MongoDB Atlas
-- 部署：Vercel
+- `/api/simple-ping` - 简化版 ping 端点
+- `/api/simple-login` - 简化版登录端点
+- `/api/minimal` - 最小化 API 端点
+- `/api/minimal-login` - 最小化登录 API 端点
 
-## 部署指南
+### 方案二：使用本地测试服务器
 
-1. 确保已设置MongoDB连接字符串环境变量：
-   - 在Vercel项目设置中添加环境变量：`MONGODB_URI`
-
-2. 部署到Vercel：
-   ```bash
-   vercel --prod
-   ```
-
-## 本地开发
+我们提供了本地测试服务器，可以绕过 Vercel 的限制：
 
 1. 安装依赖：
-   ```bash
+   ```
    npm install
    ```
 
-2. 设置环境变量：
-   创建`.env.local`文件并添加：
+2. 启动服务器：
    ```
-   MONGODB_URI=你的MongoDB连接字符串
+   npm start
    ```
 
-3. 运行开发服务器：
-   ```bash
+3. 访问测试页面：
+   ```
+   http://localhost:3000/minimal-test.html
+   ```
+
+### 方案三：使用 XMLHttpRequest 代替 fetch
+
+在前端代码中，使用 XMLHttpRequest 代替 fetch，可以减少请求头大小：
+
+```javascript
+const xhr = new XMLHttpRequest();
+xhr.open('GET', '/api/minimal', true);
+xhr.onload = function() {
+  if (xhr.status >= 200 && xhr.status < 300) {
+    const data = JSON.parse(xhr.responseText);
+    console.log(data);
+  }
+};
+xhr.send();
+```
+
+## 项目结构
+
+- `api/` - 后端 API 代码
+- `public/` - 前端静态文件
+- `frontend/` - React 前端代码
+- `server.js` - 本地测试服务器
+- `vercel.json` - Vercel 部署配置
+
+## 开发指南
+
+### 本地开发
+
+1. 安装依赖：
+   ```
+   npm install
+   ```
+
+2. 启动服务器：
+   ```
    npm run dev
    ```
 
-## 默认管理员账户
+3. 访问应用：
+   ```
+   http://localhost:3000
+   ```
 
-- 用户名：admin
-- 密码：068162
+### 部署到 Vercel
 
-## 注意事项
+1. 将代码推送到 GitHub 仓库
 
-- 由于Vercel Hobby计划限制，所有API都已合并到一个统一的端点
-- 使用`.vercelignore`文件忽略不必要的API文件，以避免超出函数限制
+2. 在 Vercel 中导入项目
+
+3. 设置环境变量：
+   - `MONGODB_URI` - MongoDB 连接字符串
+   - `JWT_SECRET` - JWT 密钥
+
+4. 部署项目

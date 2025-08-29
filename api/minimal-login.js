@@ -1,4 +1,6 @@
-// 导入所需模块
+// 最小化登录API端点
+// 不处理任何请求头，只处理必要的登录逻辑
+
 const { MongoClient } = require("mongodb");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -65,10 +67,11 @@ async function loginUser(username, password) {
 
 // 登录API处理函数
 module.exports = async (req, res) => {
-  // 设置CORS头
+  // 设置响应头
+  res.setHeader("Content-Type", "application/json");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   // 处理OPTIONS请求
   if (req.method === "OPTIONS") {
