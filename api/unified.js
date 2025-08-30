@@ -849,6 +849,41 @@ module.exports = async (req, res) => {
         stats.xctjStats.houseProfit = stats.xctjStats.totalBets - stats.xctjStats.totalPayouts;
         stats.animalsStats.houseProfit = stats.animalsStats.totalBets - stats.animalsStats.totalPayouts;
 
+        // 计算最赚钱游戏
+        const gameComparison = [
+          {
+            name: "喜从天降",
+            key: "xctj",
+            profit: stats.xctjStats.houseProfit,
+            games: stats.xctjStats.totalGames,
+            bets: stats.xctjStats.totalBets,
+            avgProfitPerGame: stats.xctjStats.totalGames > 0 ? (stats.xctjStats.houseProfit / stats.xctjStats.totalGames).toFixed(2) : 0
+          },
+          {
+            name: "飞禽走兽", 
+            key: "animals",
+            profit: stats.animalsStats.houseProfit,
+            games: stats.animalsStats.totalGames,
+            bets: stats.animalsStats.totalBets,
+            avgProfitPerGame: stats.animalsStats.totalGames > 0 ? (stats.animalsStats.houseProfit / stats.animalsStats.totalGames).toFixed(2) : 0
+          }
+        ];
+        
+        // 按总盈利排序找出最赚钱游戏
+        const mostProfitableGame = gameComparison.reduce((prev, current) => {
+          return (current.profit > prev.profit) ? current : prev;
+        });
+        
+        // 按场均盈利排序找出效率最高游戏
+        const mostEfficientGame = gameComparison.reduce((prev, current) => {
+          return (parseFloat(current.avgProfitPerGame) > parseFloat(prev.avgProfitPerGame)) ? current : prev;
+        });
+        
+        // 添加最赚钱游戏信息到统计中
+        stats.mostProfitableGame = mostProfitableGame;
+        stats.mostEfficientGame = mostEfficientGame;
+        stats.gameComparison = gameComparison;
+
         res.setHeader("Content-Type", "application/json");
         return res.end(JSON.stringify({ success: true, stats }));
       } catch (error) {

@@ -206,6 +206,22 @@
     .modal-footer {
       text-align: right;
     }
+    
+    /* 最赚钱游戏特殊样式 */
+    .stat-card.winner {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+    
+    .stat-card.winner .stat-label {
+      color: #E8F5E9;
+    }
+    
+    .stat-card.winner .stat-value {
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -239,6 +255,38 @@
         <div class="stat-card">
           <div class="stat-label">庄家盈利</div>
           <div id="house-profit" class="stat-value">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">💰 最赚钱游戏</div>
+          <div id="most-profitable-game" class="stat-value">加载中...</div>
+          <div class="stat-label" id="most-profitable-profit" style="font-size: 12px; color: #4CAF50;"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">🚀 效率最高游戏</div>
+          <div id="most-efficient-game" class="stat-value">加载中...</div>
+          <div class="stat-label" id="most-efficient-avg" style="font-size: 12px; color: #FF9800;">平均每局盈利</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>🏆 游戏盈利对比分析</h2>
+      <div id="game-comparison-container" class="stats-grid" style="display: none;">
+        <div class="stat-card">
+          <div class="stat-label">🎆 喜从天降</div>
+          <div id="xctj-comparison-profit" class="stat-value">0</div>
+          <div class="stat-label" style="font-size: 12px; margin-top: 5px;">
+            <span id="xctj-comparison-games">0局</span> | 
+            <span id="xctj-comparison-avg">平均: 0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">🦁 飞禽走兽</div>
+          <div id="animals-comparison-profit" class="stat-value">0</div>
+          <div class="stat-label" style="font-size: 12px; margin-top: 5px;">
+            <span id="animals-comparison-games">0局</span> | 
+            <span id="animals-comparison-avg">平均: 0</span>
+          </div>
         </div>
       </div>
     </div>
@@ -521,6 +569,52 @@
         document.getElementById('total-payouts').textContent = stats.totalPayouts;
         document.getElementById('house-profit').textContent = stats.houseProfit;
         
+        // 显示最赚钱游戏信息
+        if (stats.mostProfitableGame) {
+          document.getElementById('most-profitable-game').textContent = stats.mostProfitableGame.name;
+          document.getElementById('most-profitable-profit').textContent = `盈利: ${stats.mostProfitableGame.profit} (共${stats.mostProfitableGame.games}局)`;
+        }
+        
+        // 显示效率最高游戏信息
+        if (stats.mostEfficientGame) {
+          document.getElementById('most-efficient-game').textContent = stats.mostEfficientGame.name;
+          document.getElementById('most-efficient-avg').textContent = `平均每局: ${stats.mostEfficientGame.avgProfitPerGame}`;
+        }
+        
+        // 显示游戏对比数据
+        if (stats.gameComparison) {
+          const xctjData = stats.gameComparison.find(game => game.key === 'xctj');
+          const animalsData = stats.gameComparison.find(game => game.key === 'animals');
+          
+          // 重置所有样式
+          document.querySelector('#xctj-comparison-profit').parentElement.classList.remove('winner');
+          document.querySelector('#animals-comparison-profit').parentElement.classList.remove('winner');
+          
+          if (xctjData) {
+            document.getElementById('xctj-comparison-profit').textContent = xctjData.profit;
+            document.getElementById('xctj-comparison-games').textContent = `${xctjData.games}局`;
+            document.getElementById('xctj-comparison-avg').textContent = `平均: ${xctjData.avgProfitPerGame}`;
+          }
+          
+          if (animalsData) {
+            document.getElementById('animals-comparison-profit').textContent = animalsData.profit;
+            document.getElementById('animals-comparison-games').textContent = `${animalsData.games}局`;
+            document.getElementById('animals-comparison-avg').textContent = `平均: ${animalsData.avgProfitPerGame}`;
+          }
+          
+          // 为最赚钱游戏添加特殊样式
+          if (stats.mostProfitableGame) {
+            if (stats.mostProfitableGame.key === 'xctj') {
+              document.querySelector('#xctj-comparison-profit').parentElement.classList.add('winner');
+            } else if (stats.mostProfitableGame.key === 'animals') {
+              document.querySelector('#animals-comparison-profit').parentElement.classList.add('winner');
+            }
+          }
+          
+          // 显示游戏对比容器
+          document.getElementById('game-comparison-container').style.display = 'grid';
+        }
+        
         // 显示喜从天降游戏统计
         document.getElementById('xctj-games').textContent = stats.xctjStats.totalGames;
         document.getElementById('xctj-bets').textContent = stats.xctjStats.totalBets;
@@ -551,6 +645,7 @@
         // 隐藏加载提示，显示统计数据
         document.getElementById('stats-loading').style.display = 'none';
         document.getElementById('stats-container').style.display = 'grid';
+        document.getElementById('game-comparison-container').style.display = 'grid';
         document.getElementById('xctj-stats-container').style.display = 'grid';
         document.getElementById('animals-stats-container').style.display = 'grid';
       } catch (error) {
