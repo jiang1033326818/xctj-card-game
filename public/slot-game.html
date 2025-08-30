@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多福多财角子机 - XCTJ卡牌游戏</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+            background: linear-gradient(135deg, #8B0000 0%, #DC143C 50%, #FFD700 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: linear-gradient(45deg, #FF6B6B, #EE5A24);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4);
+        }
+
+        .game-title {
+            color: #FFD700;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            color: white;
+        }
+
+        .balance {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .slot-machine {
+            background: linear-gradient(145deg, #8B4513, #D2691E);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 5px solid #FFD700;
+        }
+
+        .reels-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            background: #000;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .reel {
+            background: linear-gradient(145deg, #2C2C2C, #1C1C1C);
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            border: 2px solid #FFD700;
+        }
+
+        .symbol {
+            background: #FFF;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #8B0000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            border: 2px solid #FFD700;
+        }
+
+        .symbol.winning {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            animation: glow 1s ease-in-out infinite alternate;
+            color: #8B0000;
+            font-weight: bold;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 5px #FFD700; }
+            to { box-shadow: 0 0 20px #FFD700, 0 0 30px #FFD700; }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bet-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .bet-label {
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        .bet-input {
+            background: #FFF;
+            border: 2px solid #FFD700;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            width: 120px;
+            color: #8B0000;
+        }
+
+        .bet-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .bet-btn {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            color: #8B0000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .bet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.4);
+        }
+
+        .spin-btn {
+            background: linear-gradient(45deg, #FF0000, #8B0000);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(139, 0, 0, 0.4);
+        }
+
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(139, 0, 0, 0.6);
+        }
+
+        .spin-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .info-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            border: 2px solid #FFD700;
+        }
+
+        .info-card h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFF;
+        }
+
+        .jackpot-panel {
+            background: linear-gradient(45deg, #8B0000, #DC143C);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 3px solid #FFD700;
+        }
+
+        .jackpot-title {
+            color: #FFD700;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .jackpot-levels {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .jackpot-level {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #FFD700;
+        }
+
+        .jackpot-level h4 {
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+
+        .jackpot-amount {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .wins-display {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #FFD700;
+        }
+
+        .wins-title {
+            color: #FFD700;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .win-line {
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .free-spins-indicator {
+            background: linear-gradient(45deg, #9B59B6, #8E44AD);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 2px solid #FFD700;
+        }
+
+        .symbol-meanings {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            border: 2px solid #FFD700;
+        }
+
+        .symbol-meanings h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+        }
+
+        .symbol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .symbol-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .reels-container {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 5px;
+                padding: 10px;
+            }
+
+            .symbol {
+                font-size: 18px;
+                padding: 10px 5px;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .jackpot-levels {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .info-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="header-left">
+                <button class="back-btn" onclick="goHome()">← 返回主页</button>
+                <div class="game-title">🎰 多福多财角子机</div>
+            </div>
+            <div class="user-info">
+                <span class="username">用户: <span id="username">加载中...</span></span>
+                <span class="balance">余额: ¥<span id="balance">0</span></span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            正在加载游戏...
+        </div>
+
+        <div id="game-content" class="hidden">
+            <!-- Jackpot累积奖池 -->
+            <div class="jackpot-panel">
+                <div class="jackpot-title">🏆 聚宝盆累积奖池 🏆</div>
+                <div class="jackpot-levels">
+                    <div class="jackpot-level">
+                        <h4>Mini 小奖</h4>
+                        <div class="jackpot-amount">100-500</div>
+                    </div>
+                    <div class="jackpot-level">
+                        <h4>Minor 中奖</h4>
+                        <div class="jackpot-amount">500-2000</div>
+                    </div>
+                    <div class="jackpot-level">
+                        <h4>Major 大奖</h4>
+                        <div class="jackpot-amount">2000-10000</div>
+                    </div>
+                    <div class="jackpot-level">
+                        <h4>Grand 巨奖</h4>
+                        <div class="jackpot-amount">10000-50000</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 免费旋转指示器 -->
+            <div id="free-spins-indicator" class="free-spins-indicator hidden">
+                🎊 免费旋转: <span id="free-spins-count">0</span> 次剩余 🎊
+            </div>
+
+            <!-- 角子机主体 -->
+            <div class="slot-machine">
+                <div class="reels-container" id="reels-container">
+                    <div class="reel">
+                        <div class="symbol" id="symbol-0-0">🎰</div>
+                        <div class="symbol" id="symbol-0-1">🎰</div>
+                        <div class="symbol" id="symbol-0-2">🎰</div>
+                    </div>
+                    <div class="reel">
+                        <div class="symbol" id="symbol-1-0">🎰</div>
+                        <div class="symbol" id="symbol-1-1">🎰</div>
+                        <div class="symbol" id="symbol-1-2">🎰</div>
+                    </div>
+                    <div class="reel">
+                        <div class="symbol" id="symbol-2-0">🎰</div>
+                        <div class="symbol" id="symbol-2-1">🎰</div>
+                        <div class="symbol" id="symbol-2-2">🎰</div>
+                    </div>
+                    <div class="reel">
+                        <div class="symbol" id="symbol-3-0">🎰</div>
+                        <div class="symbol" id="symbol-3-1">🎰</div>
+                        <div class="symbol" id="symbol-3-2">🎰</div>
+                    </div>
+                    <div class="reel">
+                        <div class="symbol" id="symbol-4-0">🎰</div>
+                        <div class="symbol" id="symbol-4-1">🎰</div>
+                        <div class="symbol" id="symbol-4-2">🎰</div>
+                    </div>
+                </div>
+
+                <!-- 游戏控制 -->
+                <div class="controls">
+                    <div class="bet-controls">
+                        <span class="bet-label">投注金额:</span>
+                        <input type="number" id="bet-amount" class="bet-input" value="50" min="10" max="1000" step="10">
+                        <div class="bet-buttons">
+                            <button class="bet-btn" onclick="setBet(10)">10</button>
+                            <button class="bet-btn" onclick="setBet(50)">50</button>
+                            <button class="bet-btn" onclick="setBet(100)">100</button>
+                            <button class="bet-btn" onclick="setBet(500)">500</button>
+                            <button class="bet-btn" onclick="maxBet()">最大</button>
+                        </div>
+                    </div>
+                    <button id="spin-btn" class="spin-btn" onclick="spin()">🎰 旋转 🎰</button>
+                </div>
+            </div>
+
+            <!-- 游戏信息面板 -->
+            <div class="info-panel">
+                <div class="info-card">
+                    <h3>🎯 本次投注</h3>
+                    <div class="info-value" id="current-bet">50</div>
+                </div>
+                <div class="info-card">
+                    <h3>💰 本次赢奖</h3>
+                    <div class="info-value" id="current-win">0</div>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ 连线数</h3>
+                    <div class="info-value" id="paylines-hit">0</div>
+                </div>
+                <div class="info-card">
+                    <h3>🎊 Scatter</h3>
+                    <div class="info-value" id="scatter-count">0</div>
+                </div>
+            </div>
+
+            <!-- 中奖线显示 -->
+            <div id="wins-display" class="wins-display hidden">
+                <div class="wins-title">🏆 中奖线详情</div>
+                <div id="wins-list"></div>
+            </div>
+
+            <!-- 符号说明 -->
+            <div class="symbol-meanings">
+                <h3>🎰 符号说明</h3>
+                <div class="symbol-grid">
+                    <div class="symbol-item">
+                        <span>10, J, Q, K, A</span>
+                        <span>基础符号</span>
+                    </div>
+                    <div class="symbol-item">
+                        <span>💰 金币</span>
+                        <span>中等奖励</span>
+                    </div>
+                    <div class="symbol-item">
+                        <span>🧧 金元宝</span>
+                        <span>高等奖励</span>
+                    </div>
+                    <div class="symbol-item">
+                        <span>🏮 灯笼</span>
+                        <span>超高奖励</span>
+                    </div>
+                    <div class="symbol-item">
+                        <span>🐉 龙</span>
+                        <span>极高奖励</span>
+                    </div>
+                    <div class="symbol-item">
+                        <span>福 Wild</span>
+                        <span>万能符号</span>
+                    </div>
+                    <div class="symbol-item">
+                        <span>囍 Scatter</span>
+                        <span>免费旋转</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let isSpinning = false;
+        let freeSpinsRemaining = 0;
+
+        // 符号映射
+        const symbolMap = {
+            'card_10': '10',
+            'card_j': 'J',
+            'card_q': 'Q', 
+            'card_k': 'K',
+            'card_a': 'A',
+            'coin': '💰',
+            'ingot': '🧧',
+            'lantern': '🏮',
+            'dragon': '🐉',
+            'wild': '福',
+            'scatter': '囍'
+        };
+
+        // 页面加载时检查登录状态
+        window.addEventListener('load', async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                const response = await fetch('/api/user', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    currentUser = user;
+                    
+                    document.getElementById('username').textContent = user.username;
+                    document.getElementById('balance').textContent = user.balance;
+                    
+                    // 显示游戏内容
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('game-content').classList.remove('hidden');
+                } else {
+                    // 登录失效，跳转到登录页面
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('检查登录状态失败:', error);
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            }
+        });
+
+        // 设置投注金额
+        function setBet(amount) {
+            document.getElementById('bet-amount').value = amount;
+            document.getElementById('current-bet').textContent = amount;
+        }
+
+        // 最大投注
+        function maxBet() {
+            const maxAmount = Math.min(1000, currentUser.balance);
+            setBet(maxAmount);
+        }
+
+        // 旋转角子机
+        async function spin() {
+            if (isSpinning) return;
+            
+            const betAmount = parseInt(document.getElementById('bet-amount').value);
+            
+            // 验证投注金额
+            if (betAmount < 10 || betAmount > 1000) {
+                alert('投注金额必须在10-1000之间！');
+                return;
+            }
+
+            // 如果不是免费旋转，检查余额
+            if (freeSpinsRemaining <= 0 && currentUser.balance < betAmount) {
+                alert('余额不足！');
+                return;
+            }
+
+            isSpinning = true;
+            document.getElementById('spin-btn').disabled = true;
+            document.getElementById('spin-btn').textContent = '旋转中...';
+
+            // 清除之前的中奖效果
+            clearWinningEffects();
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/slot-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        bet_amount: betAmount,
+                        free_spins_remaining: freeSpinsRemaining
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // 显示转轴结果
+                    displayReels(result.reels);
+                    
+                    // 更新游戏信息
+                    updateGameInfo(result);
+                    
+                    // 显示中奖效果
+                    if (result.wins && result.wins.length > 0) {
+                        setTimeout(() => showWinningEffects(result.wins), 500);
+                    }
+                    
+                    // 更新余额
+                    currentUser.balance = result.new_balance;
+                    document.getElementById('balance').textContent = currentUser.balance;
+                    
+                    // 更新免费旋转
+                    freeSpinsRemaining = result.free_spins_remaining;
+                    updateFreeSpinsDisplay();
+                    
+                    // 显示Jackpot
+                    if (result.jackpot) {
+                        showJackpotWin(result.jackpot);
+                    }
+                    
+                } else {
+                    alert(result.error || '游戏出错，请重试！');
+                }
+            } catch (error) {
+                console.error('游戏请求失败:', error);
+                alert('网络错误，请重试！');
+            } finally {
+                isSpinning = false;
+                document.getElementById('spin-btn').disabled = false;
+                document.getElementById('spin-btn').textContent = freeSpinsRemaining > 0 ? '🆓 免费旋转 🆓' : '🎰 旋转 🎰';
+            }
+        }
+
+        // 显示转轴结果
+        function displayReels(reels) {
+            for (let reel = 0; reel < 5; reel++) {
+                for (let row = 0; row < 3; row++) {
+                    const symbolElement = document.getElementById(`symbol-${reel}-${row}`);
+                    const symbolId = reels[reel][row];
+                    symbolElement.textContent = symbolMap[symbolId] || symbolId;
+                    symbolElement.classList.remove('winning');
+                }
+            }
+        }
+
+        // 更新游戏信息
+        function updateGameInfo(result) {
+            document.getElementById('current-bet').textContent = result.bet_amount;
+            document.getElementById('current-win').textContent = result.total_win || 0;
+            document.getElementById('paylines-hit').textContent = result.wins ? result.wins.length : 0;
+            document.getElementById('scatter-count').textContent = result.scatter ? result.scatter.count : 0;
+            
+            // 显示中奖线详情
+            if (result.wins && result.wins.length > 0) {
+                showWinsDetails(result.wins);
+            } else {
+                document.getElementById('wins-display').classList.add('hidden');
+            }
+        }
+
+        // 显示中奖线详情
+        function showWinsDetails(wins) {
+            const winsList = document.getElementById('wins-list');
+            winsList.innerHTML = '';
+            
+            wins.forEach((win, index) => {
+                const winElement = document.createElement('div');
+                winElement.className = 'win-line';
+                winElement.innerHTML = `
+                    线 ${win.line + 1}: ${win.count}个 "${symbolMap[win.symbol] || win.symbol}" - 倍数 ${win.multiplier}x
+                `;
+                winsList.appendChild(winElement);
+            });
+            
+            document.getElementById('wins-display').classList.remove('hidden');
+        }
+
+        // 显示中奖效果
+        function showWinningEffects(wins) {
+            wins.forEach(win => {
+                win.positions.forEach(pos => {
+                    const symbolElement = document.getElementById(`symbol-${pos.reel}-${pos.row}`);
+                    symbolElement.classList.add('winning');
+                });
+            });
+        }
+
+        // 清除中奖效果
+        function clearWinningEffects() {
+            const symbols = document.querySelectorAll('.symbol');
+            symbols.forEach(symbol => {
+                symbol.classList.remove('winning');
+            });
+        }
+
+        // 更新免费旋转显示
+        function updateFreeSpinsDisplay() {
+            const indicator = document.getElementById('free-spins-indicator');
+            const countElement = document.getElementById('free-spins-count');
+            
+            if (freeSpinsRemaining > 0) {
+                countElement.textContent = freeSpinsRemaining;
+                indicator.classList.remove('hidden');
+                document.getElementById('spin-btn').textContent = '🆓 免费旋转 🆓';
+            } else {
+                indicator.classList.add('hidden');
+                document.getElementById('spin-btn').textContent = '🎰 旋转 🎰';
+            }
+        }
+
+        // 显示Jackpot中奖
+        function showJackpotWin(jackpot) {
+            alert(`🎊 恭喜！您触发了 ${jackpot.level.toUpperCase()} Jackpot！\n获得奖励：¥${jackpot.amount} 🎊`);
+        }
+
+        // 返回主页
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            }
+        }
+
+        // 投注金额输入监听
+        document.getElementById('bet-amount').addEventListener('input', function() {
+            const amount = parseInt(this.value) || 0;
+            document.getElementById('current-bet').textContent = amount;
+        });
+    </script>
+</body>
+</html>

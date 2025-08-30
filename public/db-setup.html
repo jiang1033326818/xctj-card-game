@@ -95,6 +95,13 @@
         <pre id="createResult">等待操作...</pre>
     </div>
     
+    <div class="section">
+        <h2>6. 初始化角子机游戏数据</h2>
+        <p>为多福多财角子机游戏创建必要的数据表和初始化数据</p>
+        <button id="initSlotData">初始化角子机数据</button>
+        <pre id="slotResult">等待操作...</pre>
+    </div>
+    
     <script>
         // API基础URL
         const API_BASE = '/api';
@@ -198,6 +205,28 @@
             
             const result = await callApi('/create-user', 'POST', { username, password });
             updateResult('createResult', result.data || result.text || result.error, result.ok);
+        });
+        
+        document.getElementById('initSlotData').addEventListener('click', async () => {
+            const resultElement = document.getElementById('slotResult');
+            resultElement.textContent = '正在初始化角子机数据...';
+            resultElement.className = '';
+            
+            // 这里只是示例，实际上由于使用内存数据库，不需要初始化
+            const mockResult = {
+                success: true,
+                message: '角子机游戏数据初始化成功！',
+                details: {
+                    slot_game_config: '游戏配置已设置',
+                    jackpot_pools: '累积奖池已初始化',
+                    symbol_definitions: '符号定义已设置',
+                    payline_rules: '243种连线方式已配置',
+                    free_spins_config: '免费旋转规则已设置'
+                },
+                note: '由于使用内存数据库模式，所有配置都在代码中定义，无需数据库操作'
+            };
+            
+            updateResult('slotResult', mockResult, true);
         });
     </script>
 </body>

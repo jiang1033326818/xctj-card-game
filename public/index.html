@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>游戏大厅 - 选择您喜欢的游戏</title>
+    <title>XCTJ卡牌游戏 - 游戏选择</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
         * {
             margin: 0;
@@ -12,36 +13,61 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 90%;
+            padding: 20px;
         }
 
         .header {
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            margin-bottom: 50px;
         }
 
         .logo {
-            color: white;
-            font-size: 2em;
+            font-size: 3rem;
+            color: #fff;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 1.2rem;
+            margin-bottom: 20px;
         }
 
         .user-info {
-            color: white;
-            font-weight: bold;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 15px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .welcome {
+            font-size: 1.1rem;
+        }
+
+        .balance {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ffd700;
         }
 
         .logout-btn {
@@ -49,167 +75,286 @@
             color: white;
             border: none;
             padding: 8px 16px;
-            border-radius: 20px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
 
         .logout-btn:hover {
             background: rgba(255,255,255,0.3);
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 50px 20px;
-        }
-
-        .game-selection {
-            background: rgba(255,255,255,0.95);
-            border-radius: 30px;
-            padding: 50px;
-            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.2);
-            text-align: center;
-            max-width: 800px;
-        }
-
-        .title {
-            font-size: 3em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 30px;
-            font-weight: bold;
-        }
-
-        .subtitle {
-            font-size: 1.2em;
-            color: #666;
-            margin-bottom: 50px;
+            transform: translateY(-2px);
         }
 
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 30px;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .game-card {
-            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
             border-radius: 20px;
-            padding: 30px 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            text-align: center;
+            color: white;
             cursor: pointer;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.3s ease;
+            opacity: 0;
         }
 
         .game-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            border-color: #667eea;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
+            animation: shimmer 0.8s ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
 
         .game-icon {
-            font-size: 4em;
+            font-size: 4rem;
             margin-bottom: 20px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block;
         }
 
         .game-title {
-            font-size: 1.5em;
-            color: #333;
-            margin-bottom: 10px;
+            font-size: 1.8rem;
             font-weight: bold;
+            margin-bottom: 15px;
         }
 
         .game-description {
-            color: #666;
+            color: rgba(255,255,255,0.8);
             margin-bottom: 20px;
-            font-size: 0.9em;
-            line-height: 1.4;
+            line-height: 1.6;
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ffd700;
         }
 
         .play-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
             color: white;
             border: none;
             padding: 12px 30px;
             border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
+            font-size: 1.1rem;
             font-weight: bold;
-            transition: all 0.3s;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(238, 90, 36, 0.4);
         }
 
         .play-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(238, 90, 36, 0.6);
         }
 
+        .admin-panel {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .admin-btn {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.4);
+        }
+
+        /* 响应式设计 */
         @media (max-width: 768px) {
+            .logo {
+                font-size: 2rem;
+            }
+
             .games-grid {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
-            
-            .game-selection {
-                padding: 30px 20px;
+
+            .game-card {
+                padding: 20px;
             }
-            
-            .title {
-                font-size: 2em;
+
+            .user-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
             }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">🎮 游戏大厅</div>
-        <div class="user-info">
-            <span id="username">加载中...</span>
-            <span id="balance">余额: 加载中...</span>
-            <button class="logout-btn" onclick="logout()">退出登录</button>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎮 XCTJ 卡牌游戏</div>
+            <div class="subtitle">选择您想要的游戏，开始精彩的游戏之旅！</div>
         </div>
-    </div>
 
-    <div class="main-content">
-        <div class="game-selection">
-            <h1 class="title">欢迎来到游戏世界</h1>
-            <p class="subtitle">选择您喜欢的游戏开始您的冒险之旅</p>
-            
+        <div id="loading" class="loading">
+            正在加载用户信息...
+        </div>
+
+        <div id="main-content" class="hidden">
+            <div class="user-info">
+                <div>
+                    <span class="welcome">欢迎回来，<span id="username">加载中...</span></span>
+                </div>
+                <div>
+                    <span class="balance">余额: ¥<span id="balance">0</span></span>
+                </div>
+                <div>
+                    <button class="logout-btn" onclick="logout()">退出登录</button>
+                </div>
+            </div>
+
             <div class="games-grid">
-                <div class="game-card" onclick="goToGame('xctj')">
-                    <div class="game-icon">🎆✨</div>
+                <!-- 喜从天降游戏卡片 -->
+                <div class="game-card" onclick="playGame('xctj')">
+                    <div class="game-icon">🃏</div>
                     <div class="game-title">喜从天降</div>
                     <div class="game-description">
-                        经典卡牌游戏，猬测下一张牌的花色。支持多种下注方式，小丑物6倍赔率！
+                        经典的卡牌游戏，押注花色，等待幸运降临！
+                        小丑20倍赔率，其他花色3.5倍赔率。
                     </div>
-                    <button class="play-btn">立即游戏</button>
+                    <div class="game-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">3.5x</span>
+                            <div>普通赔率</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">20x</span>
+                            <div>小丑赔率</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">96.4%</span>
+                            <div>返奖率</div>
+                        </div>
+                    </div>
+                    <button class="play-btn">开始游戏</button>
                 </div>
-                
-                <div class="game-card" onclick="goToGame('animals')">
-                    <div class="game-icon">🦁🐼</div>
+
+                <!-- 飞禽走兽游戏卡片 -->
+                <div class="game-card" onclick="playGame('animals')">
+                    <div class="game-icon">🦁</div>
                     <div class="game-title">飞禽走兽</div>
                     <div class="game-description">
-                        动物世界大冲关！下注您喜欢的动物，不同动物有不同的赔率，运气好的话可以赢得巨奖！
+                        动物转盘游戏，押注飞禽走兽，赢取丰厚奖励！
+                        金鲨100倍，银鲨24倍，其他动物3-15倍不等。
                     </div>
-                    <button class="play-btn">立即游戏</button>
+                    <div class="game-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">3-15x</span>
+                            <div>普通赔率</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">100x</span>
+                            <div>金鲨赔率</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">85%</span>
+                            <div>返奖率</div>
+                        </div>
+                    </div>
+                    <button class="play-btn">开始游戏</button>
                 </div>
+
+                <!-- 多福多财角子机游戏卡片 -->
+                <div class="game-card" onclick="playGame('slot')">
+                    <div class="game-icon">🎰</div>
+                    <div class="game-title">多福多财角子机</div>
+                    <div class="game-description">
+                        5轴×3行的角子机游戏，243种连线方式！
+                        内置免费旋转、Jackpot累积奖池和Wild符号。
+                    </div>
+                    <div class="game-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">243</span>
+                            <div>连线数</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">50000x</span>
+                            <div>最大奖励</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">92%</span>
+                            <div>返奖率</div>
+                        </div>
+                    </div>
+                    <button class="play-btn">开始游戏</button>
+                </div>
+            </div>
+
+            <div id="admin-panel" class="admin-panel hidden">
+                <a href="/admin.html" class="admin-btn">👑 管理员面板</a>
             </div>
         </div>
     </div>
 
     <script>
+        let currentUser = null;
+
         // 页面加载时检查登录状态
         window.addEventListener('load', async () => {
             try {
@@ -226,41 +371,49 @@
                 });
                 
                 if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById('username').textContent = `欢迎，${data.username}`;
-                    document.getElementById('balance').textContent = `余额: ${data.balance}`;
+                    const user = await response.json();
+                    currentUser = user;
                     
-                    // 如果是管理员，优先跳转到管理页面
-                    if (data.is_admin) {
-                        const adminChoice = confirm('您是管理员，要跳转到管理页面吗？');
-                        if (adminChoice) {
-                            window.location.href = '/admin.html';
-                            return;
-                        }
+                    document.getElementById('username').textContent = user.username;
+                    document.getElementById('balance').textContent = user.balance;
+                    
+                    // 如果是管理员，显示管理员面板
+                    if (user.is_admin) {
+                        document.getElementById('admin-panel').classList.remove('hidden');
                     }
+                    
+                    // 显示主要内容
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('main-content').classList.remove('hidden');
                 } else {
+                    // 登录失效，跳转到登录页面
                     localStorage.removeItem('token');
                     window.location.href = '/login.html';
                 }
             } catch (error) {
-                console.error('获取用户信息失败:', error);
+                console.error('检查登录状态失败:', error);
+                localStorage.removeItem('token');
                 window.location.href = '/login.html';
             }
         });
 
-        // 跳转到游戏页面
-        function goToGame(gameType) {
+        // 玩游戏
+        function playGame(gameType) {
             if (gameType === 'xctj') {
                 window.location.href = '/game-xctj.html';
             } else if (gameType === 'animals') {
                 window.location.href = '/animals-game.html';
+            } else if (gameType === 'slot') {
+                window.location.href = '/slot-game.html';
             }
         }
 
         // 退出登录
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            }
         }
     </script>
 </body>

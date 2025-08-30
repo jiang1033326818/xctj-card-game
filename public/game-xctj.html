@@ -29,6 +29,34 @@
             border-bottom: 1px solid rgba(255,255,255,0.2);
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .game-title {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
         .user-info {
             color: white;
             font-weight: bold;
@@ -700,9 +728,15 @@
 </head>
 <body>
     <div class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="goHome()">← 返回主页</button>
+            <div class="game-title">🃏 喜从天降</div>
+        </div>
         <div class="user-info">
             欢迎，<span id="username">加载中...</span> | 余额: <span id="balance" class="balance">0</span>
         </div>
+        <button class="logout-btn" onclick="logout()">退出登录</button>
+    </div>
 
     <script>
         // 变量声明
@@ -1229,16 +1263,20 @@
             });
         });
 
-   function goHome() {
+        // 返回主页
+        function goHome() {
             window.location.href = '/';
         }
 
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            }
+        }
+
     </script>
-
-    <button class="logout-btn" onclick="goHome()">🏠 游戏大厅</button>
-
-        <button class="logout-btn" id="logout-btn">退出登录</button>
-    </div>
 
     <div class="container">
         <!-- 游戏控制区域 -->

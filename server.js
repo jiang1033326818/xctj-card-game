@@ -4,6 +4,8 @@ const path = require("path");
 const unifiedHandler = require("./api/unified");
 
 const server = http.createServer((req, res) => {
+  console.log(`收到请求: ${req.method} ${req.url}`);
+  
   // 处理API请求
   if (req.url.startsWith("/api/")) {
     // 解析请求体
@@ -39,7 +41,7 @@ const server = http.createServer((req, res) => {
   // 处理静态文件
   let filePath = "." + req.url;
   if (filePath === "./") {
-    filePath = "./public/game-xctj.html";
+    filePath = "./public/index.html"; // 修改为游戏选择主页
   } else if (!filePath.includes(".")) {
     filePath = `./public${req.url}.html`;
   } else {
