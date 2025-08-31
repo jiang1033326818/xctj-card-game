@@ -26,6 +26,10 @@ async function connectDB() {
 
       // 包装MongoDB为统一接口
       db = createMongoWrapper(mongoDb);
+      
+      // 初始化数据库（确保有默认用户）
+      await initializeDatabase(db);
+      
       return db;
     } else {
       // 本地开发使用内存数据库
@@ -195,7 +199,9 @@ async function initializeDatabase(database) {
   try {
     // 检查是否已有用户
     const existingUsers = await database.users.find({});
-    if (existingUsers.length === 0) {
+    const usersArray = Array.isArray(existingUsers) ? existingUsers : await existingUsers.toArray();
+    
+    if (usersArray.length === 0) {
       console.log("数据库为空，初始化默认用户...");
 
       // 创建admin用户
@@ -219,6 +225,8 @@ async function initializeDatabase(database) {
       });
 
       console.log("默认用户创建完成：admin (密码: 068162), test (密码: test123)");
+    } else {
+      console.log(`数据库中已有 ${usersArray.length} 个用户`);
     }
   } catch (error) {
     console.error("初始化数据库失败:", error);

@@ -53,6 +53,23 @@ async function getHouseStats(req, res) {
         swallowCount: 0,
         goldSharkCount: 0,
         silverSharkCount: 0
+      },
+      
+      // 多福多财角子机游戏统计
+      slotStats: {
+        totalGames: 0,
+        totalBets: 0,
+        totalPayouts: 0,
+        houseProfit: 0,
+        jackpotCount: {
+          mini: 0,
+          minor: 0,
+          major: 0,
+          grand: 0,
+          super: 0
+        },
+        scatterCount: 0,
+        freeSpinsCount: 0
       }
     };
 
@@ -85,6 +102,51 @@ async function getHouseStats(req, res) {
           case 'gold_shark': stats.animalsStats.goldSharkCount++; break;
           case 'silver_shark': stats.animalsStats.silverSharkCount++; break;
         }
+      } else if (record.game_type === 'slot') {
+        // 多福多财角子机游戏
+        stats.slotStats.totalGames++;
+        stats.slotStats.totalBets += amount;
+        stats.slotStats.totalPayouts += winAmount;
+        
+        // 统计Jackpot获奖情况
+        if (record.jackpot) {
+          try {
+            const jackpotData = typeof record.jackpot === 'string' ? JSON.parse(record.jackpot) : record.jackpot;
+            if (jackpotData && jackpotData.level) {
+              // 确保等级字段存在
+              const level = jackpotData.level;
+              if (stats.slotStats.jackpotCount.hasOwnProperty(level)) {
+                stats.slotStats.jackpotCount[level] = 
+                  (stats.slotStats.jackpotCount[level] || 0) + 1;
+              }
+            }
+          } catch (e) {
+            console.log("解析Jackpot数据失败:", e.message);
+          }
+        }
+        
+        // 统计Scatter符号数量
+        if (record.scatter_count) {
+          stats.slotStats.scatterCount += record.scatter_count;
+        } else if (record.scatter) {
+          // 兼容旧格式
+          try {
+            const scatterData = typeof record.scatter === 'string' ? JSON.parse(record.scatter) : record.scatter;
+            if (scatterData && scatterData.count) {
+              stats.slotStats.scatterCount += scatterData.count;
+            }
+          } catch (e) {
+            console.log("解析Scatter数据失败:", e.message);
+          }
+        }
+        
+        // 统计免费旋转触发次数
+        if (record.free_spins_triggered) {
+          stats.slotStats.freeSpinsCount += record.free_spins_triggered;
+        } else if (record.free_spins) {
+          // 兼容旧格式
+          stats.slotStats.freeSpinsCount += 1;
+        }
       } else {
         // 喜从天降游戏（默认或旧数据）
         stats.xctjStats.totalGames++;
@@ -106,6 +168,7 @@ async function getHouseStats(req, res) {
     stats.houseProfit = stats.totalBets - stats.totalPayouts;
     stats.xctjStats.houseProfit = stats.xctjStats.totalBets - stats.xctjStats.totalPayouts;
     stats.animalsStats.houseProfit = stats.animalsStats.totalBets - stats.animalsStats.totalPayouts;
+    stats.slotStats.houseProfit = stats.slotStats.totalBets - stats.slotStats.totalPayouts;
 
     // 计算最赚钱游戏
     const gameComparison = [
@@ -124,6 +187,14 @@ async function getHouseStats(req, res) {
         games: stats.animalsStats.totalGames,
         bets: stats.animalsStats.totalBets,
         avgProfitPerGame: stats.animalsStats.totalGames > 0 ? (stats.animalsStats.houseProfit / stats.animalsStats.totalGames).toFixed(2) : 0
+      },
+      {
+        name: "多福多财角子机",
+        key: "slot",
+        profit: stats.slotStats.houseProfit,
+        games: stats.slotStats.totalGames,
+        bets: stats.slotStats.totalBets,
+        avgProfitPerGame: stats.slotStats.totalGames > 0 ? (stats.slotStats.houseProfit / stats.slotStats.totalGames).toFixed(2) : 0
       }
     ];
     

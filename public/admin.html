@@ -396,6 +396,68 @@
     </div>
     
     <div class="card">
+      <h2>多福多财角子机统计</h2>
+      <div id="slot-stats-loading" class="loading">加载统计数据中...</div>
+      <div id="slot-stats-error" class="error-message" style="display: none;"></div>
+      <div id="slot-stats-container" style="display: none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">总游戏局数</div>
+            <div class="stat-value" id="slot-games">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">总下注金额</div>
+            <div class="stat-value" id="slot-bets">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">总派彩金额</div>
+            <div class="stat-value" id="slot-payouts">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">庄家盈利</div>
+            <div class="stat-value" id="slot-profit">0</div>
+          </div>
+        </div>
+        
+        <h3>大奖统计</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">超级大奖</div>
+            <div class="stat-value" id="slot-super-jackpot">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">多福巨奖</div>
+            <div class="stat-value" id="slot-grand-jackpot">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">多财大奖</div>
+            <div class="stat-value" id="slot-major-jackpot">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">多喜中奖</div>
+            <div class="stat-value" id="slot-minor-jackpot">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">多寿小奖</div>
+            <div class="stat-value" id="slot-mini-jackpot">0</div>
+          </div>
+        </div>
+        
+        <h3>功能统计</h3>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Scatter符号</div>
+            <div class="stat-value" id="slot-scatter-count">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">免费旋转</div>
+            <div class="stat-value" id="slot-free-spins">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
       <h2>用户列表</h2>
       <div id="users-loading" class="loading">加载用户数据中...</div>
       <div id="users-error" class="error-message" style="display: none;"></div>
@@ -585,6 +647,7 @@
         if (stats.gameComparison) {
           const xctjData = stats.gameComparison.find(game => game.key === 'xctj');
           const animalsData = stats.gameComparison.find(game => game.key === 'animals');
+          const slotData = stats.gameComparison.find(game => game.key === 'slot');
           
           // 重置所有样式
           document.querySelector('#xctj-comparison-profit').parentElement.classList.remove('winner');
@@ -642,12 +705,47 @@
         document.getElementById('gold-shark-count').textContent = stats.animalsStats.goldSharkCount;
         document.getElementById('silver-shark-count').textContent = stats.animalsStats.silverSharkCount;
         
+        // 显示多福多财角子机游戏统计
+        if (stats.slotStats) {
+          document.getElementById('slot-games').textContent = stats.slotStats.totalGames;
+          document.getElementById('slot-bets').textContent = stats.slotStats.totalBets;
+          document.getElementById('slot-payouts').textContent = stats.slotStats.totalPayouts;
+          document.getElementById('slot-profit').textContent = stats.slotStats.houseProfit;
+          document.getElementById('slot-super-jackpot').textContent = stats.slotStats.jackpotCount.super || 0;
+          document.getElementById('slot-grand-jackpot').textContent = stats.slotStats.jackpotCount.grand || 0;
+          document.getElementById('slot-major-jackpot').textContent = stats.slotStats.jackpotCount.major || 0;
+          document.getElementById('slot-minor-jackpot').textContent = stats.slotStats.jackpotCount.minor || 0;
+          document.getElementById('slot-mini-jackpot').textContent = stats.slotStats.jackpotCount.mini || 0;
+          document.getElementById('slot-scatter-count').textContent = stats.slotStats.scatterCount;
+          document.getElementById('slot-free-spins').textContent = stats.slotStats.freeSpinsCount;
+          
+          // 显示多福多财统计容器
+          document.getElementById('slot-stats-container').style.display = 'block';
+        } else {
+          // 如果没有slotStats数据，初始化为0
+          document.getElementById('slot-games').textContent = 0;
+          document.getElementById('slot-bets').textContent = 0;
+          document.getElementById('slot-payouts').textContent = 0;
+          document.getElementById('slot-profit').textContent = 0;
+          document.getElementById('slot-super-jackpot').textContent = 0;
+          document.getElementById('slot-grand-jackpot').textContent = 0;
+          document.getElementById('slot-major-jackpot').textContent = 0;
+          document.getElementById('slot-minor-jackpot').textContent = 0;
+          document.getElementById('slot-mini-jackpot').textContent = 0;
+          document.getElementById('slot-scatter-count').textContent = 0;
+          document.getElementById('slot-free-spins').textContent = 0;
+          
+          // 显示多福多财统计容器
+          document.getElementById('slot-stats-container').style.display = 'block';
+        }
+        
         // 隐藏加载提示，显示统计数据
         document.getElementById('stats-loading').style.display = 'none';
         document.getElementById('stats-container').style.display = 'grid';
         document.getElementById('game-comparison-container').style.display = 'grid';
         document.getElementById('xctj-stats-container').style.display = 'grid';
         document.getElementById('animals-stats-container').style.display = 'grid';
+        document.getElementById('slot-stats-container').style.display = 'block';
       } catch (error) {
         console.error('加载统计数据失败:', error);
         document.getElementById('stats-loading').style.display = 'none';
@@ -687,29 +785,39 @@
           throw new Error('用户数据格式错误');
         }
         
+        // 处理用户数据，确保是数组格式
+        let users = [];
+        if (Array.isArray(data.users)) {
+          users = data.users;
+        } else if (typeof data.users.toArray === 'function') {
+          users = await data.users.toArray();
+        } else {
+          users = [data.users];
+        }
+        
         // 保存用户数据到全局变量
-        currentUsers = data.users;
+        currentUsers = users;
         
         // 清空表格
         const tbody = document.getElementById('users-tbody');
         tbody.innerHTML = '';
         
         // 添加用户数据
-        data.users.forEach(user => {
+        users.forEach(user => {
           const tr = document.createElement('tr');
           
           // 格式化日期
           const createdAt = user.created_at ? new Date(user.created_at).toLocaleString() : '未知';
-          const lastLogin = user.last_login ? new Date(user.last_login).toLocaleString() : '未知';
+          const lastLogin = user.last_login ? new Date(user.last_login).toLocaleString() : '从未登录';
           
           tr.innerHTML = `
-            <td>${user.username}</td>
-            <td>${user.balance}</td>
+            <td>${user.username || '未知'}</td>
+            <td>${user.balance !== undefined ? user.balance : '未知'}</td>
             <td>${user.is_admin ? '管理员' : '普通用户'}</td>
             <td>${createdAt}</td>
             <td>${lastLogin}</td>
             <td>
-              <button class="btn btn-edit" onclick="openEditBalanceModal('${user._id}')">修改余额</button>
+              <button class="btn btn-edit" onclick="openEditBalanceModal('${user._id || user.username}')">修改余额</button>
             </td>
           `;
           
@@ -770,7 +878,8 @@
           const createdAt = record.created_at ? new Date(record.created_at).toLocaleString() : '未知';
           
           // 决定游戏类型
-          const gameType = record.game_type === 'animals' ? '🦁 飞禽走兽' : '🎆 喜从天降';
+          const gameType = record.game_type === 'animals' ? '🦁 飞禽走兽' : 
+                          record.game_type === 'slot' ? '🎰 多福多财角子机' : '🎆 喜从天降';
           
           // 翻译花色/动物
           const translateResult = (type, result) => {
@@ -788,6 +897,22 @@
                 'silver_shark': '银鲨 🦈'
               };
               return animalNames[result] || result;
+            } else if (type === 'slot') {
+              // 多福多财角子机游戏符号翻译
+              const symbolNames = {
+                'card_10': '10',
+                'card_j': 'J',
+                'card_q': 'Q', 
+                'card_k': 'K',
+                'card_a': 'A',
+                'coin': '💰 金币',
+                'ingot': '🧧 金元宝',
+                'lantern': '🏮 灯笼',
+                'dragon': '🐉 龙',
+                'wild': '福',
+                'scatter': '囍'
+              };
+              return symbolNames[result] || result;
             } else {
               const suitNames = {
                 'hearts': '红桃 ♥',
@@ -818,6 +943,14 @@
             } catch (e) {
               betDisplay = '解析错误';
             }
+          } else if (record.game_type === 'slot') {
+            // 多福多财角子机游戏
+            try {
+              // 角子机游戏的下注金额直接使用amount字段
+              betDisplay = record.bet_amount || record.amount || '未知';
+            } catch (e) {
+              betDisplay = '解析错误';
+            }
           } else {
             // 喜从天降游戏
             try {
@@ -829,17 +962,45 @@
                   .join(', ');
                 betDisplay = betEntries || translateResult('xctj', record.bet_suit);
               } else {
-                betDisplay = translateResult('xctj', record.bet_suit);
+                betDisplay = translateResult('xctj', record.bet_suit) || '未知';
               }
             } catch (e) {
-              betDisplay = translateResult('xctj', record.bet_suit);
+              betDisplay = translateResult('xctj', record.bet_suit) || '未知';
             }
           }
           
           // 获取结果
-          const resultDisplay = record.game_type === 'animals' ? 
-            translateResult('animals', record.result_animal) : 
-            translateResult('xctj', record.result_suit);
+          let resultDisplay = '未知';
+          if (record.game_type === 'animals') {
+            resultDisplay = translateResult('animals', record.result_animal) || '未知';
+          } else if (record.game_type === 'slot') {
+            // 对于角子机游戏，结果是 reels_result 字段
+            try {
+              if (record.reels_result) {
+                const reels = typeof record.reels_result === 'string' ? 
+                  JSON.parse(record.reels_result) : record.reels_result;
+                // 显示中间行的结果
+                if (reels && reels.length >= 5) {
+                  resultDisplay = reels.map((reel, index) => {
+                    // 确保reel是数组且有足够元素
+                    if (reel && Array.isArray(reel) && reel.length >= 3) {
+                      return translateResult('slot', reel[2]);
+                    }
+                    return '未知';
+                  }).join(' | ');
+                } else {
+                  resultDisplay = '未知';
+                }
+              } else {
+                resultDisplay = '无结果';
+              }
+            } catch (e) {
+              console.error('解析角子机结果错误:', e);
+              resultDisplay = '解析错误';
+            }
+          } else {
+            resultDisplay = translateResult('xctj', record.result_suit) || '未知';
+          }
           
           // 计算输赢状态
           const netResult = (record.win_amount || 0) - (record.amount || 0);
@@ -847,13 +1008,13 @@
           const winLoseText = isWin ? `赢 ${netResult}` : `输 ${Math.abs(netResult)}`;
           
           tr.innerHTML = `
-            <td>${record.username}</td>
+            <td>${record.username || '未知'}</td>
             <td>${gameType}</td>
             <td>${betDisplay}</td>
             <td>${resultDisplay}</td>
-            <td>${record.amount}</td>
+            <td>${record.amount || '未知'}</td>
             <td class="${isWin ? 'win' : 'lose'}">${winLoseText}</td>
-            <td>${record.win_amount}</td>
+            <td>${record.win_amount || 0}</td>
             <td>${createdAt}</td>
           `;
           

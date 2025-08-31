@@ -45,10 +45,20 @@ async function getAllUsers(req, res) {
 
     // 确保db已初始化
     const database = getDB() || (await connectDB());
-    const users = await database.users.find(
+    const usersResult = await database.users.find(
       {},
       { projection: { password: 0 } }
     );
+    
+    // 处理不同数据库返回的数据格式
+    let users = [];
+    if (Array.isArray(usersResult)) {
+      users = usersResult;
+    } else if (typeof usersResult.toArray === 'function') {
+      users = await usersResult.toArray();
+    } else {
+      users = [usersResult];
+    }
     
     res.setHeader("Content-Type", "application/json");
     return res.end(JSON.stringify({ success: true, users }));
