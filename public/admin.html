@@ -745,7 +745,11 @@
         document.getElementById('game-comparison-container').style.display = 'grid';
         document.getElementById('xctj-stats-container').style.display = 'grid';
         document.getElementById('animals-stats-container').style.display = 'grid';
-        document.getElementById('slot-stats-container').style.display = 'block';
+        
+        // 确保多福多财统计容器被显示
+        if (stats.slotStats) {
+          document.getElementById('slot-stats-container').style.display = 'block';
+        }
       } catch (error) {
         console.error('加载统计数据失败:', error);
         document.getElementById('stats-loading').style.display = 'none';
