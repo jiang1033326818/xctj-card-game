@@ -134,7 +134,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username: 'jiang' })
+                    body: JSON.stringify({ username: 'jiang2' })
                 });
                 
                 const data = await response.json();
@@ -225,7 +225,7 @@
         
         async function createJiangAdmin() {
             try {
-                const response = await fetch('/api/create-jiang-admin-noauth', {
+                const response = await fetch('/api/create-jiang-admin', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
