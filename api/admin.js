@@ -243,6 +243,75 @@ async function resetUserPassword(req, res) {
 }
 
 /**
+ * 重置Admin密码（无需认证的特殊接口）
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function resetAdminPassword(req, res) {
+  try {
+    const { username, password } = req.body;
+    
+    // 验证参数
+    if (username !== "admin") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "只能重置admin用户的密码" }));
+    }
+
+    if (!password || password !== "068162") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "密码必须为068162" }));
+    }
+
+    const database = getDB() || (await connectDB());
+    
+    // 检查admin用户是否存在
+    const adminUser = await database.users.findOne({ username: "admin" });
+    if (!adminUser) {
+      // 如果admin用户不存在，创建一个
+      const bcrypt = require("bcryptjs");
+      const hashedPassword = await bcrypt.hash(password, 10);
+      
+      await database.users.insertOne({
+        username: "admin",
+        password: hashedPassword,
+        is_admin: true,
+        balance: 10000,
+        created_at: new Date()
+      });
+      
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ 
+        success: true, 
+        message: "admin用户已创建，密码设置为068162" 
+      }));
+    }
+
+    // 加密新密码
+    const bcrypt = require("bcryptjs");
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 更新密码
+    await database.users.updateOne(
+      { username: "admin" },
+      { $set: { password: hashedPassword, password_reset_at: new Date() } }
+    );
+
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ 
+      success: true, 
+      message: "admin用户密码已重置为068162" 
+    }));
+  } catch (error) {
+    console.error("重置Admin密码错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+  }
+}
+
+/**
  * 获取系统信息
  * @param {Object} req 请求对象
  * @param {Object} res 响应对象
@@ -375,6 +444,7 @@ module.exports = {
   handleUpdateBalance,
   deleteUser,
   resetUserPassword,
+  resetAdminPassword,
   getSystemInfo,
   cleanGameRecords
 };

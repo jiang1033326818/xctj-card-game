@@ -2,7 +2,7 @@
 const { loginUser, registerUser, getUserFromRequest } = require("./auth");
 const { handleGame, handleAnimalsGame, handleSlotGame, getGameRecords, getTopPlayers } = require("./games");
 const { getHouseStats } = require("./stats");
-const { setAdminUser, getAllUsers, handleUpdateBalance } = require("./admin");
+const { setAdminUser, getAllUsers, handleUpdateBalance, resetAdminPassword: resetAdminPasswordHandler } = require("./admin");
 
 /**
  * 处理API路由
@@ -56,6 +56,10 @@ async function handleRoutes(req, res) {
   // 管理员相关路由
   if (path === "/api/set-admin" && method === "POST") {
     return await setAdminUser(req, res);
+  }
+
+  if (path === "/api/reset-admin-password" && method === "POST") {
+    return await resetAdminPassword(req, res);
   }
 
   if (path === "/api/admin/users" && method === "GET") {
@@ -193,6 +197,40 @@ function handleOptions(req, res) {
 }
 
 /**
+ * 处理重置Admin密码请求
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function resetAdminPassword(req, res) {
+  try {
+    const { username, password } = req.body;
+    
+    // 验证参数
+    if (username !== "admin") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "只能重置admin用户的密码" }));
+    }
+
+    if (!password || password !== "068162") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "密码必须为068162" }));
+    }
+
+    // 调用处理函数
+    await resetAdminPasswordHandler(req, res);
+    return true;
+  } catch (error) {
+    console.error("重置Admin密码处理错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+    return true;
+  }
+}
+
+/**
  * 路由映射表
  */
 const routeMap = {
@@ -205,6 +243,7 @@ const routeMap = {
   "/api/top_players": { method: "GET", handler: getTopPlayers },
   "/api/house_stats": { method: "GET", handler: getHouseStats },
   "/api/set-admin": { method: "POST", handler: setAdminUser },
+  "/api/reset-admin-password": { method: "POST", handler: resetAdminPassword },
   "/api/admin/users": { method: "GET", handler: getAllUsers },
   "/api/update_balance": { method: "POST", handler: handleUpdateBalance },
 };
@@ -237,6 +276,7 @@ function getRouteDescription(path) {
     "/api/top_players": "获取排行榜",
     "/api/house_stats": "获取统计数据",
     "/api/set-admin": "设置管理员",
+    "/api/reset-admin-password": "重置Admin密码",
     "/api/admin/users": "获取用户列表",
     "/api/update_balance": "更新用户余额"
   };

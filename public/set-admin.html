@@ -39,11 +39,17 @@
             font-size: 16px;
             transition: all 0.3s;
             margin: 10px;
+            width: 100%;
+            margin-bottom: 15px;
         }
         
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn.reset-password {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
         }
         
         .message {
@@ -64,13 +70,30 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 设置管理员权限</h1>
-        <p>点击下方按钮将admin用户设置为管理员</p>
+        <h1>🔧 管理员设置</h1>
+        
+        <div class="info">
+            <p><strong>功能说明：</strong></p>
+            <p>1. 设置admin用户为管理员权限</p>
+            <p>2. 重置admin账户密码为068162</p>
+        </div>
+        
         <button class="btn" onclick="setAdmin()">设置Admin为管理员</button>
+        <button class="btn reset-password" onclick="resetAdminPassword()">重置Admin密码为068162</button>
         <button class="btn" onclick="goBack()">返回首页</button>
         <div id="message" class="message"></div>
     </div>
@@ -100,6 +123,40 @@
                 }
             } catch (error) {
                 console.error('设置管理员失败:', error);
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = '❌ 网络错误: ' + error.message;
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+            }
+        }
+        
+        async function resetAdminPassword() {
+            try {
+                const response = await fetch('/api/reset-admin-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        username: 'admin',
+                        password: '068162'
+                    })
+                });
+                
+                const data = await response.json();
+                const messageEl = document.getElementById('message');
+                
+                if (response.ok && data.success) {
+                    messageEl.textContent = '✅ ' + data.message;
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                } else {
+                    messageEl.textContent = '❌ ' + (data.error || '密码重置失败');
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('重置密码失败:', error);
                 const messageEl = document.getElementById('message');
                 messageEl.textContent = '❌ 网络错误: ' + error.message;
                 messageEl.className = 'message error';
