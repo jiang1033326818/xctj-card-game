@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -115,24 +116,59 @@
             background: linear-gradient(145deg, #2C2C2C, #1C1C1C);
             border-radius: 10px;
             padding: 10px;
-            min-height: 180px;
             display: flex;
             flex-direction: column;
-            justify-content: space-around;
+            justify-content: center;
+            align-items: center;
             border: 2px solid #FFD700;
+            overflow: hidden;
+            position: relative;
+            perspective: 800px;
+        }
+        
+        .reel canvas {
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            border: 1px solid #FFD700;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .reel.spinning canvas {
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 0 15px rgba(255,215,0,0.3);
         }
 
-        .symbol {
-            background: #FFF;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
+        /* 特殊符号背景色 */
+        .symbol.special-coin {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
             color: #8B0000;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-            border: 2px solid #FFD700;
+        }
+
+        .symbol.special-ingot {
+            background: linear-gradient(45deg, #FF6347, #DC143C);
+            color: #FFF;
+        }
+
+        .symbol.special-lantern {
+            background: linear-gradient(45deg, #FF1493, #8B008B);
+            color: #FFF;
+        }
+
+        .symbol.special-dragon {
+            background: linear-gradient(45deg, #FF4500, #8B0000);
+            color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
+        }
+
+        .symbol.special-wild {
+            background: linear-gradient(45deg, #32CD32, #228B22);
+            color: #FFF;
+            box-shadow: 0 0 15px rgba(50, 205, 50, 0.7);
+        }
+
+        .symbol.special-scatter {
+            background: linear-gradient(45deg, #9370DB, #4B0082);
+            color: #FFD700;
+            box-shadow: 0 0 15px rgba(147, 112, 219, 0.7);
         }
 
         .symbol.winning {
@@ -147,14 +183,23 @@
             to { box-shadow: 0 0 20px #FFD700, 0 0 30px #FFD700; }
         }
 
-        .controls {
+        .spin-controls {
             display: flex;
-            justify-content: space-between;
+            align-items: right;
+            gap: 15px;
+        }
+
+        .auto-spin-label {
+            color: #FFD700;
+            font-weight: bold;
+            display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .auto-spin-label input {
+            transform: scale(1.3);
         }
 
         .bet-controls {
@@ -272,7 +317,7 @@
 
         .jackpot-levels {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr); /* 改为5列以适应5个奖项 */
             gap: 15px;
         }
 
@@ -281,6 +326,18 @@
             border-radius: 10px;
             padding: 15px;
             border: 2px solid #FFD700;
+        }
+
+        .jackpot-level.super-jackpot {
+            background: linear-gradient(45deg, #FF1493, #8B008B);
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 20px rgba(255, 20, 147, 0.7);
+            animation: superGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes superGlow {
+            from { box-shadow: 0 0 20px rgba(255, 20, 147, 0.7); }
+            to { box-shadow: 0 0 30px rgba(255, 20, 147, 1); }
         }
 
         .jackpot-level h4 {
@@ -368,6 +425,12 @@
             display: none;
         }
 
+
+        .controls{
+            display: flex;
+            justify-content: space-between;
+        }
+
         /* 响应式设计 */
         @media (max-width: 768px) {
             .reels-container {
@@ -414,26 +477,30 @@
             正在加载游戏...
         </div>
 
-        <div id="game-content" class="hidden">
+        <div id="game-content" class="">
             <!-- Jackpot累积奖池 -->
             <div class="jackpot-panel">
                 <div class="jackpot-title">🏆 聚宝盆累积奖池 🏆</div>
                 <div class="jackpot-levels">
                     <div class="jackpot-level">
-                        <h4>Mini 小奖</h4>
-                        <div class="jackpot-amount">100-500</div>
+                        <h4>多寿小奖</h4>
+                        <div class="jackpot-amount">5-500</div>
                     </div>
                     <div class="jackpot-level">
-                        <h4>Minor 中奖</h4>
-                        <div class="jackpot-amount">500-2000</div>
+                        <h4>多喜中奖</h4>
+                        <div class="jackpot-amount">25-2000</div>
                     </div>
                     <div class="jackpot-level">
-                        <h4>Major 大奖</h4>
-                        <div class="jackpot-amount">2000-10000</div>
+                        <h4>多财大奖</h4>
+                        <div class="jackpot-amount">100-10000</div>
                     </div>
                     <div class="jackpot-level">
-                        <h4>Grand 巨奖</h4>
-                        <div class="jackpot-amount">10000-50000</div>
+                        <h4>多福巨奖</h4>
+                        <div class="jackpot-amount">500-50000</div>
+                    </div>
+                    <div class="jackpot-level super-jackpot">
+                        <h4>🎆 超级大奖 🎆</h4>
+                        <div class="jackpot-amount" id="super-jackpot-amount">0</div>
                     </div>
                 </div>
             </div>
@@ -446,30 +513,20 @@
             <!-- 角子机主体 -->
             <div class="slot-machine">
                 <div class="reels-container" id="reels-container">
-                    <div class="reel">
-                        <div class="symbol" id="symbol-0-0">🎰</div>
-                        <div class="symbol" id="symbol-0-1">🎰</div>
-                        <div class="symbol" id="symbol-0-2">🎰</div>
+                    <div class="reel" data-reel="0">
+                        <canvas width="120" height="300"></canvas>
                     </div>
-                    <div class="reel">
-                        <div class="symbol" id="symbol-1-0">🎰</div>
-                        <div class="symbol" id="symbol-1-1">🎰</div>
-                        <div class="symbol" id="symbol-1-2">🎰</div>
+                    <div class="reel" data-reel="1">
+                        <canvas width="120" height="300"></canvas>
                     </div>
-                    <div class="reel">
-                        <div class="symbol" id="symbol-2-0">🎰</div>
-                        <div class="symbol" id="symbol-2-1">🎰</div>
-                        <div class="symbol" id="symbol-2-2">🎰</div>
+                    <div class="reel" data-reel="2">
+                        <canvas width="120" height="300"></canvas>
                     </div>
-                    <div class="reel">
-                        <div class="symbol" id="symbol-3-0">🎰</div>
-                        <div class="symbol" id="symbol-3-1">🎰</div>
-                        <div class="symbol" id="symbol-3-2">🎰</div>
+                    <div class="reel" data-reel="3">
+                        <canvas width="120" height="300"></canvas>
                     </div>
-                    <div class="reel">
-                        <div class="symbol" id="symbol-4-0">🎰</div>
-                        <div class="symbol" id="symbol-4-1">🎰</div>
-                        <div class="symbol" id="symbol-4-2">🎰</div>
+                    <div class="reel" data-reel="4">
+                        <canvas width="120" height="300"></canvas>
                     </div>
                 </div>
 
@@ -477,16 +534,24 @@
                 <div class="controls">
                     <div class="bet-controls">
                         <span class="bet-label">投注金额:</span>
-                        <input type="number" id="bet-amount" class="bet-input" value="50" min="10" max="1000" step="10">
+                        <input type="number" id="bet-amount" class="bet-input" value="50" min="1" max="5000" step="1">
                         <div class="bet-buttons">
+                            <button class="bet-btn" onclick="setBet(1)">1</button>
                             <button class="bet-btn" onclick="setBet(10)">10</button>
                             <button class="bet-btn" onclick="setBet(50)">50</button>
                             <button class="bet-btn" onclick="setBet(100)">100</button>
                             <button class="bet-btn" onclick="setBet(500)">500</button>
+                            <button class="bet-btn" onclick="setBet(1000)">1000</button>
                             <button class="bet-btn" onclick="maxBet()">最大</button>
                         </div>
                     </div>
-                    <button id="spin-btn" class="spin-btn" onclick="spin()">🎰 旋转 🎰</button>
+                    <div class="spin-controls">
+                        <label class="auto-spin-label">
+                            <input type="checkbox" id="auto-spin-checkbox">
+                            自动旋转
+                        </label>
+                        <button id="spin-btn" class="spin-btn" onclick="spin()">🎰 旋转 🎰</button>
+                    </div>
                 </div>
             </div>
 
@@ -557,6 +622,113 @@
         let currentUser = null;
         let isSpinning = false;
         let freeSpinsRemaining = 0;
+        let slotReels = []; // 转轴数组
+        let animationId = 0;
+        let lastTime = 0;
+        
+        // 初始化转轴
+        function initializeReels() {
+            const canvases = document.querySelectorAll('.reel canvas');
+            slotReels = Array.from(canvases).map(canvas => new SlotReel(canvas));
+            
+            // 绘制初始状态
+            slotReels.forEach(reel => reel.draw());
+        }
+        
+        // 动画循环
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+            
+            // 更新所有转轴
+            slotReels.forEach(reel => reel.update(deltaTime));
+            
+            // 检查是否所有转轴都停止
+            const lockedReels = slotReels.filter(reel => reel.state === 'locked').length;
+            if (isSpinning && lockedReels === slotReels.length) {
+                // 所有转轴都停止了，显示结果
+                isSpinning = false;
+                cancelAnimationFrame(animationId);
+                animationId = 0;
+                lastTime = 0;
+                
+                // 显示游戏结果
+                if (slotReels.gameResult) {
+                    const result = slotReels.gameResult;
+                    const betAmount = slotReels.betAmount;
+                    const autoSpin = slotReels.autoSpin;
+                    
+                    updateGameInfo(result);
+                    
+                    // 显示中奖效果
+                    if (result.wins && result.wins.length > 0) {
+                        setTimeout(() => showWinningEffects(result.wins), 200);
+                    }
+                    
+                    // 更新余额
+                    currentUser.balance = result.new_balance;
+                    document.getElementById('balance').textContent = currentUser.balance;
+                    
+                    // 更新免费旋转
+                    freeSpinsRemaining = result.free_spins_remaining;
+                    updateFreeSpinsDisplay();
+                    
+                    // 显示Jackpot（加强特效）
+                    if (result.jackpot) {
+                        setTimeout(() => showJackpotWin(result.jackpot), 300);
+                    }
+                    
+                    // 更新超级大奖池显示
+                    if (result.super_jackpot_pool !== undefined) {
+                        document.getElementById('super-jackpot-amount').textContent = result.super_jackpot_pool;
+                    }
+                    
+                    // 检查Scatter免费旋转触发（加强特效）
+                    if (result.scatter && result.scatter.free_spins > 0) {
+                        setTimeout(() => showFreeSpinsWin(result.scatter), 500);
+                    }
+                    
+                    // 检查自动旋转
+                    if (autoSpin) {
+                        // 检查余额是否足够继续自动旋转
+                        const canContinue = freeSpinsRemaining > 0 || currentUser.balance >= betAmount;
+                        if (canContinue) {
+                            // 短暂延迟后自动开始下一轮
+                            setTimeout(() => {
+                                if (document.getElementById('auto-spin-checkbox').checked) {
+                                    spin();
+                                }
+                            }, 800);
+                        } else {
+                            // 余额不足时显示提示
+                            setTimeout(() => {
+                                if (document.getElementById('auto-spin-checkbox').checked) {
+                                    alert('余额不足，自动旋转已停止！');
+                                    document.getElementById('auto-spin-checkbox').checked = false;
+                                }
+                            }, 1000);
+                        }
+                    }
+                    
+                    // 清除临时存储的结果
+                    delete slotReels.gameResult;
+                    delete slotReels.betAmount;
+                    delete slotReels.autoSpin;
+                }
+                
+                // 重置按钮状态
+                document.getElementById('spin-btn').disabled = false;
+                document.getElementById('spin-btn').textContent = freeSpinsRemaining > 0 ? '🆓 免费旋转 🆓' : '🎰 旋转 🎰';
+                
+                console.log('所有转轴已停止，游戏结束');
+                return;
+            }
+            
+            if (isSpinning) {
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
 
         // 符号映射
         const symbolMap = {
@@ -572,6 +744,175 @@
             'wild': '福',
             'scatter': '囍'
         };
+        
+        // 水果机转轴类（基于fruit.html参考实现）
+        class SlotReel {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.w = canvas.width;
+                this.h = canvas.height;
+                this.symbols = Object.values(symbolMap);
+                this.vel = 0;
+                this.targetVel = 0;
+                this.state = 'idle'; // idle, spinning, stopping, locked
+                this.targetIndex = 0;
+                this.off = 0;
+                this.sprite = this.buildStrip();
+                this.resultSymbols = ['10', 'J', 'Q', 'K', 'A']; // 默认结果
+            }
+            
+            buildStrip() {
+                const itemH = 60; // 符号高度
+                const REPEAT = 4; // 重复次数
+                const totalItems = this.symbols.length * REPEAT;
+                const strip = document.createElement('canvas');
+                strip.width = this.w;
+                strip.height = totalItems * itemH;
+                const c = strip.getContext('2d');
+                
+                c.textAlign = 'center';
+                c.textBaseline = 'middle';
+                c.font = `bold ${Math.floor(itemH * 0.6)}px system-ui`;
+                
+                // 绘制符号带（完全按照fruit.html的方式）
+                for (let r = 0; r < REPEAT; r++) {
+                    for (let i = 0; i < this.symbols.length; i++) {
+                        const y = (r * this.symbols.length + i) * itemH + itemH / 2;
+                        
+                        // 背景
+                        c.fillStyle = '#333';
+                        c.fillRect(2, (r * this.symbols.length + i) * itemH + 2, this.w - 4, itemH - 4);
+                        
+                        // 边框
+                        c.strokeStyle = '#FFD700';
+                        c.lineWidth = 1;
+                        c.strokeRect(2, (r * this.symbols.length + i) * itemH + 2, this.w - 4, itemH - 4);
+                        
+                        // 符号文本（为特殊符号添加特效）
+                        let symbolText = this.symbols[i];
+                        let textColor = '#fff';
+                        let bgColor = '#333';
+                        let hasSpecialEffect = false;
+                        
+                        // 为福（Wild）和喜（Scatter）添加特殊效果
+                        if (symbolText === '福') {
+                            textColor = '#FFD700'; // 金色文字
+                            bgColor = '#8B0000';   // 深红色背景
+                            hasSpecialEffect = true;
+                        } else if (symbolText === '囍') {
+                            textColor = '#FF69B4'; // 热粉色文字
+                            bgColor = '#4B0082';   // 紫色背景
+                            hasSpecialEffect = true;
+                        }
+                        
+                        // 背景
+                        c.fillStyle = bgColor;
+                        c.fillRect(2, (r * this.symbols.length + i) * itemH + 2, this.w - 4, itemH - 4);
+                        
+                        // 特殊符号添加闪光效果
+                        if (hasSpecialEffect) {
+                            c.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                            c.fillRect(5, (r * this.symbols.length + i) * itemH + 5, this.w - 10, 8);
+                        }
+                        
+                        // 边框
+                        c.strokeStyle = '#FFD700';
+                        c.lineWidth = 1;
+                        c.strokeRect(2, (r * this.symbols.length + i) * itemH + 2, this.w - 4, itemH - 4);
+                        
+                        // 符号文本
+                        c.fillStyle = textColor;
+                        c.fillText(symbolText, strip.width / 2, y);
+                    }
+                }
+                
+                return strip;
+            }
+            
+            start(speed = 800) {
+                this.state = 'spinning';
+                this.vel = speed;
+                this.targetVel = speed;
+            }
+            
+            requestStop(targetIndex) {
+                if (this.state === 'spinning') {
+                    this.state = 'stopping';
+                    this.targetIndex = targetIndex % this.symbols.length;
+                }
+            }
+            
+            forceStopNow() {
+                this.state = 'stopping';
+                this.targetIndex = Math.floor(Math.random() * this.symbols.length);
+                this.targetVel = 0;
+            }
+            
+            update(dt) {
+                const itemH = 60;
+                const len = this.symbols.length;
+                const cycle = len * itemH;
+                
+                if (this.state === 'stopping') {
+                    const offMod = ((this.off % cycle) + cycle) % cycle;
+                    const curIndex = Math.round(offMod / itemH) % len;
+                    const remainCells = ((len + curIndex - this.targetIndex) % len) || len;
+                    const remainPx = remainCells * itemH - (offMod % itemH);
+                    
+                    if (remainPx < 10) {
+                        const lockTo = Math.round(this.off / itemH) * itemH;
+                        this.off = lockTo;
+                        this.vel = 0;
+                        this.targetVel = 0;
+                        this.state = 'locked';
+                    } else {
+                        this.vel = 300; // 匀速滑动直到停下
+                    }
+                }
+                
+                this.off += this.vel * dt;
+                this.draw();
+            }
+            
+            draw() {
+                const ctx = this.ctx;
+                const strip = this.sprite;
+                const totalH = strip.height;
+                let y = this.off % totalH;
+                if (y < 0) y += totalH;
+                
+                ctx.clearRect(0, 0, this.w, this.h);
+                
+                // 绘制符号带（完全按照fruit.html的方式）
+                const s1 = Math.min(this.h, totalH - y);
+                ctx.drawImage(strip, 0, y, this.w, s1, 0, 0, this.w, s1);
+                if (this.h > s1) {
+                    const s2 = this.h - s1;
+                    ctx.drawImage(strip, 0, 0, this.w, s2, 0, s1, this.w, s2);
+                }
+                
+                // 绘制中间参考线
+                ctx.fillStyle = 'rgba(255,255,255,.2)';
+                ctx.fillRect(0, this.h / 2 - 1, this.w, 2);
+            }
+            
+            getCurrentSymbols() {
+                const itemH = 60;
+                const len = this.symbols.length;
+                const cycle = len * itemH;
+                const offMod = ((this.off % cycle) + cycle) % cycle;
+                
+                const results = [];
+                for (let i = 0; i < 5; i++) {
+                    const symbolOffset = offMod + (i - 2) * itemH;
+                    const symbolOffsetMod = ((symbolOffset % cycle) + cycle) % cycle;
+                    const symbolIndex = Math.floor(symbolOffsetMod / itemH) % len;
+                    results.push(this.symbols[symbolIndex]);
+                }
+                return results;
+            }
+        }
 
         // 页面加载时检查登录状态
         window.addEventListener('load', async () => {
@@ -598,6 +939,12 @@
                     // 显示游戏内容
                     document.getElementById('loading').classList.add('hidden');
                     document.getElementById('game-content').classList.remove('hidden');
+                    
+                    // 初始化转轴
+                    initializeReels();
+                    
+                    // 初始化超级大奖池显示（使用模拟值）
+                    document.getElementById('super-jackpot-amount').textContent = '0';
                 } else {
                     // 登录失效，跳转到登录页面
                     localStorage.removeItem('token');
@@ -618,25 +965,34 @@
 
         // 最大投注
         function maxBet() {
-            const maxAmount = Math.min(1000, currentUser.balance);
+            const maxAmount = Math.min(5000, currentUser.balance);
             setBet(maxAmount);
         }
 
-        // 旋转角子机
+        // 旋转角子机 - 使用新的Canvas轮带效果
         async function spin() {
             if (isSpinning) return;
             
             const betAmount = parseInt(document.getElementById('bet-amount').value);
+            const autoSpin = document.getElementById('auto-spin-checkbox').checked;
             
             // 验证投注金额
-            if (betAmount < 10 || betAmount > 1000) {
-                alert('投注金额必须在10-1000之间！');
+            if (betAmount < 1 || betAmount > 5000) {
+                alert('投注金额必须在1-5000之间！');
+                // 如果是自动旋转模式，取消自动旋转
+                if (autoSpin) {
+                    document.getElementById('auto-spin-checkbox').checked = false;
+                }
                 return;
             }
 
             // 如果不是免费旋转，检查余额
             if (freeSpinsRemaining <= 0 && currentUser.balance < betAmount) {
                 alert('余额不足！');
+                // 如果是自动旋转模式，取消自动旋转
+                if (autoSpin) {
+                    document.getElementById('auto-spin-checkbox').checked = false;
+                }
                 return;
             }
 
@@ -662,55 +1018,79 @@
                 });
 
                 const result = await response.json();
-                
+
                 if (response.ok) {
-                    // 显示转轴结果
-                    displayReels(result.reels);
+                    // 启动所有转轴同时旋转（按照fruit.html的方式）
+                    slotReels.forEach((reel, index) => {
+                        const reelElement = document.querySelector(`[data-reel="${index}"]`);
+                        reelElement.classList.add('spinning');
+                        reel.start(800); // 统一速度
+                        console.log(`转轴 ${index + 1} 开始旋转`);
+                    });
                     
-                    // 更新游戏信息
-                    updateGameInfo(result);
+                    // 为每个转轴设置停止时间（按照fruit.html的方式）
+                    const runMs = 3000; // 旋转时间
+                    const stopIntervals = 400; // 每个转轴之间的停止间隔
                     
-                    // 显示中奖效果
-                    if (result.wins && result.wins.length > 0) {
-                        setTimeout(() => showWinningEffects(result.wins), 500);
-                    }
+                    // 依次停止转轴
+                    slotReels.forEach((reel, index) => {
+                        setTimeout(() => {
+                            // 获取对应位置的结果符号索引
+                            const resultSymbol = result.reels[index][2]; // 中间位置的符号
+                            const targetIndex = reel.symbols.indexOf(resultSymbol);
+                            
+                            if (targetIndex !== -1) {
+                                reel.requestStop(targetIndex);
+                                console.log(`转轴 ${index + 1} 请求停止，目标符号: ${resultSymbol}`);
+                            } else {
+                                // 如果找不到符号，随机停止
+                                reel.forceStopNow();
+                                console.log(`转轴 ${index + 1} 随机停止`);
+                            }
+                        }, runMs + index * stopIntervals);
+                    });
                     
-                    // 更新余额
-                    currentUser.balance = result.new_balance;
-                    document.getElementById('balance').textContent = currentUser.balance;
+                    // 启动动画循环
+                    lastTime = 0;
+                    animationId = requestAnimationFrame(gameLoop);
                     
-                    // 更新免费旋转
-                    freeSpinsRemaining = result.free_spins_remaining;
-                    updateFreeSpinsDisplay();
-                    
-                    // 显示Jackpot
-                    if (result.jackpot) {
-                        showJackpotWin(result.jackpot);
-                    }
+                    // 存储游戏结果，等待所有转轴停止后使用
+                    slotReels.gameResult = result;
+                    slotReels.betAmount = betAmount;
+                    slotReels.autoSpin = autoSpin;
                     
                 } else {
                     alert(result.error || '游戏出错，请重试！');
+                    isSpinning = false;
+                    document.getElementById('spin-btn').disabled = false;
+                    document.getElementById('spin-btn').textContent = freeSpinsRemaining > 0 ? '🆓 免费旋转 🆓' : '🎰 旋转 🎰';
+                    
+                    // 如果是自动旋转模式，取消自动旋转
+                    if (autoSpin) {
+                        document.getElementById('auto-spin-checkbox').checked = false;
+                    }
                 }
+                
             } catch (error) {
                 console.error('游戏请求失败:', error);
                 alert('网络错误，请重试！');
-            } finally {
+                
+                // 重置状态
                 isSpinning = false;
                 document.getElementById('spin-btn').disabled = false;
                 document.getElementById('spin-btn').textContent = freeSpinsRemaining > 0 ? '🆓 免费旋转 🆓' : '🎰 旋转 🎰';
+                
+                // 如果是自动旋转模式，取消自动旋转
+                if (autoSpin) {
+                    document.getElementById('auto-spin-checkbox').checked = false;
+                }
             }
         }
 
-        // 显示转轴结果
+        // 显示转轴结果 - 更新为兼容Canvas
         function displayReels(reels) {
-            for (let reel = 0; reel < 5; reel++) {
-                for (let row = 0; row < 3; row++) {
-                    const symbolElement = document.getElementById(`symbol-${reel}-${row}`);
-                    const symbolId = reels[reel][row];
-                    symbolElement.textContent = symbolMap[symbolId] || symbolId;
-                    symbolElement.classList.remove('winning');
-                }
-            }
+            // Canvas转轴会自动显示结果，这里可以用于额外的效果
+            console.log('转轴结果:', reels);
         }
 
         // 更新游戏信息
@@ -736,8 +1116,27 @@
             wins.forEach((win, index) => {
                 const winElement = document.createElement('div');
                 winElement.className = 'win-line';
+                
+                // 翻译线型名称
+                let lineTypeName = win.line;
+                if (typeof win.line === 'string') {
+                    if (win.line.startsWith('horizontal-')) {
+                        lineTypeName = `水平线 ${parseInt(win.line.split('-')[1]) + 1}`;
+                    } else if (win.line.startsWith('vertical-')) {
+                        lineTypeName = `垂直线 ${parseInt(win.line.split('-')[1]) + 1}`;
+                    } else if (win.line === 'diagonal-1') {
+                        lineTypeName = '对角线 \\';
+                    } else if (win.line === 'diagonal-2') {
+                        lineTypeName = '对角线 /';
+                    } else if (win.line === 'zigzag-1') {
+                        lineTypeName = '之字型 A';
+                    } else if (win.line === 'zigzag-2') {
+                        lineTypeName = '之字型 B';
+                    }
+                }
+                
                 winElement.innerHTML = `
-                    线 ${win.line + 1}: ${win.count}个 "${symbolMap[win.symbol] || win.symbol}" - 倍数 ${win.multiplier}x
+                    ${lineTypeName}: ${win.count}个 "${symbolMap[win.symbol] || win.symbol}" - 倍数 ${win.multiplier}x
                 `;
                 winsList.appendChild(winElement);
             });
@@ -745,21 +1144,128 @@
             document.getElementById('wins-display').classList.remove('hidden');
         }
 
-        // 显示中奖效果
+        // 显示中奖效果 - 加强版本！
         function showWinningEffects(wins) {
+            // 为每条中奖线生成随机背景色
+            const lineColors = {};
+            
+            // 在Canvas转轴上高亮显示中奖位置
             wins.forEach(win => {
+                // 为这条线生成唯一颜色（如果还没有的话）
+                if (!lineColors[win.line]) {
+                    // 生成鲜艳的颜色
+                    const colors = [
+                        '#FF6B6B', // 红色
+                        '#4ECDC4', // 青色
+                        '#45B7D1', // 蓝色
+                        '#96CEB4', // 绿色
+                        '#FFEAA7', // 黄色
+                        '#DDA0DD', // 紫色
+                        '#FFB6C1', // 粉色
+                        '#98D8C8'  // 薄荷绿
+                    ];
+                    lineColors[win.line] = colors[Math.floor(Math.random() * colors.length)];
+                }
+                
+                const lineColor = lineColors[win.line];
+                
                 win.positions.forEach(pos => {
-                    const symbolElement = document.getElementById(`symbol-${pos.reel}-${pos.row}`);
-                    symbolElement.classList.add('winning');
+                    const reel = slotReels[pos.reel];
+                    if (reel) {
+                        // 在Canvas上绘制中奖高亮效果
+                        const canvas = reel.canvas;
+                        const ctx = reel.ctx;
+                        
+                        // 计算中奖符号的Y位置
+                        const symbolY = reel.h / 2 + (pos.row - 2) * 60;
+                        
+                        // 绘制带背景色的中奖框
+                        ctx.save();
+                        
+                        // 绘制背景色
+                        ctx.fillStyle = lineColor + '80'; // 50%透明度
+                        ctx.fillRect(5, symbolY - 30, reel.w - 10, 60);
+                        
+                        // 绘制边框
+                        ctx.strokeStyle = '#FFD700';
+                        ctx.lineWidth = 3;
+                        ctx.shadowColor = '#FFD700';
+                        ctx.shadowBlur = 8;
+                        ctx.strokeRect(5, symbolY - 30, reel.w - 10, 60);
+                        
+                        ctx.restore();
+                    }
                 });
             });
+            
+            // 添加中奖庆祝特效
+            createWinCelebration(wins.length);
+            
+            console.log('中奖效果已显示:', wins.length, '条中奖线');
+        }
+        
+        // 中奖庆祝特效
+        function createWinCelebration(winCount) {
+            // 根据中奖线数量决定特效强度
+            const intensity = Math.min(winCount, 5);
+            
+            // 创建彩虹爆炸特效
+            for (let i = 0; i < intensity * 3; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.style.cssText = `
+                        position: fixed;
+                        left: ${20 + Math.random() * 60}%;
+                        top: ${20 + Math.random() * 60}%;
+                        font-size: 2rem;
+                        z-index: 9998;
+                        animation: fireworkPop 1.5s ease-out;
+                        pointer-events: none;
+                    `;
+                    firework.textContent = ['✨', '🎆', '🎇', '🎉', '⭐'][Math.floor(Math.random() * 5)];
+                    
+                    // 添加烟花动画
+                    if (!document.querySelector('#firework-style')) {
+                        const style = document.createElement('style');
+                        style.id = 'firework-style';
+                        style.textContent = `
+                            @keyframes fireworkPop {
+                                0% { opacity: 0; transform: scale(0) rotate(0deg); }
+                                50% { opacity: 1; transform: scale(1.5) rotate(180deg); }
+                                100% { opacity: 0; transform: scale(0.5) rotate(360deg); }
+                            }
+                            @keyframes winPulse {
+                                0%, 100% { transform: scale(1); }
+                                50% { transform: scale(1.1); }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                    
+                    document.body.appendChild(firework);
+                    
+                    setTimeout(() => {
+                        if (document.body.contains(firework)) {
+                            document.body.removeChild(firework);
+                        }
+                    }, 1500);
+                }, i * 200);
+            }
+            
+            // 中奖信息闪烁效果
+            const winsDisplay = document.getElementById('wins-display');
+            if (winsDisplay && !winsDisplay.classList.contains('hidden')) {
+                winsDisplay.style.animation = 'winPulse 0.5s ease-in-out 3';
+            }
         }
 
-        // 清除中奖效果
+        // 清除中奖效果 - 更新为Canvas版本
         function clearWinningEffects() {
-            const symbols = document.querySelectorAll('.symbol');
-            symbols.forEach(symbol => {
-                symbol.classList.remove('winning');
+            // Canvas转轴会在下次绘制时自动清除，这里可以添加额外的清理逻辑
+            slotReels.forEach(reel => {
+                if (reel.state === 'locked') {
+                    reel.draw(); // 重新绘制以清除高亮效果
+                }
             });
         }
 
@@ -778,9 +1284,247 @@
             }
         }
 
-        // 显示Jackpot中奖
+        // 显示Jackpot中奖 - 加强版本！
         function showJackpotWin(jackpot) {
-            alert(`🎊 恭喜！您触发了 ${jackpot.level.toUpperCase()} Jackpot！\n获得奖励：¥${jackpot.amount} 🎊`);
+            // 创建全屏爆炸特效
+            createJackpotExplosion();
+            
+            if (jackpot.level === 'super') {
+                // 超级大奖特殊效果
+                showSuperJackpotEffect(jackpot.amount);
+            } else {
+                const levelNames = {
+                    'mini': '多寿小奖',
+                    'minor': '多喜中奖', 
+                    'major': '多财大奖',
+                    'grand': '多福巨奖'
+                };
+                showNormalJackpotEffect(levelNames[jackpot.level], jackpot.amount, jackpot.level);
+            }
+        }
+        
+        // 创建全屏爆炸特效
+        function createJackpotExplosion() {
+            const explosion = document.createElement('div');
+            explosion.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: radial-gradient(circle, rgba(255,215,0,0.8) 0%, rgba(255,69,0,0.6) 30%, transparent 70%);
+                z-index: 9999;
+                animation: explosionPulse 0.8s ease-out;
+                pointer-events: none;
+            `;
+            
+            // 添加爆炸动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes explosionPulse {
+                    0% { opacity: 0; transform: scale(0.1); }
+                    50% { opacity: 1; transform: scale(1.2); }
+                    100% { opacity: 0; transform: scale(1); }
+                }
+                @keyframes jackpotBounce {
+                    0%, 20%, 50%, 80%, 100% { transform: translateY(0) scale(1); }
+                    40% { transform: translateY(-30px) scale(1.1); }
+                    60% { transform: translateY(-15px) scale(1.05); }
+                }
+                @keyframes jackpotGlow {
+                    0%, 100% { text-shadow: 0 0 20px #FFD700, 0 0 40px #FFD700; }
+                    50% { text-shadow: 0 0 40px #FFD700, 0 0 80px #FFD700, 0 0 120px #FF4500; }
+                }
+                @keyframes superExplosion {
+                    0% { opacity: 0; transform: scale(0); }
+                    30% { opacity: 1; transform: scale(1.2); }
+                    70% { opacity: 1; transform: scale(1); }
+                    100% { opacity: 0; transform: scale(1.1); }
+                }
+                @keyframes coinRain {
+                    0% { transform: translateY(-100vh) rotate(0deg); }
+                    100% { transform: translateY(100vh) rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+            document.body.appendChild(explosion);
+            
+            // 播放爆炸声音（模拟）
+            console.log('💥 BOOM! Jackpot 爆炸特效!');
+            
+            setTimeout(() => {
+                document.body.removeChild(explosion);
+            }, 800);
+        }
+        
+        // 超级大奖特效
+        function showSuperJackpotEffect(amount) {
+            // 创建金币雨特效
+            createCoinRain();
+            
+            const superModal = document.createElement('div');
+            superModal.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                animation: superExplosion 3s ease-out;
+            `;
+            
+            superModal.innerHTML = `
+                <div style="
+                    text-align: center;
+                    color: #FFD700;
+                    animation: jackpotBounce 2s infinite, jackpotGlow 1s infinite;
+                ">
+                    <div style="font-size: 4rem; margin-bottom: 20px;"> erotik</div>
+                    <div style="font-size: 3rem; font-weight: bold; margin-bottom: 20px;">传说中的超级大奖！</div>
+                    <div style="font-size: 5rem; font-weight: bold; margin-bottom: 20px; color: #FF4500;">¥${amount}</div>
+                    <div style="font-size: 1.8rem;">🎉 您成为了今日的幸运王！ 🎉</div>
+                    <div style="font-size: 1.2rem; margin-top: 30px; color: #FFA500;">3秒后自动关闭...</div>
+                </div>
+            `;
+            
+            document.body.appendChild(superModal);
+            
+            setTimeout(() => {
+                document.body.removeChild(superModal);
+            }, 3000);
+        }
+        
+        // 普通奖项特效
+        function showNormalJackpotEffect(levelName, amount, level) {
+            const colors = {
+                'mini': '#32CD32',
+                'minor': '#00BFFF', 
+                'major': '#FF6347',
+                'grand': '#9370DB'
+            };
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(45deg, ${colors[level]}, #FFD700);
+                padding: 40px;
+                border-radius: 20px;
+                border: 5px solid #FFD700;
+                z-index: 10000;
+                text-align: center;
+                box-shadow: 0 0 50px ${colors[level]};
+                animation: jackpotBounce 1.5s ease-out;
+            `;
+            
+            modal.innerHTML = `
+                <div style="color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🎊 ${levelName} 🎊</div>
+                    <div style="font-size: 3rem; font-weight: bold; margin-bottom: 15px;">¥${amount}</div>
+                    <div style="font-size: 1.5rem;">🎉 恭喜中奖！ 🎉</div>
+                </div>
+            `;
+            
+            // 添加背景遮罩
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.7);
+                z-index: 9999;
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(modal);
+            
+            // 点击关闭
+            const closeModal = () => {
+                document.body.removeChild(overlay);
+                document.body.removeChild(modal);
+            };
+            
+            overlay.addEventListener('click', closeModal);
+            modal.addEventListener('click', closeModal);
+            
+            // 2秒后自动关闭
+            setTimeout(closeModal, 2000);
+        }
+        
+        // 金币雨特效
+        function createCoinRain() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const coin = document.createElement('div');
+                    coin.style.cssText = `
+                        position: fixed;
+                        left: ${Math.random() * 100}%;
+                        top: -50px;
+                        font-size: 2rem;
+                        z-index: 9998;
+                        animation: coinRain 3s linear;
+                        pointer-events: none;
+                    `;
+                    coin.textContent = '💰';
+                    
+                    document.body.appendChild(coin);
+                    
+                    setTimeout(() => {
+                        if (document.body.contains(coin)) {
+                            document.body.removeChild(coin);
+                        }
+                    }, 3000);
+                }, i * 100);
+            }
+        }
+        
+        // 免费旋转获得特效
+        function showFreeSpinsWin(scatterData) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%; left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(45deg, #9B59B6, #8E44AD);
+                padding: 40px;
+                border-radius: 20px;
+                border: 5px solid #FFD700;
+                z-index: 10000;
+                text-align: center;
+                box-shadow: 0 0 50px #9B59B6;
+                animation: jackpotBounce 1.5s ease-out;
+            `;
+            
+            modal.innerHTML = `
+                <div style="color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🎆 免费旋转！ 🎆</div>
+                    <div style="font-size: 4rem; font-weight: bold; margin-bottom: 15px;">${scatterData.free_spins} 次</div>
+                    <div style="font-size: 1.8rem; margin-bottom: 10px;">🎯 ${scatterData.count}个 Scatter 符号触发！</div>
+                    <div style="font-size: 1.5rem;">🎉 无限惊喜等着您！ 🎉</div>
+                </div>
+            `;
+            
+            // 添加背景遮罩
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.7);
+                z-index: 9999;
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(modal);
+            
+            // 点击关闭
+            const closeModal = () => {
+                document.body.removeChild(overlay);
+                document.body.removeChild(modal);
+            };
+            
+            overlay.addEventListener('click', closeModal);
+            modal.addEventListener('click', closeModal);
+            
+            // 2.5秒后自动关闭
+            setTimeout(closeModal, 2500);
         }
 
         // 返回主页

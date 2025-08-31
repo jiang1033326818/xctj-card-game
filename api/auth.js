@@ -279,19 +279,6 @@ async function authenticateAdmin(req, res) {
   return user;
 }
 
-module.exports = {
-  loginUser,
-  registerUser,
-  getUserFromRequest,
-  verifyToken,
-  generateToken,
-  isAdmin,
-  authenticateUser,
-  authenticateAdmin,
-  updateUserBalance,
-  getAllCachedUsers
-};
-
 /**
  * 更新用户余额
  * @param {string} username 用户名
@@ -304,9 +291,10 @@ function updateUserBalance(username, newBalance) {
     
     const user = userCache.get(username);
     if (user) {
+      const oldBalance = user.balance;
       user.balance = newBalance;
       userCache.set(username, user);
-      console.log("更新用户余额:", { username, newBalance });
+      console.log("更新用户余额成功:", { username, oldBalance, newBalance, diff: newBalance - oldBalance });
       
       // 尝试同步到数据库（非关键）
       try {
@@ -323,6 +311,7 @@ function updateUserBalance(username, newBalance) {
       
       return true;
     }
+    console.error("用户不存在，无法更新余额:", username);
     return false;
   } catch (error) {
     console.error("更新用户余额错误:", error);
@@ -342,3 +331,16 @@ function getAllCachedUsers() {
     .sort((a, b) => b.balance - a.balance)
     .slice(0, 3);
 }
+
+module.exports = {
+  loginUser,
+  registerUser,
+  getUserFromRequest,
+  verifyToken,
+  generateToken,
+  isAdmin,
+  authenticateUser,
+  authenticateAdmin,
+  updateUserBalance,
+  getAllCachedUsers
+};

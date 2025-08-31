@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 页面修复测试</h1>
+        
+        <div class="status success">
+            <strong>✅ 页面修复状态：</strong><br>
+            1. 添加了缺失的 &lt;!DOCTYPE html&gt; 标签<br>
+            2. 移除了 game-content 的 hidden 类<br>
+            3. 修复了 JavaScript 语法错误<br>
+        </div>
+        
+        <h3>测试链接：</h3>
+        <a href="slot-game.html" target="_blank">
+            <button>🎰 测试角子机页面</button>
+        </a>
+        
+        <a href="slot-test.html" target="_blank">
+            <button>📊 查看修复验证页面</button>
+        </a>
+        
+        <h3>登录信息：</h3>
+        <div class="status">
+            用户名: <strong>test</strong><br>
+            密码: <strong>test</strong>
+        </div>
+        
+        <h3>问题诊断：</h3>
+        <button onclick="checkPage()">检查页面状态</button>
+        <div id="diagnosis-result"></div>
+        
+        <script>
+            function checkPage() {
+                const resultDiv = document.getElementById('diagnosis-result');
+                
+                // 检查各个页面元素
+                fetch('slot-game.html')
+                    .then(response => response.text())
+                    .then(html => {
+                        let issues = [];
+                        
+                        if (!html.includes('<!DOCTYPE html>')) {
+                            issues.push('缺少 DOCTYPE 声明');
+                        }
+                        
+                        if (html.includes('class="hidden"') && html.includes('game-content')) {
+                            issues.push('game-content 可能被隐藏');
+                        }
+                        
+                        if (html.length < 10000) {
+                            issues.push('页面内容可能不完整');
+                        }
+                        
+                        if (issues.length === 0) {
+                            resultDiv.innerHTML = '<div class="status success">✅ 页面检查通过，没有发现问题</div>';
+                        } else {
+                            resultDiv.innerHTML = '<div class="status error">❌ 发现问题：<br>' + issues.join('<br>') + '</div>';
+                        }
+                    })
+                    .catch(error => {
+                        resultDiv.innerHTML = '<div class="status error">❌ 无法加载页面：' + error.message + '</div>';
+                    });
+            }
+            
+            // 页面加载时自动检查
+            window.onload = function() {
+                setTimeout(checkPage, 1000);
+            };
+        </script>
+    </div>
+</body>
+</html>

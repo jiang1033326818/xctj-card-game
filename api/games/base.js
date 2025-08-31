@@ -62,10 +62,16 @@ class BaseGameHandler {
    * 更新用户余额
    * @param {string} username 用户名
    * @param {number} newBalance 新余额
+   * @returns {boolean} 是否成功
    */
   updateBalance(username, newBalance) {
-    updateUserBalance(username, newBalance);
-    console.log("余额更新成功:", { username, newBalance });
+    const result = updateUserBalance(username, newBalance);
+    if (result) {
+      console.log("余额更新成功:", { username, newBalance });
+    } else {
+      console.error("余额更新失败:", { username, newBalance });
+    }
+    return result;
   }
 
   /**

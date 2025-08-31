@@ -11,34 +11,42 @@ class SlotGameHandler extends BaseGameHandler {
     // 游戏配置
     this.config = {
       reels: 5,        // 5个转轴
-      rows: 3,         // 3行
-      paylines: 243,   // 243种连线方式
-      minBet: 10,      // 最小投注
-      maxBet: 1000,    // 最大投注
+      rows: 5,         // 5行（增加为5行）
+      paylines: 1024,  // 1024种连线方式（增加连线）
+      minBet: 1,       // 最小投注改为1
+      maxBet: 5000,    // 最大投注改为5000
     };
 
-    // 符号配置（从低到高价值）
+    // 符号配置（从低到高价值）- 微调保持小幅庄家优势，但中奖基本覆盖本金
     this.symbols = [
-      { id: 'card_10', name: '10', multiplier: [0, 0, 5, 15, 50], weight: 120 },
-      { id: 'card_j', name: 'J', multiplier: [0, 0, 5, 15, 50], weight: 110 },
-      { id: 'card_q', name: 'Q', multiplier: [0, 0, 10, 25, 75], weight: 100 },
-      { id: 'card_k', name: 'K', multiplier: [0, 0, 10, 25, 75], weight: 90 },
-      { id: 'card_a', name: 'A', multiplier: [0, 0, 15, 40, 100], weight: 80 },
-      { id: 'coin', name: '金币', multiplier: [0, 0, 20, 60, 150], weight: 70 },
-      { id: 'ingot', name: '金元宝', multiplier: [0, 0, 30, 100, 300], weight: 60 },
-      { id: 'lantern', name: '灯笼', multiplier: [0, 0, 50, 150, 500], weight: 50 },
-      { id: 'dragon', name: '龙', multiplier: [0, 0, 100, 300, 1000], weight: 40 },
-      { id: 'wild', name: '福(Wild)', multiplier: [0, 0, 200, 500, 2000], weight: 30 }, // Wild符号
-      { id: 'scatter', name: '囍(Scatter)', multiplier: [0, 0, 0, 0, 0], weight: 20 }, // Scatter符号
+      { id: 'card_10', name: '10', multiplier: [0, 12, 30, 60, 120], weight: 130 }, // 略微降低倍数
+      { id: 'card_j', name: 'J', multiplier: [0, 12, 30, 60, 120], weight: 125 },
+      { id: 'card_q', name: 'Q', multiplier: [0, 15, 40, 80, 160], weight: 120 },
+      { id: 'card_k', name: 'K', multiplier: [0, 20, 50, 100, 200], weight: 115 },
+      { id: 'card_a', name: 'A', multiplier: [0, 25, 60, 120, 240], weight: 110 },
+      { id: 'coin', name: '金币', multiplier: [0, 30, 80, 160, 320], weight: 100 },
+      { id: 'ingot', name: '金元宝', multiplier: [0, 50, 120, 250, 500], weight: 90 },
+      { id: 'lantern', name: '灯笼', multiplier: [0, 80, 200, 400, 800], weight: 80 },
+      { id: 'dragon', name: '龙', multiplier: [0, 120, 300, 600, 1200], weight: 70 },
+      { id: 'wild', name: '福(Wild)', multiplier: [0, 160, 400, 800, 1600], weight: 60 }, // Wild符号
+      { id: 'scatter', name: '囍(Scatter)', multiplier: [0, 0, 0, 0, 0], weight: 10 }, // Scatter符号（权重进一步降低）
     ];
 
-    // Jackpot累积奖池配置
+    // Jackpot累积奖池配置（降低触发概率）
     this.jackpotConfig = {
-      mini: { min: 100, max: 500, probability: 0.001 },
-      minor: { min: 500, max: 2000, probability: 0.0005 },
-      major: { min: 2000, max: 10000, probability: 0.0002 },
-      grand: { min: 10000, max: 50000, probability: 0.0001 }
+      mini: { min: 100, max: 500, probability: 0.005 }, // 降低概率到原来的1/10
+      minor: { min: 500, max: 2000, probability: 0.003 }, // 降低概率到原来的1/10
+      major: { min: 2000, max: 10000, probability: 0.001 }, // 降低概率到原来的1/10
+      grand: { min: 10000, max: 50000, probability: 0.0005 }, // 降低概率到原来的1/10
+      // 超级大奖：游戏总投注金额
+      super: { probability: 0.0001 } // 降低概率到原来的1/10
     };
+
+    // 超级大奖池（全局总投注金额累积）
+    this.superJackpotPool = 0;
+    
+    // 记录游戏总投注金额
+    this.totalGameBets = 0;
 
     // 免费旋转配置
     this.freeSpinsConfig = {
@@ -51,7 +59,7 @@ class SlotGameHandler extends BaseGameHandler {
 
   /**
    * 生成转轴结果
-   * @returns {Array} 5x3的转轴结果
+   * @returns {Array} 5x5的转轴结果
    */
   generateReels() {
     const reels = [];
@@ -84,20 +92,50 @@ class SlotGameHandler extends BaseGameHandler {
   checkPaylines(reels) {
     const wins = [];
     
-    // 检查每一行的连线（简化版243线，实际为3行基础连线）
+    // 适度增加连线数量，保持合理平衡
+    // 检查所有5条水平线
     for (let row = 0; row < this.config.rows; row++) {
       const line = [];
       for (let reel = 0; reel < this.config.reels; reel++) {
         line.push(reels[reel][row]);
       }
       
-      const lineWin = this.checkLine(line, row);
+      const lineWin = this.checkLine(line, `horizontal-${row}`);
       if (lineWin) {
+        lineWin.positions = line.map((symbol, reel) => ({reel, row}));
         wins.push(lineWin);
       }
     }
     
-    return wins;
+    // 添加两条对角线增加中奖机会
+    // 主对角线（左上到右下）
+    const diagonal1 = [];
+    const diagonal1Positions = [];
+    for (let i = 0; i < Math.min(this.config.reels, this.config.rows); i++) {
+      diagonal1.push(reels[i][i]);
+      diagonal1Positions.push({reel: i, row: i});
+    }
+    const diagonal1Win = this.checkLine(diagonal1, 'diagonal-1');
+    if (diagonal1Win) {
+      diagonal1Win.positions = diagonal1Positions;
+      wins.push(diagonal1Win);
+    }
+    
+    // 反对角线（左下到右上）
+    const diagonal2 = [];
+    const diagonal2Positions = [];
+    for (let i = 0; i < Math.min(this.config.reels, this.config.rows); i++) {
+      const row = this.config.rows - 1 - i;
+      diagonal2.push(reels[i][row]);
+      diagonal2Positions.push({reel: i, row});
+    }
+    const diagonal2Win = this.checkLine(diagonal2, 'diagonal-2');
+    if (diagonal2Win) {
+      diagonal2Win.positions = diagonal2Positions;
+      wins.push(diagonal2Win);
+    }
+    
+    return wins; // 7条连线（5水平 + 2对角）
   }
 
   /**
@@ -132,8 +170,8 @@ class SlotGameHandler extends BaseGameHandler {
       }
     }
     
-    // 需要至少3个连续符号才中奖
-    if (consecutiveCount >= 3) {
+    // 需要至少2个连续符号才中奖（降低门槛增加中奖机会）
+    if (consecutiveCount >= 2) {
       const symbol = this.symbols.find(s => s.id === currentSymbol);
       if (symbol && symbol.multiplier[consecutiveCount - 1] > 0) {
         return {
@@ -201,18 +239,75 @@ class SlotGameHandler extends BaseGameHandler {
    * @returns {Object|null} Jackpot结果
    */
   checkJackpot(betAmount) {
-    // 投注额越高，触发概率越大
+    // 投注额越高，触发概率越大（增强关联性）
     const baseProbability = betAmount / this.config.maxBet;
     
+    // 累积总投注金额
+    this.totalGameBets += betAmount;
+    
+    // 检查超级大奖（使用总投注金额作为奖金）
+    // 超级大奖开奖条件：基于总投注金额
+    if (this.totalGameBets >= 1000) { // 至少需要累积1000元投注
+      // 增强与投注金额的关联性
+      const superProbability = this.jackpotConfig.super.probability * (1 + baseProbability * 5);
+      
+      if (Math.random() < superProbability) {
+        // 奖金与投注金额强关联
+        const superAmount = Math.floor(this.totalGameBets * (0.5 + baseProbability * 0.5)); // 50%-100%的总投注金额
+        this.totalGameBets = 0; // 重置累积金额
+        return {
+          level: 'super',
+          amount: superAmount,
+          triggered: true,
+          type: 'super_jackpot'
+        };
+      }
+    }
+    
+    // 检查其他Jackpot（提高触发概率，并与投注金额强关联）
     for (const [level, config] of Object.entries(this.jackpotConfig)) {
-      const probability = config.probability * (1 + baseProbability);
+      if (level === 'super') continue; // 跳过超级大奖
+      
+      // 增强与投注金额的关联性
+      const probability = config.probability * (1 + baseProbability * 5); // 增加更强的概率加成
       
       if (Math.random() < probability) {
-        const amount = Math.floor(Math.random() * (config.max - config.min) + config.min);
+        // 根据投注金额调整奖励金额，使其与投注金额强关联
+        let minAmount, maxAmount;
+        
+        // 更明显的奖励范围区分
+        if (betAmount <= 10) {
+          // 小额投注，奖励范围很小
+          minAmount = config.min * 0.05;
+          maxAmount = config.max * 0.1;
+        } else if (betAmount <= 100) {
+          // 中等投注，奖励范围较小
+          minAmount = config.min * 0.2;
+          maxAmount = config.max * 0.4;
+        } else if (betAmount <= 500) {
+          // 中高投注，奖励范围适中
+          minAmount = config.min * 0.5;
+          maxAmount = config.max * 0.8;
+        } else if (betAmount <= 1000) {
+          // 高投注，奖励范围较大
+          minAmount = config.min * 0.8;
+          maxAmount = config.max * 1.2;
+        } else {
+          // 超高投注，奖励范围最大（甚至可能超过原设定上限）
+          minAmount = config.min * (betAmount / 500);
+          maxAmount = config.max * (betAmount / 500);
+        }
+        
+        // 确保奖励金额不低于最小值
+        minAmount = Math.max(minAmount, config.min * 0.05);
+        maxAmount = Math.max(maxAmount, config.min * 0.1);
+        
+        const amount = Math.floor(Math.random() * (maxAmount - minAmount) + minAmount);
         return {
           level,
-          amount,
-          triggered: true
+          amount: Math.round(amount),
+          triggered: true,
+          type: 'regular_jackpot'
         };
       }
     }
@@ -231,7 +326,8 @@ class SlotGameHandler extends BaseGameHandler {
     let totalWin = 0;
     
     wins.forEach(win => {
-      let lineWin = Math.floor((betAmount / this.config.paylines) * win.multiplier);
+      // 调整奖金计算，保持平衡
+      let lineWin = Math.floor((betAmount / 50) * win.multiplier); // 恢复为50倍数
       if (isFreeSpins) {
         lineWin *= this.freeSpinsConfig.multiplier;
       }
@@ -281,7 +377,8 @@ class SlotGameHandler extends BaseGameHandler {
       
       // 检查连线
       const wins = this.checkPaylines(reels);
-      console.log("中奖线:", wins);
+      console.log("中奖线数量:", wins.length);
+      console.log("中奖线详情:", wins.map(w => ({ line: w.line, symbol: w.symbol, count: w.count, multiplier: w.multiplier })));
       
       // 检查Scatter
       const scatterResult = this.checkScatters(reels);
@@ -313,18 +410,43 @@ class SlotGameHandler extends BaseGameHandler {
         newFreeSpins -= 1; // 消耗一次免费旋转
       }
       
-      // 计算新余额
+      // 计算新余额 - 增强调试信息
       let newBalance = user.balance;
+      console.log("================== 余额计算详情 ==================");
+      console.log("计算前状态:");
+      console.log("  - 用户余额:", user.balance);
+      console.log("  - 投注金额:", bet_amount);
+      console.log("  - 中奖金额:", totalWin);
+      console.log("  - 免费旋转:", isFreeSpins);
+      console.log("  - 中奖线数:", wins.length);
+      
       if (!isFreeSpins) {
-        newBalance = user.balance - bet_amount + totalWin;
+        // 付费旋转：扣除投注金额，加上赢奖
+        const oldBalance = user.balance;
+        newBalance = oldBalance - bet_amount + totalWin;
+        console.log("付费旋转计算:");
+        console.log("  公式: ", oldBalance, " - ", bet_amount, " + ", totalWin, " = ", newBalance);
+        console.log("  理论变化:", newBalance - oldBalance, "（应该等于 ", totalWin - bet_amount, ")");
       } else {
-        newBalance = user.balance + totalWin;
+        // 免费旋转：只加上赢奖，不扣除投注
+        const oldBalance = user.balance;
+        newBalance = oldBalance + totalWin;
+        console.log("免费旋转计算:");
+        console.log("  公式: ", oldBalance, " + ", totalWin, " = ", newBalance);
+        console.log("  理论变化:", newBalance - oldBalance, "（应该等于 ", totalWin, ")");
       }
       
-      console.log("新余额:", newBalance);
+      console.log("计算后余额:", newBalance);
+      console.log("================================================");
       
-      // 更新余额
-      this.updateBalance(user.username, newBalance);
+      // 更新余额 - 确保立即更新并验证
+      const balanceUpdated = this.updateBalance(user.username, newBalance);
+      if (!balanceUpdated) {
+        console.error("余额更新失败！用户:", user.username, "新余额:", newBalance);
+        // 即使余额更新失败，也继续返回结果，但记录错误
+      } else {
+        console.log("余额更新成功！用户:", user.username, "旧余额:", user.balance, "新余额:", newBalance, "中奖:", totalWin);
+      }
 
       // 记录游戏结果
       await this.recordGame({
@@ -350,7 +472,8 @@ class SlotGameHandler extends BaseGameHandler {
         total_win: totalWin,
         bet_amount: bet_amount,
         new_balance: newBalance,
-        is_free_spin: isFreeSpins
+        is_free_spin: isFreeSpins,
+        super_jackpot_pool: this.totalGameBets // 返回总投注金额作为超级大奖池
       };
       
       console.log("准备返回结果:", result);

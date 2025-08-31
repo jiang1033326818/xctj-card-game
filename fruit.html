@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>水果机旋转效果 Demo</title>
+  <style>
+    body{background:#0b1020;color:#fff;font-family:sans-serif;text-align:center;padding:20px}
+    .machine{display:inline-block;padding:20px;border:4px solid #3af;border-radius:16px;background:#111;box-shadow:0 0 20px rgba(0,200,255,.4)}
+    .reels{display:flex;gap:10px;justify-content:center;margin:20px 0}
+    .reel canvas{background:#000;border:2px solid #3af;border-radius:8px}
+    .panel{margin-top:10px}
+    .btn{padding:8px 20px;margin:4px;font-size:16px;border:none;border-radius:6px;cursor:pointer}
+    .btn{background:#3af;color:#000}
+    .btn:disabled{background:#555;color:#aaa}
+    .secondary{background:#999;color:#000}
+    .status{margin-top:10px;min-height:30px}
+  </style>
+</head>
+<body>
+  <div class="machine">
+    <h2>水果机 🎰</h2>
+    <div class="reels" id="reels">
+      <div class="reel"><canvas width="160" height="240"></canvas></div>
+      <div class="reel"><canvas width="160" height="240"></canvas></div>
+      <div class="reel"><canvas width="160" height="240"></canvas></div>
+    </div>
+    <div class="panel">
+      <button class="btn" id="btnSpin">开始旋转</button>
+      <button class="btn secondary" id="btnStop" disabled>提前刹车</button>
+    </div>
+    <div class="status" id="status">点击“开始旋转”体验效果</div>
+  </div>
+
+<script>
+const SYMBOLS = ["🍒","🍋","🍇","⭐️","🍉","🔔","7️⃣","🍀","🍎"];
+const SYMBOL_SIZE = 80;
+const REPEAT = 4;
+
+const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+const randInt=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
+
+class Reel{
+  constructor(canvas, symbols){
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.w = canvas.width; this.h = canvas.height;
+    this.symbols = symbols;
+    this.vel = 0;
+    this.targetVel = 0;
+    this.state = 'idle';
+    this.targetIndex = 0;
+    this.sprite = this.buildStrip();
+    this.off = 0;
+  }
+
+  buildStrip(){
+    const itemH = SYMBOL_SIZE;
+    const totalItems = this.symbols.length * REPEAT;
+    const strip = document.createElement('canvas');
+    strip.width = this.w; strip.height = totalItems * itemH;
+    const c = strip.getContext('2d');
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = `bold ${Math.floor(itemH*0.6)}px system-ui`;
+    for(let r=0;r<REPEAT;r++){
+      for(let i=0;i<this.symbols.length;i++){
+        const y = (r*this.symbols.length + i)*itemH + itemH/2;
+        c.fillStyle = '#fff';
+        c.fillText(this.symbols[i], strip.width/2, y);
+      }
+    }
+    return strip;
+  }
+
+  start(speed){
+    this.state = 'spinning';
+    this.vel = speed;
+    this.targetVel = speed;
+  }
+
+  requestStop(targetIndex){
+    if(this.state==='spinning'){
+      this.state = 'stopping';
+      this.targetIndex = targetIndex % this.symbols.length;
+    }
+  }
+
+  forceStopNow(){
+    this.state = 'stopping';
+    this.targetIndex = randInt(0,this.symbols.length-1);
+    this.targetVel = 0;
+  }
+
+  update(dt){
+    const itemH = SYMBOL_SIZE;
+    const len = this.symbols.length;
+    const cycle = len*itemH;
+
+    if(this.state==='stopping'){
+      const offMod = ((this.off % cycle) + cycle) % cycle;
+      const curIndex = Math.round(offMod / itemH) % len;
+      const remainCells = ((len + curIndex - this.targetIndex) % len) || len;
+      const remainPx = remainCells*itemH - (offMod % itemH);
+
+      if(remainPx < 10){
+        const lockTo = Math.round(this.off / itemH) * itemH;
+        this.off = lockTo;
+        this.vel = 0; this.targetVel = 0; this.state='locked';
+      } else {
+        this.vel = 300; // 匀速滑动直到停下
+      }
+    }
+
+    this.off += this.vel*dt;
+    this.draw();
+  }
+
+  draw(){
+    const ctx=this.ctx, strip=this.sprite;
+    const totalH = strip.height;
+    let y = this.off % totalH; if(y<0) y+=totalH;
+
+    ctx.clearRect(0,0,this.w,this.h);
+    const s1=Math.min(this.h,totalH-y);
+    ctx.drawImage(strip,0,y,this.w,s1,0,0,this.w,s1);
+    if(this.h>s1){
+      const s2=this.h-s1;
+      ctx.drawImage(strip,0,0,this.w,s2,0,s1,this.w,s2);
+    }
+
+    ctx.fillStyle='rgba(255,255,255,.2)';
+    ctx.fillRect(0,this.h/2-1,this.w,2);
+  }
+}
+
+const reels=[...document.querySelectorAll('canvas')].map(c=>new Reel(c,SYMBOLS));
+let raf=0,last=0,spinning=false;
+const status=document.getElementById('status');
+const btnSpin=document.getElementById('btnSpin');
+const btnStop=document.getElementById('btnStop');
+
+function loop(ts){
+  if(!last) last=ts; const dt=(ts-last)/1000; last=ts;
+  reels.forEach(r=>r.update(dt));
+
+  const locked=reels.filter(r=>r.state==='locked').length;
+  if(spinning && locked===reels.length){
+    spinning=false; cancelAnimationFrame(raf); raf=0; last=0;
+    btnSpin.disabled=false; btnStop.disabled=true;
+    const result=getCenterRow();
+    status.innerText=`结果：${result.join(' | ')}`;
+    return;
+  }
+
+  if(spinning) raf=requestAnimationFrame(loop);
+}
+
+function getCenterRow(){
+  return reels.map(r=>{
+    const cycle=SYMBOLS.length*SYMBOL_SIZE;
+    const offMod=((r.off%cycle)+cycle)%cycle;
+    const idx=Math.round(offMod/SYMBOL_SIZE)%SYMBOLS.length;
+    return SYMBOLS[idx];
+  });
+}
+
+function planTargets(){
+  return reels.map(()=>randInt(0,SYMBOLS.length-1));
+}
+
+function startSpin(){
+  if(spinning) return;
+  status.innerText='旋转中…';
+  spinning=true; last=0; if(raf) cancelAnimationFrame(raf);
+
+  reels.forEach(r=>{r.start(800)});
+
+  const targets=planTargets();
+  const runMs=5000; // 固定 5 秒
+  const gaps=[0,600,1200]; // 三个轮依次停
+
+  setTimeout(()=>reels[0].requestStop(targets[0]), runMs+gaps[0]);
+  setTimeout(()=>reels[1].requestStop(targets[1]), runMs+gaps[1]);
+  setTimeout(()=>reels[2].requestStop(targets[2]), runMs+gaps[2]);
+
+  btnSpin.disabled=true; btnStop.disabled=false;
+  raf=requestAnimationFrame(loop);
+}
+
+function earlyBrake(){
+  if(!spinning) return;
+  reels.forEach(r=>r.forceStopNow());
+  status.innerText='正在刹车…';
+}
+
+btnSpin.addEventListener('click',startSpin);
+btnStop.addEventListener('click',earlyBrake);
+
+reels.forEach(r=>r.draw());
+</script>
+</body>
+</html>
