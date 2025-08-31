@@ -60,6 +60,10 @@
             background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
         }
         
+        .btn.delete-all {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+        }
+        
         .message {
             margin-top: 20px;
             padding: 10px;
@@ -98,6 +102,16 @@
             margin-bottom: 20px;
             text-align: left;
         }
+        
+        .danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -109,6 +123,7 @@
             <p>1. 重置admin账户密码为068162（无需认证）</p>
             <p>2. 创建新管理员用户jiang（密码068162）</p>
             <p>3. 清理重复的admin账户</p>
+            <p>4. 删除所有admin/jiang账户并重新创建</p>
         </div>
         
         <div class="warning">
@@ -116,9 +131,15 @@
             <p>此工具可绕过管理员验证，仅在紧急情况下使用。</p>
         </div>
         
+        <div class="danger">
+            <p><strong>🔥 危险操作：</strong></p>
+            <p>"删除所有账户并重建"将删除所有admin和jiang账户，然后重新创建。请谨慎使用！</p>
+        </div>
+        
         <button class="btn reset-password" onclick="resetAdminPassword()">重置Admin密码为068162</button>
         <button class="btn create-jiang" onclick="createJiangAdmin()">创建管理员用户jiang</button>
         <button class="btn delete-duplicate" onclick="deleteDuplicateAdmins()">清理重复Admin账户</button>
+        <button class="btn delete-all" onclick="deleteAllAdminsAndRecreate()">删除所有账户并重建</button>
         <button class="btn" onclick="goBack()">返回首页</button>
         <div id="message" class="message"></div>
     </div>
@@ -216,6 +237,45 @@
                 }
             } catch (error) {
                 console.error('清理重复账户失败:', error);
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = '❌ 网络错误: ' + error.message;
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+            }
+        }
+        
+        async function deleteAllAdminsAndRecreate() {
+            // 确认操作
+            if (!confirm("⚠️ 警告：此操作将删除所有admin和jiang账户，然后重新创建admin账户！\n\n确定要继续吗？")) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/delete-all-admins-recreate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        adminPassword: '068162',
+                        jiangPassword: '068162'
+                    })
+                });
+                
+                const data = await response.json();
+                const messageEl = document.getElementById('message');
+                
+                if (response.ok && data.success) {
+                    messageEl.textContent = '✅ ' + data.message;
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                } else {
+                    messageEl.textContent = '❌ ' + (data.error || '操作失败');
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('删除并重建账户失败:', error);
                 const messageEl = document.getElementById('message');
                 messageEl.textContent = '❌ 网络错误: ' + error.message;
                 messageEl.className = 'message error';

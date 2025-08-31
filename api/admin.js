@@ -626,6 +626,117 @@ async function createJiangAdminNoAuth(req, res) {
   }
 }
 
+/**
+ * 删除所有admin用户并重新创建（无需认证）
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function deleteAllAdminsAndRecreate(req, res) {
+  try {
+    const { adminPassword, jiangPassword } = req.body;
+    
+    // 验证参数
+    if (adminPassword !== "068162") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "admin密码必须为068162" }));
+    }
+
+    if (jiangPassword && jiangPassword !== "068162") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "jiang密码必须为068162" }));
+    }
+
+    const database = getDB() || (await connectDB());
+    
+    // 查找所有admin用户
+    const allAdminUsers = await database.users.find({ username: "admin" });
+    const adminUsersArray = Array.isArray(allAdminUsers) ? allAdminUsers : await allAdminUsers.toArray();
+    
+    // 删除所有admin用户
+    let deletedCount = 0;
+    for (const user of adminUsersArray) {
+      try {
+        // 对于MongoDB，使用_id删除
+        if (user._id) {
+          await database.users.deleteOne({ _id: user._id });
+        } else {
+          // 对于内存数据库，使用username和created_at组合条件删除
+          await database.users.deleteOne({ username: "admin", created_at: user.created_at });
+        }
+        deletedCount++;
+      } catch (deleteError) {
+        console.error("删除admin用户失败:", deleteError);
+      }
+    }
+    
+    // 查找所有jiang用户
+    const allJiangUsers = await database.users.find({ username: "jiang" });
+    const jiangUsersArray = Array.isArray(allJiangUsers) ? allJiangUsers : await allJiangUsers.toArray();
+    
+    // 删除所有jiang用户
+    let jiangDeletedCount = 0;
+    for (const user of jiangUsersArray) {
+      try {
+        // 对于MongoDB，使用_id删除
+        if (user._id) {
+          await database.users.deleteOne({ _id: user._id });
+        } else {
+          // 对于内存数据库，使用username和created_at组合条件删除
+          await database.users.deleteOne({ username: "jiang", created_at: user.created_at });
+        }
+        jiangDeletedCount++;
+      } catch (deleteError) {
+        console.error("删除jiang用户失败:", deleteError);
+      }
+    }
+    
+    // 加密密码
+    const bcrypt = require("bcryptjs");
+    const hashedAdminPassword = await bcrypt.hash(adminPassword, 10);
+
+    // 创建新的admin用户
+    const newAdminUser = {
+      username: "admin",
+      password: hashedAdminPassword,
+      is_admin: true,
+      balance: 10000,
+      created_at: new Date()
+    };
+
+    await database.users.insertOne(newAdminUser);
+    
+    // 如果需要，创建新的jiang用户
+    let jiangMessage = "";
+    if (jiangPassword) {
+      const hashedJiangPassword = await bcrypt.hash(jiangPassword, 10);
+      
+      const newJiangUser = {
+        username: "jiang",
+        password: hashedJiangPassword,
+        is_admin: true,
+        balance: 10000,
+        created_at: new Date()
+      };
+
+      await database.users.insertOne(newJiangUser);
+      jiangMessage = "，并创建了jiang管理员账户";
+    }
+
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ 
+      success: true, 
+      message: `已删除 ${deletedCount} 个admin账户和 ${jiangDeletedCount} 个jiang账户，重新创建了admin管理员账户${jiangMessage}` 
+    }));
+  } catch (error) {
+    console.error("删除并重建管理员账户错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+  }
+}
+
 module.exports = {
   setAdminUser,
   getAllUsers,
@@ -636,6 +747,7 @@ module.exports = {
   deleteDuplicateAdmins,
   createJiangAdmin,
   createJiangAdminNoAuth,
+  deleteAllAdminsAndRecreate,
   getSystemInfo,
   cleanGameRecords
 };

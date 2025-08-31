@@ -2,7 +2,7 @@
 const { loginUser, registerUser, getUserFromRequest } = require("./auth");
 const { handleGame, handleAnimalsGame, handleSlotGame, getGameRecords, getTopPlayers } = require("./games");
 const { getHouseStats } = require("./stats");
-const { setAdminUser, getAllUsers, handleUpdateBalance, deleteUser, resetAdminPassword: resetAdminPasswordHandler, deleteDuplicateAdmins: deleteDuplicateAdminsHandler, createJiangAdmin, createJiangAdminNoAuth } = require("./admin");
+const { setAdminUser, getAllUsers, handleUpdateBalance, deleteUser, resetAdminPassword: resetAdminPasswordHandler, deleteDuplicateAdmins: deleteDuplicateAdminsHandler, createJiangAdmin, createJiangAdminNoAuth, deleteAllAdminsAndRecreate } = require("./admin");
 
 /**
  * 处理API路由
@@ -72,6 +72,10 @@ async function handleRoutes(req, res) {
 
   if (path === "/api/create-jiang-admin-noauth" && method === "POST") {
     return await createJiangAdminNoAuthHandler(req, res);
+  }
+
+  if (path === "/api/delete-all-admins-recreate" && method === "POST") {
+    return await deleteAllAdminsAndRecreateHandler(req, res);
   }
 
   if (path === "/api/admin/users" && method === "GET") {
@@ -346,6 +350,25 @@ async function createJiangAdminNoAuthHandler(req, res) {
 }
 
 /**
+ * 处理删除所有admin并重建请求
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function deleteAllAdminsAndRecreateHandler(req, res) {
+  try {
+    // 调用处理函数
+    await deleteAllAdminsAndRecreate(req, res);
+    return true;
+  } catch (error) {
+    console.error("删除并重建管理员账户处理错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+    return true;
+  }
+}
+
+/**
  * 处理删除用户请求
  * @param {Object} req 请求对象
  * @param {Object} res 响应对象
@@ -381,6 +404,7 @@ const routeMap = {
   "/api/delete-duplicate-admins": { method: "POST", handler: deleteDuplicateAdmins },
   "/api/create-jiang-admin": { method: "POST", handler: createJiangAdminHandler },
   "/api/create-jiang-admin-noauth": { method: "POST", handler: createJiangAdminNoAuthHandler },
+  "/api/delete-all-admins-recreate": { method: "POST", handler: deleteAllAdminsAndRecreateHandler },
   "/api/admin/users": { method: "GET", handler: getAllUsers },
   "/api/update_balance": { method: "POST", handler: handleUpdateBalance },
   "/api/delete_user": { method: "POST", handler: handleDeleteUser },
