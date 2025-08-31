@@ -2,7 +2,7 @@
 const { loginUser, registerUser, getUserFromRequest } = require("./auth");
 const { handleGame, handleAnimalsGame, handleSlotGame, getGameRecords, getTopPlayers } = require("./games");
 const { getHouseStats } = require("./stats");
-const { setAdminUser, getAllUsers, handleUpdateBalance, resetAdminPassword: resetAdminPasswordHandler } = require("./admin");
+const { setAdminUser, getAllUsers, handleUpdateBalance, resetAdminPassword: resetAdminPasswordHandler, deleteDuplicateAdmins: deleteDuplicateAdminsHandler } = require("./admin");
 
 /**
  * 处理API路由
@@ -60,6 +60,10 @@ async function handleRoutes(req, res) {
 
   if (path === "/api/reset-admin-password" && method === "POST") {
     return await resetAdminPassword(req, res);
+  }
+
+  if (path === "/api/delete-duplicate-admins" && method === "POST") {
+    return await deleteDuplicateAdmins(req, res);
   }
 
   if (path === "/api/admin/users" && method === "GET") {
@@ -231,6 +235,37 @@ async function resetAdminPassword(req, res) {
 }
 
 /**
+ * 处理删除重复Admin账户请求
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function deleteDuplicateAdmins(req, res) {
+  try {
+    const { username } = req.body;
+    
+    // 验证参数
+    if (username !== "admin") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "只能清理admin用户的重复账户" }));
+    }
+
+    // 导入admin模块中的删除重复账户函数
+    const { deleteDuplicateAdmins: deleteDuplicateAdminsHandler } = require("./admin");
+    
+    // 调用处理函数
+    await deleteDuplicateAdminsHandler(req, res);
+    return true;
+  } catch (error) {
+    console.error("删除重复Admin账户处理错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+    return true;
+  }
+}
+
+/**
  * 路由映射表
  */
 const routeMap = {
@@ -244,6 +279,7 @@ const routeMap = {
   "/api/house_stats": { method: "GET", handler: getHouseStats },
   "/api/set-admin": { method: "POST", handler: setAdminUser },
   "/api/reset-admin-password": { method: "POST", handler: resetAdminPassword },
+  "/api/delete-duplicate-admins": { method: "POST", handler: deleteDuplicateAdmins },
   "/api/admin/users": { method: "GET", handler: getAllUsers },
   "/api/update_balance": { method: "POST", handler: handleUpdateBalance },
 };
@@ -277,6 +313,7 @@ function getRouteDescription(path) {
     "/api/house_stats": "获取统计数据",
     "/api/set-admin": "设置管理员",
     "/api/reset-admin-password": "重置Admin密码",
+    "/api/delete-duplicate-admins": "删除重复Admin账户",
     "/api/admin/users": "获取用户列表",
     "/api/update_balance": "更新用户余额"
   };

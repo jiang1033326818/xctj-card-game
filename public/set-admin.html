@@ -52,6 +52,14 @@
             background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
         }
         
+        .btn.delete-duplicate {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        }
+        
+        .btn.cleanup {
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+        }
+        
         .message {
             margin-top: 20px;
             padding: 10px;
@@ -80,6 +88,16 @@
             margin-bottom: 20px;
             text-align: left;
         }
+        
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -90,10 +108,18 @@
             <p><strong>功能说明：</strong></p>
             <p>1. 设置admin用户为管理员权限</p>
             <p>2. 重置admin账户密码为068162</p>
+            <p>3. 清理重复的admin账户</p>
+        </div>
+        
+        <div class="warning">
+            <p><strong>⚠️ 警告：</strong></p>
+            <p>清理重复账户功能会删除所有用户名为admin的账户，只保留一个。</p>
         </div>
         
         <button class="btn" onclick="setAdmin()">设置Admin为管理员</button>
         <button class="btn reset-password" onclick="resetAdminPassword()">重置Admin密码为068162</button>
+        <button class="btn delete-duplicate" onclick="deleteDuplicateAdmins()">清理重复Admin账户</button>
+        <button class="btn cleanup" onclick="cleanupAndReset()">一键清理并重置</button>
         <button class="btn" onclick="goBack()">返回首页</button>
         <div id="message" class="message"></div>
     </div>
@@ -162,6 +188,48 @@
                 messageEl.className = 'message error';
                 messageEl.style.display = 'block';
             }
+        }
+        
+        async function deleteDuplicateAdmins() {
+            try {
+                const response = await fetch('/api/delete-duplicate-admins', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: 'admin' })
+                });
+                
+                const data = await response.json();
+                const messageEl = document.getElementById('message');
+                
+                if (response.ok && data.success) {
+                    messageEl.textContent = '✅ ' + data.message;
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                } else {
+                    messageEl.textContent = '❌ ' + (data.error || '清理失败');
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('清理重复账户失败:', error);
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = '❌ 网络错误: ' + error.message;
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+            }
+        }
+        
+        async function cleanupAndReset() {
+            // 先清理重复账户
+            await deleteDuplicateAdmins();
+            
+            // 等待一段时间确保清理完成
+            setTimeout(async () => {
+                // 重置密码
+                await resetAdminPassword();
+            }, 1000);
         }
         
         function goBack() {

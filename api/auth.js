@@ -107,10 +107,22 @@ async function registerUser(username, password) {
     // 初始化缓存
     initializeUserCache();
     
-    // 检查用户是否已存在
+    // 检查用户是否已存在（缓存中检查）
     if (userCache.has(username)) {
-      console.log("用户名已存在:", username);
+      console.log("用户名已存在（缓存中）:", username);
       return { success: false, error: "用户名已存在" };
+    }
+
+    // 检查数据库中是否已存在该用户名
+    try {
+      const database = getDB() || (await connectDB());
+      const existingUser = await database.users.findOne({ username });
+      if (existingUser) {
+        console.log("用户名已存在（数据库中）:", username);
+        return { success: false, error: "用户名已存在" };
+      }
+    } catch (dbError) {
+      console.log("数据库查询失败，但仍继续注册流程:", dbError.message);
     }
 
     console.log("开始加密密码");

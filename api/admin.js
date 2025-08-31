@@ -438,6 +438,74 @@ async function cleanGameRecords(req, res) {
   }
 }
 
+/**
+ * 删除重复的Admin账户（只保留一个）
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function deleteDuplicateAdmins(req, res) {
+  try {
+    const { username } = req.body;
+    
+    // 验证参数
+    if (username !== "admin") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "只能清理admin用户的重复账户" }));
+    }
+
+    const database = getDB() || (await connectDB());
+    
+    // 查找所有admin用户
+    const allAdminUsers = await database.users.find({ username: "admin" });
+    const adminUsersArray = Array.isArray(allAdminUsers) ? allAdminUsers : await allAdminUsers.toArray();
+    
+    if (adminUsersArray.length <= 1) {
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ 
+        success: true, 
+        message: "没有发现重复的admin账户" 
+      }));
+    }
+    
+    // 保留第一个账户，删除其他所有重复账户
+    const usersToDelete = adminUsersArray.slice(1);
+    let deletedCount = 0;
+    
+    for (const user of usersToDelete) {
+      try {
+        // 对于MongoDB，使用_id删除
+        if (user._id) {
+          await database.users.updateOne(
+            { _id: user._id },
+            { $set: { deleted: true, deleted_at: new Date() } }
+          );
+        } else {
+          // 对于内存数据库，使用username和created_at组合条件删除
+          await database.users.updateOne(
+            { username: "admin", created_at: user.created_at },
+            { $set: { deleted: true, deleted_at: new Date() } }
+          );
+        }
+        deletedCount++;
+      } catch (deleteError) {
+        console.error("删除用户失败:", deleteError);
+      }
+    }
+    
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ 
+      success: true, 
+      message: `已清理 ${deletedCount} 个重复的admin账户，保留了1个` 
+    }));
+  } catch (error) {
+    console.error("清理重复Admin账户错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+  }
+}
+
 module.exports = {
   setAdminUser,
   getAllUsers,
@@ -445,6 +513,7 @@ module.exports = {
   deleteUser,
   resetUserPassword,
   resetAdminPassword,
+  deleteDuplicateAdmins,
   getSystemInfo,
   cleanGameRecords
 };
