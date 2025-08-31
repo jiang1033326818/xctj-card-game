@@ -516,7 +516,7 @@ async function createJiangAdmin(req, res) {
     const { username, password } = req.body;
     
     // 验证参数
-    if (username !== "jiang") {
+    if (username !== "jiang" && username !== "jiang2") {
       res.statusCode = 400;
       res.setHeader("Content-Type", "application/json");
       return res.end(JSON.stringify({ error: "只能创建用户名为jiang的管理员" }));
