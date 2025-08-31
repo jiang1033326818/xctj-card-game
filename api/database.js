@@ -72,6 +72,12 @@ function createMongoWrapper(mongoDb) {
       updateOne: async (query, update) => {
         return await mongoDb.collection("users").updateOne(query, update);
       },
+      deleteOne: async (query) => {
+        return await mongoDb.collection("users").deleteOne(query);
+      },
+      deleteMany: async (query) => {
+        return await mongoDb.collection("users").deleteMany(query);
+      }
     },
     game_records: {
       find: async (query = {}) => {
@@ -169,6 +175,28 @@ function createMemoryDB() {
           };
         }
       },
+      deleteOne: async (query) => {
+        const index = memoryDatabase.users.findIndex(user => {
+          return Object.keys(query).every(key => user[key] === query[key]);
+        });
+        if (index !== -1) {
+          memoryDatabase.users.splice(index, 1);
+          return { deletedCount: 1 };
+        }
+        return { deletedCount: 0 };
+      },
+      deleteMany: async (query) => {
+        let deletedCount = 0;
+        // 从后往前删除，避免索引变化问题
+        for (let i = memoryDatabase.users.length - 1; i >= 0; i--) {
+          const user = memoryDatabase.users[i];
+          if (Object.keys(query).every(key => user[key] === query[key])) {
+            memoryDatabase.users.splice(i, 1);
+            deletedCount++;
+          }
+        }
+        return { deletedCount };
+      }
     },
     game_records: {
       find: async (query = {}) => {

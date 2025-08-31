@@ -650,47 +650,13 @@ async function deleteAllAdminsAndRecreate(req, res) {
 
     const database = getDB() || (await connectDB());
     
-    // 查找所有admin用户
-    const allAdminUsers = await database.users.find({ username: "admin" });
-    const adminUsersArray = Array.isArray(allAdminUsers) ? allAdminUsers : await allAdminUsers.toArray();
-    
     // 删除所有admin用户
-    let deletedCount = 0;
-    for (const user of adminUsersArray) {
-      try {
-        // 对于MongoDB，使用_id删除
-        if (user._id) {
-          await database.users.deleteOne({ _id: user._id });
-        } else {
-          // 对于内存数据库，使用username和created_at组合条件删除
-          await database.users.deleteOne({ username: "admin", created_at: user.created_at });
-        }
-        deletedCount++;
-      } catch (deleteError) {
-        console.error("删除admin用户失败:", deleteError);
-      }
-    }
-    
-    // 查找所有jiang用户
-    const allJiangUsers = await database.users.find({ username: "jiang" });
-    const jiangUsersArray = Array.isArray(allJiangUsers) ? allJiangUsers : await allJiangUsers.toArray();
+    const deleteAdminResult = await database.users.deleteMany({ username: "admin" });
+    const deletedAdminCount = deleteAdminResult.deletedCount || 0;
     
     // 删除所有jiang用户
-    let jiangDeletedCount = 0;
-    for (const user of jiangUsersArray) {
-      try {
-        // 对于MongoDB，使用_id删除
-        if (user._id) {
-          await database.users.deleteOne({ _id: user._id });
-        } else {
-          // 对于内存数据库，使用username和created_at组合条件删除
-          await database.users.deleteOne({ username: "jiang", created_at: user.created_at });
-        }
-        jiangDeletedCount++;
-      } catch (deleteError) {
-        console.error("删除jiang用户失败:", deleteError);
-      }
-    }
+    const deleteJiangResult = await database.users.deleteMany({ username: "jiang" });
+    const deletedJiangCount = deleteJiangResult.deletedCount || 0;
     
     // 加密密码
     const bcrypt = require("bcryptjs");
@@ -727,7 +693,7 @@ async function deleteAllAdminsAndRecreate(req, res) {
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({ 
       success: true, 
-      message: `已删除 ${deletedCount} 个admin账户和 ${jiangDeletedCount} 个jiang账户，重新创建了admin管理员账户${jiangMessage}` 
+      message: `已删除 ${deletedAdminCount} 个admin账户和 ${deletedJiangCount} 个jiang账户，重新创建了admin管理员账户${jiangMessage}` 
     }));
   } catch (error) {
     console.error("删除并重建管理员账户错误:", error);

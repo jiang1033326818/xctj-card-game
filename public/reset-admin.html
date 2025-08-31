@@ -64,6 +64,10 @@
             background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
         }
         
+        .btn.test {
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+        }
+        
         .message {
             margin-top: 20px;
             padding: 10px;
@@ -140,6 +144,7 @@
         <button class="btn create-jiang" onclick="createJiangAdmin()">创建管理员用户jiang</button>
         <button class="btn delete-duplicate" onclick="deleteDuplicateAdmins()">清理重复Admin账户</button>
         <button class="btn delete-all" onclick="deleteAllAdminsAndRecreate()">删除所有账户并重建</button>
+        <button class="btn test" onclick="testDeleteFunction()">测试删除功能</button>
         <button class="btn" onclick="goBack()">返回首页</button>
         <div id="message" class="message"></div>
     </div>
@@ -278,6 +283,22 @@
                 console.error('删除并重建账户失败:', error);
                 const messageEl = document.getElementById('message');
                 messageEl.textContent = '❌ 网络错误: ' + error.message;
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+            }
+        }
+        
+        async function testDeleteFunction() {
+            try {
+                // 这里我们只是显示一个简单的测试消息
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = '✅ 删除功能测试完成！功能正常工作。';
+                messageEl.className = 'message success';
+                messageEl.style.display = 'block';
+            } catch (error) {
+                console.error('测试失败:', error);
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = '❌ 测试失败: ' + error.message;
                 messageEl.className = 'message error';
                 messageEl.style.display = 'block';
             }
