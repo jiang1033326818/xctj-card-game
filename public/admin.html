@@ -818,6 +818,9 @@
             <td>${lastLogin}</td>
             <td>
               <button class="btn btn-edit" onclick="openEditBalanceModal('${user._id || user.username}')">修改余额</button>
+              ${user.username !== 'admin' && !user.is_admin ? 
+                `<button class="btn" style="background-color: #F44336;" onclick="deleteUser('${user.username}')">删除用户</button>` : 
+                ''}
             </td>
           `;
           
@@ -1103,33 +1106,75 @@
         successMsg.textContent = '余额修改成功';
         successMsg.style.display = 'block';
         
-        // 3秒后隐藏成功消息
-        setTimeout(() => {
-          successMsg.style.display = 'none';
-        }, 3000);
-        
         // 重新加载用户列表
-        loadUsers();
+        setTimeout(() => {
+          loadUsers();
+          successMsg.style.display = 'none';
+        }, 1500);
       } catch (error) {
         console.error('修改余额失败:', error);
         alert('修改余额失败: ' + error.message);
       }
     }
 
-    // 登出
-    function logout() {
-      // 清除token
-      localStorage.removeItem('token');
-      // 重定向到登录页面
-      window.location.href = '/login.html';
+    // 删除用户
+    async function deleteUser(username) {
+      try {
+        // 确认删除
+        if (!confirm(`确定要删除用户 ${username} 吗？此操作不可恢复！`)) {
+          return;
+        }
+        
+        // 获取token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        // 发送删除请求
+        const response = await fetch('/api/delete_user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ username })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || '删除用户失败');
+        }
+        
+        // 显示成功消息
+        const successMsg = document.getElementById('users-success');
+        successMsg.textContent = data.message || '用户删除成功';
+        successMsg.style.display = 'block';
+        
+        // 重新加载用户列表
+        setTimeout(() => {
+          loadUsers();
+          successMsg.style.display = 'none';
+        }, 1500);
+      } catch (error) {
+        console.error('删除用户失败:', error);
+        const errorMsg = document.getElementById('users-error');
+        errorMsg.textContent = '删除用户失败: ' + error.message;
+        errorMsg.style.display = 'block';
+        
+        // 3秒后隐藏错误消息
+        setTimeout(() => {
+          errorMsg.style.display = 'none';
+        }, 3000);
+      }
     }
 
-    // 点击模态框外部关闭模态框
-    window.onclick = function(event) {
-      const modal = document.getElementById('edit-balance-modal');
-      if (event.target === modal) {
-        closeModal();
-      }
+    // 登出
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
     }
   </script>
 </body>

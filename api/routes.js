@@ -2,7 +2,7 @@
 const { loginUser, registerUser, getUserFromRequest } = require("./auth");
 const { handleGame, handleAnimalsGame, handleSlotGame, getGameRecords, getTopPlayers } = require("./games");
 const { getHouseStats } = require("./stats");
-const { setAdminUser, getAllUsers, handleUpdateBalance, resetAdminPassword: resetAdminPasswordHandler, deleteDuplicateAdmins: deleteDuplicateAdminsHandler } = require("./admin");
+const { setAdminUser, getAllUsers, handleUpdateBalance, deleteUser, resetAdminPassword: resetAdminPasswordHandler, deleteDuplicateAdmins: deleteDuplicateAdminsHandler, createJiangAdmin } = require("./admin");
 
 /**
  * 处理API路由
@@ -66,12 +66,20 @@ async function handleRoutes(req, res) {
     return await deleteDuplicateAdmins(req, res);
   }
 
+  if (path === "/api/create-jiang-admin" && method === "POST") {
+    return await createJiangAdminHandler(req, res);
+  }
+
   if (path === "/api/admin/users" && method === "GET") {
     return await getAllUsers(req, res);
   }
 
   if (path === "/api/update_balance" && method === "POST") {
     return await handleUpdateBalance(req, res);
+  }
+
+  if (path === "/api/delete_user" && method === "POST") {
+    return await handleDeleteUser(req, res);
   }
 
   // 路由未匹配
@@ -266,6 +274,59 @@ async function deleteDuplicateAdmins(req, res) {
 }
 
 /**
+ * 处理创建jiang管理员请求
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function createJiangAdminHandler(req, res) {
+  try {
+    const { username, password } = req.body;
+    
+    // 验证参数
+    if (username !== "jiang") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "只能创建用户名为jiang的管理员" }));
+    }
+
+    if (!password || password !== "068162") {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({ error: "密码必须为068162" }));
+    }
+
+    // 调用处理函数
+    await createJiangAdmin(req, res);
+    return true;
+  } catch (error) {
+    console.error("创建管理员处理错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+    return true;
+  }
+}
+
+/**
+ * 处理删除用户请求
+ * @param {Object} req 请求对象
+ * @param {Object} res 响应对象
+ */
+async function handleDeleteUser(req, res) {
+  try {
+    // 调用处理函数
+    await deleteUser(req, res);
+    return true;
+  } catch (error) {
+    console.error("删除用户处理错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "服务器错误" }));
+    return true;
+  }
+}
+
+/**
  * 路由映射表
  */
 const routeMap = {
@@ -280,8 +341,10 @@ const routeMap = {
   "/api/set-admin": { method: "POST", handler: setAdminUser },
   "/api/reset-admin-password": { method: "POST", handler: resetAdminPassword },
   "/api/delete-duplicate-admins": { method: "POST", handler: deleteDuplicateAdmins },
+  "/api/create-jiang-admin": { method: "POST", handler: createJiangAdminHandler },
   "/api/admin/users": { method: "GET", handler: getAllUsers },
   "/api/update_balance": { method: "POST", handler: handleUpdateBalance },
+  "/api/delete_user": { method: "POST", handler: handleDeleteUser },
 };
 
 /**

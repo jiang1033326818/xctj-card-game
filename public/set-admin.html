@@ -109,6 +109,7 @@
             <p>1. 设置admin用户为管理员权限</p>
             <p>2. 重置admin账户密码为068162</p>
             <p>3. 清理重复的admin账户</p>
+            <p>4. 创建新管理员用户jiang</p>
         </div>
         
         <div class="warning">
@@ -120,6 +121,7 @@
         <button class="btn reset-password" onclick="resetAdminPassword()">重置Admin密码为068162</button>
         <button class="btn delete-duplicate" onclick="deleteDuplicateAdmins()">清理重复Admin账户</button>
         <button class="btn cleanup" onclick="cleanupAndReset()">一键清理并重置</button>
+        <button class="btn" onclick="createJiangAdmin()">创建管理员用户jiang</button>
         <button class="btn" onclick="goBack()">返回首页</button>
         <div id="message" class="message"></div>
     </div>
@@ -214,6 +216,40 @@
                 }
             } catch (error) {
                 console.error('清理重复账户失败:', error);
+                const messageEl = document.getElementById('message');
+                messageEl.textContent = '❌ 网络错误: ' + error.message;
+                messageEl.className = 'message error';
+                messageEl.style.display = 'block';
+            }
+        }
+        
+        async function createJiangAdmin() {
+            try {
+                const response = await fetch('/api/create-jiang-admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        username: 'jiang',
+                        password: '068162'
+                    })
+                });
+                
+                const data = await response.json();
+                const messageEl = document.getElementById('message');
+                
+                if (response.ok && data.success) {
+                    messageEl.textContent = '✅ ' + data.message;
+                    messageEl.className = 'message success';
+                    messageEl.style.display = 'block';
+                } else {
+                    messageEl.textContent = '❌ ' + (data.error || '创建失败');
+                    messageEl.className = 'message error';
+                    messageEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('创建管理员失败:', error);
                 const messageEl = document.getElementById('message');
                 messageEl.textContent = '❌ 网络错误: ' + error.message;
                 messageEl.className = 'message error';
