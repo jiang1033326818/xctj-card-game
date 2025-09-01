@@ -290,8 +290,8 @@ class SlotGameHandler extends BaseGameHandler {
           line: lineNumber,
           symbol: currentSymbol,
           count: consecutiveCount,
-          multiplier: symbol.multiplier[consecutiveCount - 1]
-          // 注意：这里不设置positions，因为它会在checkPaylines方法中设置
+          multiplier: symbol.multiplier[consecutiveCount - 1],
+          positions: [] // 初始化positions数组，将在checkPaylines中填充
         };
       }
     }

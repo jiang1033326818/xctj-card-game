@@ -1703,5 +1703,76 @@
             setTimeout(startTopPlayersRefresh, 1000);
         });
     </script>
+    
+    <!-- 游戏规则说明 -->
+    <div class="game-rules">
+        <h3>游戏副本规则说明</h3>
+        <div class="rules-content">
+            <h4>_symbols_连线规则</h4>
+            <ul>
+                <li>游戏共有5个转轴，每个转轴有5行符号</li>
+                <li>支持多种连线方式：5条水平线 + 2条对角线 = 共7条连线</li>
+                <li>中奖条件：同一条线上有2个或以上连续相同符号</li>
+                <li>Wild符号（福）可以替代除Scatter外的任何符号</li>
+                <li>Scatter符号（囍）用于触发免费旋转，3个及以上触发</li>
+            </ul>
+            
+            <h4>符号说明</h4>
+            <ul>
+                <li>普通牌：10, J, Q, K, A</li>
+                <li>特殊符号：💰金币, 🧧金元宝, 🏮灯笼, 🐉龙</li>
+                <li>功能符号：福(Wild), 囍(Scatter)</li>
+            </ul>
+            
+            <h4>奖励机制</h4>
+            <ul>
+                <li>累计奖池：所有玩家的总投注额累积</li>
+                <li>免费旋转：3个.scatter符号触发10次免费旋转</li>
+                <li>Jackpot大奖：包括迷你奖、中等奖、大奖、巨奖和超级大奖</li>
+            </ul>
+            
+            <h4>投注规则</h4>
+            <ul>
+                <li>最小投注：1金币</li>
+                <li>最大投注：5000金币</li>
+                <li>每次旋转消耗相应投注金额</li>
+            </ul>
+        </div>
+    </div>
+    
+    <style>
+        .game-rules {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            color: white;
+            border: 2px solid #FFD700;
+        }
+        
+        .game-rules h3 {
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .rules-content h4 {
+            color: #FF6B6B;
+            margin: 15px 0 10px 0;
+            font-size: 1.3rem;
+        }
+        
+        .rules-content ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .rules-content li {
+            margin: 8px 0;
+            line-height: 1.4;
+        }
+    </style>
 </body>
 </html>
