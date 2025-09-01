@@ -264,44 +264,31 @@
         <div class="stat-card">
           <div class="stat-label">🚀 效率最高游戏</div>
           <div id="most-efficient-game" class="stat-value">加载中...</div>
-          <div class="stat-label" id="most-efficient-avg" style="font-size: 12px; color: #FF9800;">平均每局盈利</div>
+          <div class="stat-label" id="most-efficient-value" style="font-size: 12px; color: #FF9800;">平均每局盈利</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">💸 最亏钱游戏</div>
           <div id="most-loss-game" class="stat-value">加载中...</div>
-          <div class="stat-label" id="most-loss-amount" style="font-size: 12px; color: #F44336;"></div>
+          <div class="stat-label" id="most-loss-value" style="font-size: 12px; color: #F44336;"></div>
         </div>
       </div>
     </div>
     
     <div class="card">
       <h2>🏆 游戏盈利对比分析</h2>
-      <div id="game-comparison-container" class="stats-grid" style="display: none;">
-        <div class="stat-card">
-          <div class="stat-label">🎆 喜从天降</div>
-          <div id="xctj-comparison-profit" class="stat-value">0</div>
-          <div class="stat-label" style="font-size: 12px; margin-top: 5px;">
-            <span id="xctj-comparison-games">0局</span> | 
-            <span id="xctj-comparison-avg">平均: 0</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">🦁 飞禽走兽</div>
-          <div id="animals-comparison-profit" class="stat-value">0</div>
-          <div class="stat-label" style="font-size: 12px; margin-top: 5px;">
-            <span id="animals-comparison-games">0局</span> | 
-            <span id="animals-comparison-avg">平均: 0</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">🎰 多福多财角子机</div>
-          <div id="slot-comparison-profit" class="stat-value">0</div>
-          <div class="stat-label" style="font-size: 12px; margin-top: 5px;">
-            <span id="slot-comparison-games">0局</span> | 
-            <span id="slot-comparison-avg">平均: 0</span>
-          </div>
-        </div>
-      </div>
+      <table id="comparison-table">
+        <thead>
+          <tr>
+            <th>游戏名称</th>
+            <th>游戏局数</th>
+            <th>平均每局盈利</th>
+            <th>总盈利</th>
+          </tr>
+        </thead>
+        <tbody id="comparison-body">
+          <!-- 游戏对比数据将在这里动态加载 -->
+        </tbody>
+      </table>
     </div>
     
     <div class="card">
@@ -322,26 +309,6 @@
         <div class="stat-card">
           <div class="stat-label">庄家盈利</div>
           <div id="xctj-profit" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">红桃次数</div>
-          <div id="hearts-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">方块次数</div>
-          <div id="diamonds-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">梅花次数</div>
-          <div id="clubs-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">黑桃次数</div>
-          <div id="spades-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">小丑次数</div>
-          <div id="joker-count" class="stat-value">0</div>
         </div>
       </div>
     </div>
@@ -364,46 +331,6 @@
         <div class="stat-card">
           <div class="stat-label">庄家盈利</div>
           <div id="animals-profit" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">狮子 🦁</div>
-          <div id="lion-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">熊猫 🐼</div>
-          <div id="panda-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">老鹰 🦅</div>
-          <div id="eagle-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">猴子 🐵</div>
-          <div id="monkey-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">兔子 🐰</div>
-          <div id="rabbit-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">孔雀 🦚</div>
-          <div id="peacock-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">鸽子 🕊️</div>
-          <div id="pigeon-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">燕子 🐦</div>
-          <div id="swallow-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">金鲨 🦈</div>
-          <div id="gold-shark-count" class="stat-value">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">银鲨 🦈</div>
-          <div id="silver-shark-count" class="stat-value">0</div>
         </div>
       </div>
     </div>
@@ -1284,6 +1211,111 @@
       localStorage.removeItem('token');
       window.location.href = '/login.html';
     }
+
+    // 获取统计数据
+    async function getStats() {
+      try {
+        showLoading();
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/house_stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          hideLoading();
+          displayStats(result.stats);
+        } else {
+          hideLoading();
+          showError('获取统计数据失败');
+        }
+      } catch (error) {
+        hideLoading();
+        console.error('获取统计数据错误:', error);
+        showError('获取统计数据失败');
+      }
+    }
+
+    // 显示统计数据
+    function displayStats(stats) {
+      // 显示总体统计
+      document.getElementById('total-games').textContent = stats.totalGames;
+      document.getElementById('total-bets').textContent = stats.totalBets.toFixed(2);
+      document.getElementById('total-payouts').textContent = stats.totalPayouts.toFixed(2);
+      document.getElementById('house-profit').textContent = stats.houseProfit.toFixed(2);
+
+      // 显示喜从天降统计
+      document.getElementById('xctj-games').textContent = stats.xctjStats.totalGames;
+      document.getElementById('xctj-bets').textContent = stats.xctjStats.totalBets.toFixed(2);
+      document.getElementById('xctj-payouts').textContent = stats.xctjStats.totalPayouts.toFixed(2);
+      document.getElementById('xctj-profit').textContent = stats.xctjStats.houseProfit.toFixed(2);
+
+      // 显示飞禽走兽统计
+      document.getElementById('animals-games').textContent = stats.animalsStats.totalGames;
+      document.getElementById('animals-bets').textContent = stats.animalsStats.totalBets.toFixed(2);
+      document.getElementById('animals-payouts').textContent = stats.animalsStats.totalPayouts.toFixed(2);
+      document.getElementById('animals-profit').textContent = stats.animalsStats.houseProfit.toFixed(2);
+
+      // 显示多福多财角子机统计
+      document.getElementById('slot-games').textContent = stats.slotStats.totalGames;
+      document.getElementById('slot-bets').textContent = stats.slotStats.totalBets.toFixed(2);
+      document.getElementById('slot-payouts').textContent = stats.slotStats.totalPayouts.toFixed(2);
+      document.getElementById('slot-profit').textContent = stats.slotStats.houseProfit.toFixed(2);
+
+      // 显示炸金花统计（如果存在）
+      const zhajinhuaStatsContainer = document.getElementById('zhajinhua-stats-container');
+      if (stats.zhajinhuaStats) {
+        document.getElementById('zhajinhua-games').textContent = stats.zhajinhuaStats.totalGames;
+        document.getElementById('zhajinhua-bets').textContent = stats.zhajinhuaStats.totalBets.toFixed(2);
+        document.getElementById('zhajinhua-payouts').textContent = stats.zhajinhuaStats.totalPayouts.toFixed(2);
+        document.getElementById('zhajinhua-profit').textContent = stats.zhajinhuaStats.houseProfit.toFixed(2);
+        zhajinhuaStatsContainer.style.display = 'block';
+      } else {
+        zhajinhuaStatsContainer.style.display = 'none';
+      }
+
+      // 显示最赚钱游戏
+      if (stats.mostProfitableGame) {
+        document.getElementById('most-profitable-game').textContent = stats.mostProfitableGame.name;
+        document.getElementById('most-profitable-profit').textContent = stats.mostProfitableGame.profit.toFixed(2);
+      }
+
+      // 显示效率最高游戏
+      if (stats.mostEfficientGame) {
+        document.getElementById('most-efficient-game').textContent = stats.mostEfficientGame.name;
+        document.getElementById('most-efficient-value').textContent = stats.mostEfficientGame.avgProfitPerGame;
+      }
+
+      // 显示最亏钱游戏
+      if (stats.mostLossGame) {
+        document.getElementById('most-loss-game').textContent = stats.mostLossGame.name;
+        document.getElementById('most-loss-value').textContent = stats.mostLossGame.profit.toFixed(2);
+      }
+
+      // 显示游戏对比分析
+      displayGameComparison(stats.gameComparison);
+    }
+
+    // 显示游戏对比分析
+    function displayGameComparison(gameComparison) {
+      const comparisonBody = document.getElementById('comparison-body');
+      comparisonBody.innerHTML = '';
+
+      gameComparison.forEach(game => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${game.name}</td>
+          <td>${game.games}</td>
+          <td>${parseFloat(game.avgProfitPerGame).toFixed(2)}</td>
+          <td>${game.profit.toFixed(2)}</td>
+        `;
+        comparisonBody.appendChild(row);
+      });
+    }
+
   </script>
 </body>
 </html>

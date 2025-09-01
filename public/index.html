@@ -344,6 +344,31 @@
                     </div>
                     <button class="play-btn">开始游戏</button>
                 </div>
+
+                <!-- 炸金花游戏卡片 -->
+                <div class="game-card" onclick="playGame('zhajinhua')">
+                    <div class="game-icon">♣️</div>
+                    <div class="game-title">炸金花</div>
+                    <div class="game-description">
+                        经典的扑克牌游戏，三人成局，比拼牌型大小！
+                        支持多人联机对战，策略与运气并存。
+                    </div>
+                    <div class="game-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">3人+</span>
+                            <div>最少人数</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">∞</span>
+                            <div>策略深度</div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">95%</span>
+                            <div>技巧占比</div>
+                        </div>
+                    </div>
+                    <button class="play-btn">开始游戏</button>
+                </div>
             </div>
 
             <div id="admin-panel" class="admin-panel hidden">
@@ -405,6 +430,8 @@
                 window.location.href = '/animals-game.html';
             } else if (gameType === 'slot') {
                 window.location.href = '/slot-game.html';
+            } else if (gameType === 'zhajinhua') {
+                window.location.href = '/zhajinhua.html';
             }
         }
 

@@ -92,8 +92,8 @@ const server = http.createServer((req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001; // 使用3001端口
 
 server.listen(PORT, () => {
-  console.log(`服务器运行在 http://localhost:${PORT}`);
+  console.log(`服务器2运行在 http://localhost:${PORT}`);
 });

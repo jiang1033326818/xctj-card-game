@@ -24,19 +24,24 @@ module.exports = async (req, res) => {
 
     // 添加全局错误边界 - 确保任何错误都不会导致进程崩溃
     try {
+      console.log("开始连接数据库");
       // 连接数据库（使用try-catch保护）
       await connectDB().catch(err => {
         console.log("数据库连接失败，使用默认配置:", err.message);
       });
+      console.log("数据库连接完成");
 
+      console.log("开始路由处理");
       // 路由处理（使用try-catch保护）
       const handled = await handleRoutes(req, res).catch(err => {
         console.error("路由处理错误:", err.message);
         return false;
       });
+      console.log("路由处理完成，handled:", handled);
       
       // 如果没有匹配的路由，返回404
       if (!handled) {
+        console.log("未找到匹配的路由，返回404");
         handle404(req, res);
       }
     } catch (routeError) {

@@ -196,6 +196,24 @@ async function getHouseStats(req, res) {
           // 兼容旧格式
           stats.slotStats.freeSpinsCount += 1;
         }
+      } else if (record.game_type === "zhajinhua") {
+        // 炸金花游戏
+        stats.zhajinhuaStats = stats.zhajinhuaStats || {
+          totalGames: 0,
+          totalBets: 0,
+          totalPayouts: 0,
+          houseProfit: 0,
+          totalPlayers: 0
+        };
+        
+        stats.zhajinhuaStats.totalGames++;
+        stats.zhajinhuaStats.totalBets += amount;
+        stats.zhajinhuaStats.totalPayouts += winAmount;
+        
+        // 统计玩家数量
+        if (record.players_count) {
+          stats.zhajinhuaStats.totalPlayers += record.players_count;
+        }
       } else {
         // 喜从天降游戏（默认或旧数据）
         stats.xctjStats.totalGames++;
@@ -231,6 +249,12 @@ async function getHouseStats(req, res) {
       stats.animalsStats.totalBets - stats.animalsStats.totalPayouts;
     stats.slotStats.houseProfit =
       stats.slotStats.totalBets - stats.slotStats.totalPayouts;
+    
+    // 计算炸金花盈利（如果存在）
+    if (stats.zhajinhuaStats) {
+      stats.zhajinhuaStats.houseProfit =
+        stats.zhajinhuaStats.totalBets - stats.zhajinhuaStats.totalPayouts;
+    }
 
     // 计算最赚钱游戏
     const gameComparison = [
@@ -271,6 +295,22 @@ async function getHouseStats(req, res) {
             : 0
       }
     ];
+
+    // 添加炸金花到游戏对比（如果存在）
+    if (stats.zhajinhuaStats) {
+      gameComparison.push({
+        name: "炸金花",
+        key: "zhajinhua",
+        profit: stats.zhajinhuaStats.houseProfit,
+        games: stats.zhajinhuaStats.totalGames,
+        bets: stats.zhajinhuaStats.totalBets,
+        avgProfitPerGame:
+          stats.zhajinhuaStats.totalGames > 0
+            ? (stats.zhajinhuaStats.houseProfit /
+                stats.zhajinhuaStats.totalGames).toFixed(2)
+            : 0
+      });
+    }
 
     // 按总盈利排序找出最赚钱游戏
     const mostProfitableGame = gameComparison.reduce((prev, current) => {

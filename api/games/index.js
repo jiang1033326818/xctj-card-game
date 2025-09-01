@@ -5,6 +5,7 @@ const { handleGame } = require("./xctj");
 const { handleAnimalsGame } = require("./animals");
 const { handleSlotGame, getSlotJackpot } = require("./slot");
 const { getGameRecords, getTopPlayers } = require("./records");
+const { createRoom, joinRoom, getRoomInfo, startGame, playerAction } = require("./zhajinhua");
 
 module.exports = {
   // 喜从天降游戏
@@ -16,6 +17,13 @@ module.exports = {
   // 多福多财角子机游戏
   handleSlotGame,
   getSlotJackpot,
+
+  // 炸金花游戏
+  createRoom,
+  joinRoom,
+  getRoomInfo,
+  startGame,
+  playerAction,
 
   // 游戏记录和排行榜
   getGameRecords,
@@ -43,12 +51,22 @@ module.exports = {
 //    - 飞禽走兽分类处理
 //    - 复杂赔付计算
 //
-// 4. records.js - 游戏记录和排行榜模块
+// 4. slot.js - 多福多财角子机游戏模块
+//    - 继承自BaseGameHandler
+//    - 5轴×3行，243种连线方式
+//    - 免费旋转、Jackpot累积奖池、Wild符号
+//
+// 5. zhajinhua.js - 炸金花游戏模块
+//    - 继承自BaseGameHandler
+//    - 房间管理、实时对战
+//    - 牌型比较、筹码管理
+//
+// 6. records.js - 游戏记录和排行榜模块
 //    - 游戏记录查询
 //    - 排行榜数据获取
 //    - 权限控制（管理员可查看所有记录）
 //
-// 5. index.js - 统一入口文件
+// 7. index.js - 统一入口文件
 //    - 导出所有游戏处理函数
 //    - 提供模块说明和使用指南
 //

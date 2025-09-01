@@ -5,6 +5,11 @@ const {
   handleAnimalsGame,
   handleSlotGame,
   getSlotJackpot,
+  createRoom,
+  joinRoom,
+  getRoomInfo,
+  startGame,
+  playerAction,
   getGameRecords,
   getTopPlayers
 } = require("./games");
@@ -109,6 +114,27 @@ async function handleRoutes(req, res) {
 
   if (path === "/api/delete_user" && method === "POST") {
     return await handleDeleteUser(req, res);
+  }
+
+  // 炸金花游戏相关路由
+  if (path === "/api/zhajinhua/create-room" && method === "POST") {
+    return await createRoom(req, res);
+  }
+
+  if (path === "/api/zhajinhua/join-room" && method === "POST") {
+    return await joinRoom(req, res);
+  }
+
+  if (path === "/api/zhajinhua/room-info" && method === "GET") {
+    return await getRoomInfo(req, res);
+  }
+
+  if (path === "/api/zhajinhua/start-game" && method === "POST") {
+    return await startGame(req, res);
+  }
+
+  if (path === "/api/zhajinhua/player-action" && method === "POST") {
+    return await playerAction(req, res);
   }
 
   // 路由未匹配
@@ -444,7 +470,13 @@ const routeMap = {
   },
   "/api/admin/users": { method: "GET", handler: getAllUsers },
   "/api/update_balance": { method: "POST", handler: handleUpdateBalance },
-  "/api/delete_user": { method: "POST", handler: handleDeleteUser }
+  "/api/delete_user": { method: "POST", handler: handleDeleteUser },
+  // 炸金花游戏路由
+  "/api/zhajinhua/create-room": { method: "POST", handler: createRoom },
+  "/api/zhajinhua/join-room": { method: "POST", handler: joinRoom },
+  "/api/zhajinhua/room-info": { method: "GET", handler: getRoomInfo },
+  "/api/zhajinhua/start-game": { method: "POST", handler: startGame },
+  "/api/zhajinhua/player-action": { method: "POST", handler: playerAction }
 };
 
 /**
@@ -522,5 +554,11 @@ module.exports = {
   setCORSHeaders,
   handleOptions,
   getRouteInfo,
-  validateRequest
+  validateRequest,
+  // 炸金花游戏处理函数
+  createRoom,
+  joinRoom,
+  getRoomInfo,
+  startGame,
+  playerAction
 };
