@@ -505,6 +505,7 @@
               <th>下注金额</th>
               <th>输赢</th>
               <th>赢取金额</th>
+              <th>游戏后余额</th>
               <th>时间</th>
             </tr>
           </thead>
@@ -1065,6 +1066,9 @@
           const isWin = netResult > 0;
           const winLoseText = isWin ? `赢 ${netResult}` : `输 ${Math.abs(netResult)}`;
           
+          // 获取游戏后余额
+          const afterBalance = record.new_balance !== undefined ? record.new_balance : '未知';
+          
           tr.innerHTML = `
             <td>${record.username || '未知'}</td>
             <td>${gameType}</td>
@@ -1073,9 +1077,10 @@
             <td>${record.amount || '未知'}</td>
             <td class="${isWin ? 'win' : 'lose'}">${winLoseText}</td>
             <td>${record.win_amount || 0}</td>
+            <td>${afterBalance}</td>
             <td>${createdAt}</td>
           `;
-          
+
           tbody.appendChild(tr);
         });
         

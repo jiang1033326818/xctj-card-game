@@ -106,7 +106,9 @@ class AnimalsGameHandler extends BaseGameHandler {
         bet_data: JSON.stringify(bets),
         result_animal: resultAnimal.name,
         amount: totalAmount,
-        win_amount: winAmount
+        win_amount: winAmount,
+        old_balance: user.balance, // 添加旧余额字段
+        new_balance: newBalance // 添加新余额字段
       });
 
       // 返回结果

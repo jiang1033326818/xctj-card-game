@@ -66,7 +66,9 @@ class XCTJGameHandler extends BaseGameHandler {
         bet_suit: JSON.stringify(bets),
         result_suit: resultSuit.name,
         amount: totalAmount,
-        win_amount: winAmount
+        win_amount: winAmount,
+        old_balance: user.balance, // 添加旧余额字段
+        new_balance: newBalance // 添加新余额字段
       });
 
       // 返回结果
