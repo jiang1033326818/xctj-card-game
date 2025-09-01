@@ -3,26 +3,27 @@
 
 const { handleGame } = require("./xctj");
 const { handleAnimalsGame } = require("./animals");
-const { handleSlotGame } = require("./slot");
+const { handleSlotGame, getSlotJackpot } = require("./slot");
 const { getGameRecords, getTopPlayers } = require("./records");
 
 module.exports = {
   // 喜从天降游戏
   handleGame,
-  
+
   // 飞禽走兽游戏
   handleAnimalsGame,
-  
+
   // 多福多财角子机游戏
   handleSlotGame,
-  
+  getSlotJackpot,
+
   // 游戏记录和排行榜
   getGameRecords,
-  getTopPlayers,
+  getTopPlayers
 };
 
 // 游戏模块说明：
-// 
+//
 // 1. base.js - 游戏基础处理器，提供所有游戏的通用功能
 //    - 用户验证和余额检查
 //    - 押注参数验证

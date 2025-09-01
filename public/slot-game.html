@@ -1580,18 +1580,13 @@
         // 刷新累计奖池
         async function refreshJackpotPool() {
             try {
-                // 通过一次游戏请求来获取最新的奖池金额
+                // 通过专门的奖池信息接口获取最新的奖池金额
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/slot-game', {
-                    method: 'POST',
+                const response = await fetch('/api/slot-jackpot', {
+                    method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        bet_amount: 1, // 使用最小投注来获取奖池信息
-                        free_spins_remaining: 0
-                    })
+                    }
                 });
 
                 const result = await response.json();

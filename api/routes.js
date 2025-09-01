@@ -1,8 +1,25 @@
 // 路由处理模块
 const { loginUser, registerUser, getUserFromRequest } = require("./auth");
-const { handleGame, handleAnimalsGame, handleSlotGame, getGameRecords, getTopPlayers } = require("./games");
+const {
+  handleGame,
+  handleAnimalsGame,
+  handleSlotGame,
+  getSlotJackpot,
+  getGameRecords,
+  getTopPlayers
+} = require("./games");
 const { getHouseStats } = require("./stats");
-const { setAdminUser, getAllUsers, handleUpdateBalance, deleteUser, resetAdminPassword: resetAdminPasswordHandler, deleteDuplicateAdmins: deleteDuplicateAdminsHandler, createJiangAdmin, createJiangAdminNoAuth, deleteAllAdminsAndRecreate } = require("./admin");
+const {
+  setAdminUser,
+  getAllUsers,
+  handleUpdateBalance,
+  deleteUser,
+  resetAdminPassword: resetAdminPasswordHandler,
+  deleteDuplicateAdmins: deleteDuplicateAdminsHandler,
+  createJiangAdmin,
+  createJiangAdminNoAuth,
+  deleteAllAdminsAndRecreate
+} = require("./admin");
 
 /**
  * 处理API路由
@@ -38,6 +55,10 @@ async function handleRoutes(req, res) {
 
   if (path === "/api/slot-game" && method === "POST") {
     return await handleSlotGame(req, res);
+  }
+
+  if (path === "/api/slot-jackpot" && method === "GET") {
+    return await getSlotJackpot(req, res);
   }
 
   if (path === "/api/game_records" && method === "GET") {
@@ -169,11 +190,13 @@ async function handleGetUser(req, res) {
     }
 
     res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({
-      username: user.username,
-      is_admin: user.is_admin,
-      balance: user.balance,
-    }));
+    res.end(
+      JSON.stringify({
+        username: user.username,
+        is_admin: user.is_admin,
+        balance: user.balance
+      })
+    );
     return true;
   } catch (error) {
     console.error("获取用户信息错误:", error);
@@ -224,7 +247,7 @@ function handleOptions(req, res) {
 async function resetAdminPassword(req, res) {
   try {
     const { username, password } = req.body;
-    
+
     // 验证参数
     if (username !== "admin") {
       res.statusCode = 400;
@@ -258,7 +281,7 @@ async function resetAdminPassword(req, res) {
 async function deleteDuplicateAdmins(req, res) {
   try {
     const { username } = req.body;
-    
+
     // 验证参数
     if (username !== "admin") {
       res.statusCode = 400;
@@ -267,8 +290,10 @@ async function deleteDuplicateAdmins(req, res) {
     }
 
     // 导入admin模块中的删除重复账户函数
-    const { deleteDuplicateAdmins: deleteDuplicateAdminsHandler } = require("./admin");
-    
+    const {
+      deleteDuplicateAdmins: deleteDuplicateAdminsHandler
+    } = require("./admin");
+
     // 调用处理函数
     await deleteDuplicateAdminsHandler(req, res);
     return true;
@@ -289,7 +314,7 @@ async function deleteDuplicateAdmins(req, res) {
 async function createJiangAdminHandler(req, res) {
   try {
     const { username, password } = req.body;
-    
+
     // 验证参数
     if (username !== "jiang" && username !== "jiang2") {
       res.statusCode = 400;
@@ -323,7 +348,7 @@ async function createJiangAdminHandler(req, res) {
 async function createJiangAdminNoAuthHandler(req, res) {
   try {
     const { username, password } = req.body;
-    
+
     // 验证参数
     if (username !== "jiang" && username !== "jiang2") {
       res.statusCode = 400;
@@ -401,13 +426,25 @@ const routeMap = {
   "/api/house_stats": { method: "GET", handler: getHouseStats },
   "/api/set-admin": { method: "POST", handler: setAdminUser },
   "/api/reset-admin-password": { method: "POST", handler: resetAdminPassword },
-  "/api/delete-duplicate-admins": { method: "POST", handler: deleteDuplicateAdmins },
-  "/api/create-jiang-admin": { method: "POST", handler: createJiangAdminHandler },
-  "/api/create-jiang-admin-noauth": { method: "POST", handler: createJiangAdminNoAuthHandler },
-  "/api/delete-all-admins-recreate": { method: "POST", handler: deleteAllAdminsAndRecreateHandler },
+  "/api/delete-duplicate-admins": {
+    method: "POST",
+    handler: deleteDuplicateAdmins
+  },
+  "/api/create-jiang-admin": {
+    method: "POST",
+    handler: createJiangAdminHandler
+  },
+  "/api/create-jiang-admin-noauth": {
+    method: "POST",
+    handler: createJiangAdminNoAuthHandler
+  },
+  "/api/delete-all-admins-recreate": {
+    method: "POST",
+    handler: deleteAllAdminsAndRecreateHandler
+  },
   "/api/admin/users": { method: "GET", handler: getAllUsers },
   "/api/update_balance": { method: "POST", handler: handleUpdateBalance },
-  "/api/delete_user": { method: "POST", handler: handleDeleteUser },
+  "/api/delete_user": { method: "POST", handler: handleDeleteUser }
 };
 
 /**
@@ -430,7 +467,7 @@ function getRouteInfo() {
 function getRouteDescription(path) {
   const descriptions = {
     "/api/login": "用户登录",
-    "/api/register": "用户注册", 
+    "/api/register": "用户注册",
     "/api/user": "获取用户信息",
     "/api/game": "喜从天降游戏",
     "/api/animals-game": "飞禽走兽游戏",
@@ -443,7 +480,7 @@ function getRouteDescription(path) {
     "/api/admin/users": "获取用户列表",
     "/api/update_balance": "更新用户余额"
   };
-  
+
   return descriptions[path] || "未知路由";
 }
 
@@ -455,20 +492,24 @@ function getRouteDescription(path) {
  */
 function validateRequest(req, requiredFields = []) {
   const errors = [];
-  
+
   for (const field of requiredFields) {
-    if (!req.body || req.body[field] === undefined || req.body[field] === null) {
+    if (
+      !req.body ||
+      req.body[field] === undefined ||
+      req.body[field] === null
+    ) {
       errors.push(`缺少必需参数: ${field}`);
     }
   }
-  
+
   if (errors.length > 0) {
-    return { 
-      isValid: false, 
-      errors 
+    return {
+      isValid: false,
+      errors
     };
   }
-  
+
   return { isValid: true };
 }
 

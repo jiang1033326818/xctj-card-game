@@ -6,6 +6,7 @@ const {
   handleGame,
   handleAnimalsGame,
   handleSlotGame,
+  getSlotJackpot,
   getGameRecords,
   getTopPlayers
 } = require("./games/index");
@@ -15,14 +16,15 @@ module.exports = {
   handleGame,
   handleAnimalsGame,
   handleSlotGame,
+  getSlotJackpot,
   getGameRecords,
   getTopPlayers
 };
 
 // 模块重构说明：
-// 
+//
 // 原始的games.js文件已被拆分为以下模块：
-// 
+//
 // 1. games/base.js - 游戏基础处理器
 //    - BaseGameHandler类提供通用功能
 //    - 用户验证、余额检查、押注验证

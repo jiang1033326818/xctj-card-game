@@ -678,6 +678,26 @@ class SlotGameHandler extends BaseGameHandler {
 // 创建实例并导出处理函数
 const slotHandler = new SlotGameHandler();
 
+// 获取奖池信息
+async function getSlotJackpot(req, res) {
+  try {
+    const totalGameBets = await slotHandler.getTotalGameBets();
+    res.setHeader("Content-Type", "application/json");
+    return res.end(
+      JSON.stringify({
+        success: true,
+        super_jackpot_pool: totalGameBets
+      })
+    );
+  } catch (error) {
+    console.error("获取奖池信息错误:", error);
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    return res.end(JSON.stringify({ error: "获取奖池信息失败" }));
+  }
+}
+
 module.exports = {
-  handleSlotGame: (req, res) => slotHandler.handle(req, res)
+  handleSlotGame: (req, res) => slotHandler.handle(req, res),
+  getSlotJackpot
 };
