@@ -8,12 +8,14 @@ const { getUserFromRequest, updateUserBalance } = require("../auth");
  */
 class BaseGameHandler {
   /**
-   * 验证用户并检查余额
+   * 验证用户并检查余额（使用原子化验证）
    * @param {Object} req 请求对象
    * @param {number} totalAmount 总押注金额
    * @returns {Object} 用户信息或null
    */
   async validateUserAndBalance(req, totalAmount) {
+    const { getUserFromRequest, validateUserBalance } = require("../auth");
+
     const user = await getUserFromRequest(req).catch(err => {
       console.log("用户认证失败:", err.message);
       return null;
@@ -24,14 +26,22 @@ class BaseGameHandler {
       return null;
     }
 
-    console.log("用户信息:", { username: user.username, balance: user.balance });
-
-    if (user.balance < totalAmount) {
-      console.log("用户余额不足:", { balance: user.balance, need: totalAmount });
+    // 使用原子化验证检查余额
+    const validUser = await validateUserBalance(user.username, totalAmount);
+    if (!validUser) {
+      console.log("用户余额不足:", {
+        username: user.username,
+        balance: user.balance,
+        need: totalAmount
+      });
       throw new Error("余额不足");
     }
 
-    return user;
+    console.log("用户信息:", {
+      username: validUser.username,
+      balance: validUser.balance
+    });
+    return validUser;
   }
 
   /**
@@ -59,17 +69,22 @@ class BaseGameHandler {
   }
 
   /**
-   * 更新用户余额
+   * 原子化更新用户余额
    * @param {string} username 用户名
-   * @param {number} newBalance 新余额
-   * @returns {boolean} 是否成功
+   * @param {number} amount 变化金额（正数表示增加，负数表示减少）
+   * @returns {Object|null} 更新后的用户信息或null
    */
-  updateBalance(username, newBalance) {
-    const result = updateUserBalance(username, newBalance);
+  async updateBalance(username, amount) {
+    const { atomicUpdateUserBalance } = require("../auth");
+    const result = await atomicUpdateUserBalance(username, amount);
     if (result) {
-      console.log("余额更新成功:", { username, newBalance });
+      console.log("原子化余额更新成功:", {
+        username,
+        amount,
+        newBalance: result.balance
+      });
     } else {
-      console.error("余额更新失败:", { username, newBalance });
+      console.error("原子化余额更新失败:", { username, amount });
     }
     return result;
   }
@@ -139,3 +154,5 @@ class BaseGameHandler {
 }
 
 module.exports = BaseGameHandler;
+module.exports.validateUserAndBalanceAtomic = validateUserAndBalanceAtomic;
+module.exports.updateBalanceAtomic = updateBalanceAtomic;

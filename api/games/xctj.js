@@ -1,5 +1,6 @@
 // 喜从天降游戏模块
 const BaseGameHandler = require("./base");
+const { validateUserAndBalanceAtomic, updateBalanceAtomic } = require("./base");
 
 /**
  * 喜从天降游戏处理器
@@ -33,8 +34,8 @@ class XCTJGameHandler extends BaseGameHandler {
       const totalAmount = this.validateBets(bets);
       console.log("总押注金额:", totalAmount);
 
-      // 验证用户和余额
-      const user = await this.validateUserAndBalance(req, totalAmount);
+      // 验证用户和余额（使用原子化验证）
+      const user = await validateUserAndBalanceAtomic(req, totalAmount);
       if (!user) {
         return this.sendError(res, 401, "未授权");
       }
@@ -52,12 +53,27 @@ class XCTJGameHandler extends BaseGameHandler {
       }
       console.log("赢取金额:", winAmount);
 
-      // 计算新余额
-      const newBalance = user.balance - totalAmount + winAmount;
-      console.log("新余额:", newBalance);
+      // 计算余额变化
+      const balanceChange = winAmount - totalAmount;
 
-      // 更新余额
-      this.updateBalance(user.username, newBalance);
+      // 原子化更新余额
+      const updatedUser = await updateBalanceAtomic(
+        user.username,
+        balanceChange
+      );
+      if (!updatedUser) {
+        console.error("原子化余额更新失败！用户:", user.username, "变化金额:", balanceChange);
+        return this.sendError(res, 500, "余额更新失败");
+      }
+
+      const newBalance = updatedUser.balance;
+      console.log("原子化余额更新成功:", {
+        username: user.username,
+        oldBalance: user.balance,
+        newBalance,
+        winAmount,
+        totalAmount
+      });
 
       // 记录游戏结果
       const recordId = await this.recordGame({
@@ -67,13 +83,14 @@ class XCTJGameHandler extends BaseGameHandler {
         result_suit: resultSuit.name,
         amount: totalAmount,
         win_amount: winAmount,
-        old_balance: user.balance, // 添加旧余额字段
-        new_balance: newBalance // 添加新余额字段
+        old_balance: user.balance,
+        new_balance: newBalance,
+        balance_change: balanceChange
       });
 
       // 返回结果
       const result = {
-        record_id: recordId, // 添加记录ID字段
+        record_id: recordId,
         result_suit: resultSuit.name,
         win_amount: winAmount,
         new_balance: newBalance,

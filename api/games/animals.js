@@ -1,5 +1,6 @@
 // 飞禽走兽游戏模块
 const BaseGameHandler = require("./base");
+const { validateUserAndBalanceAtomic, updateBalanceAtomic } = require("./base");
 
 /**
  * 飞禽走兽游戏处理器
@@ -75,8 +76,8 @@ class AnimalsGameHandler extends BaseGameHandler {
       const totalAmount = this.validateBets(bets);
       console.log("总押注金额:", totalAmount);
 
-      // 验证用户和余额
-      const user = await this.validateUserAndBalance(req, totalAmount);
+      // 验证用户和余额（使用原子化验证）
+      const user = await validateUserAndBalanceAtomic(req, totalAmount);
       if (!user) {
         return this.sendError(res, 401, "未授权");
       }
@@ -92,12 +93,22 @@ class AnimalsGameHandler extends BaseGameHandler {
       const netWin = winAmount - totalAmount; // 净赢金额
       console.log("赢取金额:", winAmount, "净赢:", netWin);
 
-      // 计算新余额
-      const newBalance = user.balance + netWin;
-      console.log("新余额:", newBalance);
+      // 原子化更新余额
+      const updatedUser = await updateBalanceAtomic(user.username, netWin);
+      if (!updatedUser) {
+        console.error("原子化余额更新失败！用户:", user.username, "变化金额:", netWin);
+        return this.sendError(res, 500, "余额更新失败");
+      }
 
-      // 更新余额
-      this.updateBalance(user.username, newBalance);
+      const newBalance = updatedUser.balance;
+      console.log("原子化余额更新成功:", {
+        username: user.username,
+        oldBalance: user.balance,
+        newBalance,
+        winAmount,
+        totalAmount,
+        netWin
+      });
 
       // 记录游戏结果
       const recordId = await this.recordGame({
@@ -107,13 +118,14 @@ class AnimalsGameHandler extends BaseGameHandler {
         result_animal: resultAnimal.name,
         amount: totalAmount,
         win_amount: winAmount,
-        old_balance: user.balance, // 添加旧余额字段
-        new_balance: newBalance // 添加新余额字段
+        old_balance: user.balance,
+        new_balance: newBalance,
+        balance_change: netWin
       });
 
       // 返回结果
       const result = {
-        record_id: recordId, // 添加记录ID字段
+        record_id: recordId,
         result_animal: resultAnimal.name,
         win_amount: winAmount,
         net_win: netWin,

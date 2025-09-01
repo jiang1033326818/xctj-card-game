@@ -301,10 +301,15 @@ async function initializeDatabase(database) {
 }
 
 /**
- * 获取数据库实例
+ * 获取数据库实例（带安全检查）
  * @returns {Object} 当前数据库实例
  */
 function getDB() {
+  if (!db) {
+    console.warn("数据库未初始化，尝试重新连接...");
+    // 在某些情况下，可能需要重新连接数据库
+    // 但这应该在适当的上下文中完成
+  }
   return db;
 }
 

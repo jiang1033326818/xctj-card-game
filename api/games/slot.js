@@ -1,6 +1,7 @@
 // 多福多财角子机游戏模块
 const BaseGameHandler = require("./base");
 const { getDB } = require("../database");
+const { validateUserAndBalanceAtomic, updateBalanceAtomic } = require("./base");
 
 /**
  * 多福多财角子机游戏处理器
@@ -192,7 +193,6 @@ class SlotGameHandler extends BaseGameHandler {
 
   /**
    * 检查连线组合
-   * @param {Array} reels 转轴结果
    * @returns {Array} 中奖线信息
    */
   checkPaylines(reels) {
@@ -290,11 +290,8 @@ class SlotGameHandler extends BaseGameHandler {
           line: lineNumber,
           symbol: currentSymbol,
           count: consecutiveCount,
-          multiplier: symbol.multiplier[consecutiveCount - 1],
-          positions: Array.from({ length: consecutiveCount }, (_, i) => ({
-            reel: i,
-            row: lineNumber
-          }))
+          multiplier: symbol.multiplier[consecutiveCount - 1]
+          // 注意：这里不设置positions，因为它会在checkPaylines方法中设置
         };
       }
     }
@@ -482,16 +479,16 @@ class SlotGameHandler extends BaseGameHandler {
         );
       }
 
-      // 如果不是免费旋转，验证用户和余额
+      // 如果不是免费旋转，验证用户和余额（使用原子化验证）
       let user = null;
       if (free_spins_remaining <= 0) {
-        user = await this.validateUserAndBalance(req, bet_amount);
+        user = await validateUserAndBalanceAtomic(req, bet_amount);
         if (!user) {
           return this.sendError(res, 401, "未授权");
         }
       } else {
         // 免费旋转时仍需获取用户信息
-        user = await this.validateUserAndBalance(req, 0);
+        user = await validateUserAndBalanceAtomic(req, 0);
         if (!user) {
           return this.sendError(res, 401, "未授权");
         }
@@ -558,8 +555,16 @@ class SlotGameHandler extends BaseGameHandler {
         newFreeSpins -= 1; // 消耗一次免费旋转
       }
 
-      // 计算新余额 - 增强调试信息
-      let newBalance = user.balance;
+      // 计算余额变化
+      let balanceChange = 0;
+      if (!isFreeSpins) {
+        // 付费旋转：赢奖减去投注金额
+        balanceChange = totalWin - bet_amount;
+      } else {
+        // 免费旋转：只加上赢奖
+        balanceChange = totalWin;
+      }
+
       console.log("================== 余额计算详情 ==================");
       console.log("计算前状态:");
       console.log("  - 用户余额:", user.balance);
@@ -567,64 +572,32 @@ class SlotGameHandler extends BaseGameHandler {
       console.log("  - 中奖金额:", totalWin);
       console.log("  - 免费旋转:", isFreeSpins);
       console.log("  - 中奖线数:", wins.length);
-
-      if (!isFreeSpins) {
-        // 付费旋转：扣除投注金额，加上赢奖
-        const oldBalance = user.balance;
-        newBalance = oldBalance - bet_amount + totalWin;
-        console.log("付费旋转计算:");
-        console.log(
-          "  公式: ",
-          oldBalance,
-          " - ",
-          bet_amount,
-          " + ",
-          totalWin,
-          " = ",
-          newBalance
-        );
-        console.log(
-          "  理论变化:",
-          newBalance - oldBalance,
-          "（应该等于 ",
-          totalWin - bet_amount,
-          ")"
-        );
-      } else {
-        // 免费旋转：只加上赢奖，不扣除投注
-        const oldBalance = user.balance;
-        newBalance = oldBalance + totalWin;
-        console.log("免费旋转计算:");
-        console.log("  公式: ", oldBalance, " + ", totalWin, " = ", newBalance);
-        console.log(
-          "  理论变化:",
-          newBalance - oldBalance,
-          "（应该等于 ",
-          totalWin,
-          ")"
-        );
-      }
-
-      console.log("计算后余额:", newBalance);
+      console.log("  - 余额变化:", balanceChange);
       console.log("================================================");
 
-      // 更新余额 - 确保立即更新并验证
-      const balanceUpdated = this.updateBalance(user.username, newBalance);
-      if (!balanceUpdated) {
-        console.error("余额更新失败！用户:", user.username, "新余额:", newBalance);
-        // 即使余额更新失败，也继续返回结果，但记录错误
-      } else {
-        console.log(
-          "余额更新成功！用户:",
-          user.username,
-          "旧余额:",
-          user.balance,
-          "新余额:",
-          newBalance,
-          "中奖:",
-          totalWin
-        );
+      // 原子化更新余额
+      const updatedUser = await updateBalanceAtomic(
+        user.username,
+        balanceChange
+      );
+      if (!updatedUser) {
+        console.error("原子化余额更新失败！用户:", user.username, "变化金额:", balanceChange);
+        return this.sendError(res, 500, "余额更新失败");
       }
+
+      const newBalance = updatedUser.balance;
+      console.log(
+        "原子化余额更新成功！用户:",
+        user.username,
+        "旧余额:",
+        user.balance,
+        "新余额:",
+        newBalance,
+        "变化:",
+        balanceChange,
+        "中奖:",
+        totalWin
+      );
 
       // 记录游戏结果
       const recordId = await this.recordGame({
@@ -643,7 +616,8 @@ class SlotGameHandler extends BaseGameHandler {
         total_win: totalWin,
         is_free_spin: isFreeSpins,
         old_balance: user.balance, // 添加旧余额字段
-        new_balance: newBalance // 添加新余额字段
+        new_balance: newBalance, // 添加新余额字段
+        balance_change: balanceChange // 添加余额变化字段
       });
 
       // 返回结果
