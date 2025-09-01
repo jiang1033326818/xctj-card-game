@@ -12,11 +12,11 @@ const userCache = new Map();
 // 初始化默认用户
 function initializeUserCache() {
   if (userCache.size === 0) {
-    // 为默认用户设置哈希密码（密码都是对应的用户名）
+    // 为默认用户设置哈希密码
     const adminHash =
-      "$2a$10$SAZReMYSHCPBEX9wPfO7AeFfS5x.8qkfXJ3yEvHFbnjImk4EJANqu"; // admin
+      "$2a$10$ZworHLC.G8fXn2O6wdi4v.OnFM2NJVshnARuKzvyoanpqoRDLm3/y"; // 068162
     const testHash =
-      "$2a$10$9rKS1932Y5vCWqVdgppCV.byzPSD/SjxfxbqvzDIAnl5MpjcXXW2y"; // test
+      "$2a$10$krcdNZRRFvL4.H1/KY/Yb.HL6OGvaDfZKx/h4M1injDEj1O0UZ6nW"; // test123
 
     userCache.set("admin", {
       username: "admin",

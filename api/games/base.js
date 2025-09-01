@@ -154,5 +154,6 @@ class BaseGameHandler {
 }
 
 module.exports = BaseGameHandler;
-module.exports.validateUserAndBalanceAtomic = validateUserAndBalanceAtomic;
-module.exports.updateBalanceAtomic = updateBalanceAtomic;
+module.exports.validateUserAndBalanceAtomic =
+  BaseGameHandler.prototype.validateUserAndBalance;
+module.exports.updateBalanceAtomic = BaseGameHandler.prototype.updateBalance;
