@@ -765,7 +765,6 @@
                     
                     // 清除临时存储的结果
                     delete slotReels.gameResult;
-                    delete slotReels.betAmount;
                     delete slotReels.autoSpin;
                 }
                 
@@ -1047,6 +1046,13 @@
                     document.getElementById('auto-spin-checkbox').checked = false;
                 }
                 return;
+            }
+            
+            // 如果当前有免费旋转，投注金额应该与触发免费旋转时的金额一致
+            if (freeSpinsRemaining > 0 && slotReels.betAmount && betAmount !== slotReels.betAmount) {
+                // 重置为之前触发免费旋转时的投注金额
+                setBet(slotReels.betAmount);
+                alert('免费旋转期间不能更改投注金额，已重置为触发免费旋转时的金额');
             }
 
             isSpinning = true;
@@ -1331,9 +1337,33 @@
                 countElement.textContent = freeSpinsRemaining;
                 indicator.classList.remove('hidden');
                 document.getElementById('spin-btn').textContent = '🆓 免费旋转 🆓';
+                
+                // 当有免费旋转时，禁用投注金额输入和筹码按钮
+                disableBetControls(true);
             } else {
                 indicator.classList.add('hidden');
                 document.getElementById('spin-btn').textContent = '🎰 旋转 🎰';
+                
+                // 当没有免费旋转时，启用投注金额输入和筹码按钮
+                disableBetControls(false);
+            }
+        }
+        
+        // 禁用/启用投注控制
+        function disableBetControls(disable) {
+            // 禁用/启用投注金额输入框
+            document.getElementById('bet-amount').disabled = disable;
+            
+            // 禁用/启用所有筹码按钮
+            const betButtons = document.querySelectorAll('.bet-btn');
+            betButtons.forEach(button => {
+                button.disabled = disable;
+            });
+            
+            // 禁用/启用最大投注按钮
+            const maxBetButton = document.querySelector('.bet-buttons .bet-btn:last-child');
+            if (maxBetButton) {
+                maxBetButton.disabled = disable;
             }
         }
 
