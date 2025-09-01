@@ -285,9 +285,15 @@ async function getHouseStats(req, res) {
         : prev;
     });
 
+    // 按总盈利排序找出最亏钱游戏（盈利最少或亏损最多的游戏）
+    const mostLossGame = gameComparison.reduce((prev, current) => {
+      return current.profit < prev.profit ? current : prev;
+    });
+
     // 添加最赚钱游戏信息到统计中
     stats.mostProfitableGame = mostProfitableGame;
     stats.mostEfficientGame = mostEfficientGame;
+    stats.mostLossGame = mostLossGame;
     stats.gameComparison = gameComparison;
 
     res.setHeader("Content-Type", "application/json");

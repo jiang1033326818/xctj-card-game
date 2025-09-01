@@ -578,7 +578,7 @@
                 <div class="controls">
                     <div class="bet-controls">
                         <span class="bet-label">投注金额:</span>
-                        <input type="number" id="bet-amount" class="bet-input" value="50" min="1" max="5000" step="1">
+                        <input type="number" id="bet-amount" class="bet-input" value="50" min="1" max="100000" step="1">
                         <div class="bet-buttons">
                             <button class="bet-btn" onclick="setBet(1)">1</button>
                             <button class="bet-btn" onclick="setBet(10)">10</button>
@@ -586,6 +586,8 @@
                             <button class="bet-btn" onclick="setBet(100)">100</button>
                             <button class="bet-btn" onclick="setBet(500)">500</button>
                             <button class="bet-btn" onclick="setBet(1000)">1000</button>
+                            <button class="bet-btn" onclick="setBet(10000)">1万</button>
+                            <button class="bet-btn" onclick="setBet(100000)">10万</button>
                             <button class="bet-btn" onclick="maxBet()">最大</button>
                         </div>
                     </div>
@@ -1735,7 +1737,7 @@
             <h4>投注规则</h4>
             <ul>
                 <li>最小投注：1金币</li>
-                <li>最大投注：5000金币</li>
+                <li>最大投注：100000金币</li>
                 <li>每次旋转消耗相应投注金额</li>
             </ul>
         </div>

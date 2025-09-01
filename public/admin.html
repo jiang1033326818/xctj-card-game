@@ -266,6 +266,11 @@
           <div id="most-efficient-game" class="stat-value">加载中...</div>
           <div class="stat-label" id="most-efficient-avg" style="font-size: 12px; color: #FF9800;">平均每局盈利</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">💸 最亏钱游戏</div>
+          <div id="most-loss-game" class="stat-value">加载中...</div>
+          <div class="stat-label" id="most-loss-amount" style="font-size: 12px; color: #F44336;"></div>
+        </div>
       </div>
     </div>
     
@@ -286,6 +291,14 @@
           <div class="stat-label" style="font-size: 12px; margin-top: 5px;">
             <span id="animals-comparison-games">0局</span> | 
             <span id="animals-comparison-avg">平均: 0</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">🎰 多福多财角子机</div>
+          <div id="slot-comparison-profit" class="stat-value">0</div>
+          <div class="stat-label" style="font-size: 12px; margin-top: 5px;">
+            <span id="slot-comparison-games">0局</span> | 
+            <span id="slot-comparison-avg">平均: 0</span>
           </div>
         </div>
       </div>
@@ -673,6 +686,12 @@
           document.getElementById('most-efficient-avg').textContent = `平均每局: ${stats.mostEfficientGame.avgProfitPerGame}`;
         }
         
+        // 显示最亏钱游戏信息
+        if (stats.mostLossGame) {
+          document.getElementById('most-loss-game').textContent = stats.mostLossGame.name;
+          document.getElementById('most-loss-amount').textContent = `亏损: ${Math.abs(stats.mostLossGame.profit)} (共${stats.mostLossGame.games}局)`;
+        }
+        
         // 显示游戏对比数据
         if (stats.gameComparison) {
           const xctjData = stats.gameComparison.find(game => game.key === 'xctj');
@@ -701,6 +720,8 @@
               document.querySelector('#xctj-comparison-profit').parentElement.classList.add('winner');
             } else if (stats.mostProfitableGame.key === 'animals') {
               document.querySelector('#animals-comparison-profit').parentElement.classList.add('winner');
+            } else if (stats.mostProfitableGame.key === 'slot') {
+              document.querySelector('#slot-comparison-profit').parentElement.classList.add('winner');
             }
           }
           

@@ -16,7 +16,7 @@ class SlotGameHandler extends BaseGameHandler {
       rows: 5, // 5行（增加为5行）
       paylines: 1024, // 1024种连线方式（增加连线）
       minBet: 1, // 最小投注改为1
-      maxBet: 5000 // 最大投注改为5000
+      maxBet: 100000 // 最大投注改为10万
     };
 
     // 符号配置（从低到高价值）- 微调保持小幅庄家优势，但中奖基本覆盖本金
@@ -85,18 +85,18 @@ class SlotGameHandler extends BaseGameHandler {
         id: "scatter",
         name: "囍(Scatter)",
         multiplier: [0, 0, 0, 0, 0],
-        weight: 10
-      } // Scatter符号（权重进一步降低）
+        weight: 15
+      } // Scatter符号（增加权重以提高触发概率）
     ];
 
-    // Jackpot累积奖池配置（降低触发概率）
+    // Jackpot累积奖池配置（调整奖金额度与触发概率）
     this.jackpotConfig = {
-      mini: { min: 100, max: 500, probability: 0.005 }, // 降低概率到原来的1/10
-      minor: { min: 500, max: 2000, probability: 0.003 }, // 降低概率到原来的1/10
-      major: { min: 2000, max: 10000, probability: 0.001 }, // 降低概率到原来的1/10
-      grand: { min: 10000, max: 50000, probability: 0.0005 }, // 降低概率到原来的1/10
+      mini: { min: 2000, max: 10000, probability: 0.005 }, // 增加奖金额度
+      minor: { min: 10000, max: 50000, probability: 0.003 }, // 增加奖金额度
+      major: { min: 50000, max: 200000, probability: 0.001 }, // 增加奖金额度
+      grand: { min: 200000, max: 1000000, probability: 0.0005 }, // 增加奖金额度
       // 超级大奖：游戏总投注金额
-      super: { probability: 0.0001 } // 降低概率到原来的1/10
+      super: { probability: 0.0002 } // 稍微增加触发概率
     };
 
     // 免费旋转配置
