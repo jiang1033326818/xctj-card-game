@@ -68,6 +68,14 @@ async function getHouseStats(req, res) {
           grand: 0,
           super: 0
         },
+        jackpotPayouts: {
+          mini: 0,
+          minor: 0,
+          major: 0,
+          grand: 0,
+          super: 0
+        },
+        totalJackpotPayouts: 0,
         scatterCount: 0,
         freeSpinsCount: 0
       }
@@ -148,6 +156,14 @@ async function getHouseStats(req, res) {
               if (stats.slotStats.jackpotCount.hasOwnProperty(level)) {
                 stats.slotStats.jackpotCount[level] =
                   (stats.slotStats.jackpotCount[level] || 0) + 1;
+
+                // 统计Jackpot派彩金额
+                if (jackpotData.amount) {
+                  stats.slotStats.jackpotPayouts[level] =
+                    (stats.slotStats.jackpotPayouts[level] || 0) +
+                    jackpotData.amount;
+                  stats.slotStats.totalJackpotPayouts += jackpotData.amount;
+                }
               }
             }
           } catch (e) {

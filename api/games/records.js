@@ -51,22 +51,16 @@ async function getGameRecords(req, res) {
  */
 async function getTopPlayers(req, res) {
   try {
-    console.log("开始获取排行榜数据");
-
     // 用户认证
     const user = await getUserFromRequest(req).catch(err => {
-      console.log("用户认证失败:", err.message);
       return null;
     });
 
     if (!user) {
-      console.log("用户未授权，返回空排行榜");
       res.statusCode = 200;
       res.setHeader("Content-Type", "application/json");
       return res.end(JSON.stringify({ success: true, users: [] }));
     }
-
-    console.log("用户认证成功:", user.username);
 
     // 从数据库获取真实用户数据，排除管理员用户
     const database = getDB() || (await connectDB());
@@ -76,7 +70,13 @@ async function getTopPlayers(req, res) {
       users = await database.users.toArray();
     } else {
       // 内存数据库直接返回数组
-      users = await database.users.find({});
+      const result = await database.users.find({});
+      // 内存数据库的find方法返回的是带有toArray方法的对象
+      if (result && typeof result.toArray === "function") {
+        users = await result.toArray();
+      } else {
+        users = result;
+      }
     }
 
     // 过滤掉管理员用户，按余额排序，取前3名
@@ -85,8 +85,6 @@ async function getTopPlayers(req, res) {
       .map(u => ({ username: u.username, balance: u.balance }))
       .sort((a, b) => b.balance - a.balance)
       .slice(0, 3);
-
-    console.log("排行榜数据准备完成:", topUsers.length, "个用户");
 
     res.setHeader("Content-Type", "application/json");
     return res.end(JSON.stringify({ success: true, users: topUsers }));
