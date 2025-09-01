@@ -20,22 +20,66 @@ async function getGameRecords(req, res) {
 
     console.log("用户认证成功:", user.username, "是否管理员:", user.is_admin);
 
+    // 获取查询参数
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const page = parseInt(url.searchParams.get("page")) || 1;
+    const limit = parseInt(url.searchParams.get("limit")) || 10;
+    const username = url.searchParams.get("username") || "";
+
+    // 确保page和limit在合理范围内
+    const pageNum = Math.max(1, page);
+    const limitNum = Math.min(Math.max(1, limit), 100); // 限制每页最多100条记录
+
+    console.log("查询参数:", { page: pageNum, limit: limitNum, username });
+
     let records;
+    let totalCount;
+
     // 确保db已初始化
     const database = getDB() || (await connectDB());
 
     if (user.is_admin) {
       console.log("管理员用户，获取所有游戏记录");
-      records = await database.game_records.find({});
+
+      // 构建查询条件
+      const query = username ? { username } : {};
+
+      // 获取总记录数
+      const allRecords = await database.game_records.find(query);
+      totalCount = allRecords.length;
+
+      // 获取分页记录
+      // 注意：内存数据库的find方法不支持skip和limit，我们需要手动实现
+      records = allRecords.slice((pageNum - 1) * limitNum, pageNum * limitNum);
     } else {
       console.log("普通用户，获取个人游戏记录");
-      records = await database.game_records.find({ username: user.username });
+
+      // 普通用户只能查看自己的记录
+      const query = { username: user.username };
+
+      // 获取总记录数
+      const allRecords = await database.game_records.find(query);
+      totalCount = allRecords.length;
+
+      // 获取分页记录
+      records = allRecords.slice((pageNum - 1) * limitNum, pageNum * limitNum);
     }
 
     console.log("获取到游戏记录:", records.length, "条");
 
     res.setHeader("Content-Type", "application/json");
-    return res.end(JSON.stringify({ success: true, records }));
+    return res.end(
+      JSON.stringify({
+        success: true,
+        records,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: totalCount,
+          pages: Math.ceil(totalCount / limitNum)
+        }
+      })
+    );
   } catch (error) {
     console.error("获取游戏记录错误:", error);
     res.statusCode = 500;

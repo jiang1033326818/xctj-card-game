@@ -183,7 +183,9 @@ function createMemoryDB() {
             ...memoryDatabase.users[index],
             ...update.$set
           };
+          return { modifiedCount: 1 };
         }
+        return { modifiedCount: 0 };
       },
       deleteOne: async query => {
         const index = memoryDatabase.users.findIndex(user => {

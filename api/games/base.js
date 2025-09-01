@@ -18,12 +18,12 @@ class BaseGameHandler {
       console.log("用户认证失败:", err.message);
       return null;
     });
-    
+
     if (!user) {
       console.log("用户未授权");
       return null;
     }
-    
+
     console.log("用户信息:", { username: user.username, balance: user.balance });
 
     if (user.balance < totalAmount) {
@@ -81,13 +81,17 @@ class BaseGameHandler {
   async recordGame(gameRecord) {
     try {
       const database = getDB() || (await connectDB());
-      await database.game_records.insertOne({
+      const result = await database.game_records.insertOne({
         ...gameRecord,
         created_at: new Date()
       });
-      console.log("游戏结果记录成功");
+
+      // 返回插入的记录ID，便于追踪问题
+      console.log("游戏结果记录成功，记录ID:", result.insertedId);
+      return result.insertedId;
     } catch (recordError) {
       console.log("游戏结果记录失败:", recordError.message);
+      return null;
     }
   }
 

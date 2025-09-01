@@ -7,14 +7,14 @@ const BaseGameHandler = require("./base");
 class XCTJGameHandler extends BaseGameHandler {
   constructor() {
     super();
-    
+
     // 喜从天降游戏配置
     this.suits = [
-      { name: "hearts", weight: 24.1, multiplier: 3.5 },    // 红桃 24.1%
-      { name: "diamonds", weight: 24.1, multiplier: 3.5 },  // 方块 24.1%
-      { name: "clubs", weight: 24.1, multiplier: 3.5 },     // 梅花 24.1%
-      { name: "spades", weight: 24.1, multiplier: 3.5 },    // 黑桃 24.1%
-      { name: "joker", weight: 3.6, multiplier: 20 },       // 小丑 3.6%
+      { name: "hearts", weight: 24.1, multiplier: 3.5 }, // 红桃 24.1%
+      { name: "diamonds", weight: 24.1, multiplier: 3.5 }, // 方块 24.1%
+      { name: "clubs", weight: 24.1, multiplier: 3.5 }, // 梅花 24.1%
+      { name: "spades", weight: 24.1, multiplier: 3.5 }, // 黑桃 24.1%
+      { name: "joker", weight: 3.6, multiplier: 20 } // 小丑 3.6%
     ];
   }
 
@@ -27,7 +27,7 @@ class XCTJGameHandler extends BaseGameHandler {
     try {
       console.log("开始处理喜从天降游戏请求");
       console.log("请求体:", req.body);
-      
+
       // 验证押注参数
       const { bets } = req.body;
       const totalAmount = this.validateBets(bets);
@@ -40,7 +40,7 @@ class XCTJGameHandler extends BaseGameHandler {
       }
 
       console.log("开始游戏逻辑处理");
-      
+
       // 选择结果花色
       const resultSuit = this.weightedRandom(this.suits);
       console.log("游戏结果:", resultSuit.name);
@@ -55,34 +55,34 @@ class XCTJGameHandler extends BaseGameHandler {
       // 计算新余额
       const newBalance = user.balance - totalAmount + winAmount;
       console.log("新余额:", newBalance);
-      
+
       // 更新余额
       this.updateBalance(user.username, newBalance);
 
       // 记录游戏结果
-      await this.recordGame({
+      const recordId = await this.recordGame({
         username: user.username,
         game_type: "xctj",
         bet_suit: JSON.stringify(bets),
         result_suit: resultSuit.name,
         amount: totalAmount,
-        win_amount: winAmount,
+        win_amount: winAmount
       });
 
       // 返回结果
       const result = {
+        record_id: recordId, // 添加记录ID字段
         result_suit: resultSuit.name,
         win_amount: winAmount,
         new_balance: newBalance,
-        total_bet: totalAmount,
+        total_bet: totalAmount
       };
       console.log("准备返回结果:", result);
 
       return this.sendSuccess(res, result);
-      
     } catch (error) {
       console.error("喜从天降游戏错误:", error);
-      
+
       if (error.message === "无效的请求参数") {
         return this.sendError(res, 400, error.message);
       }
@@ -92,7 +92,7 @@ class XCTJGameHandler extends BaseGameHandler {
       if (error.message === "余额不足") {
         return this.sendError(res, 400, error.message);
       }
-      
+
       return this.sendError(res, 500, "服务器错误");
     }
   }

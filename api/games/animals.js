@@ -7,19 +7,19 @@ const BaseGameHandler = require("./base");
 class AnimalsGameHandler extends BaseGameHandler {
   constructor() {
     super();
-    
+
     // 飞禽走兽游戏配置 - 重新平衡概率确保庄家优势
     this.animals = [
-      { name: "lion", multiplier: 12, weight: 7.1 },     // 狮子 7.1% (期望: 0.071×12≈0.85)
-      { name: "panda", multiplier: 8, weight: 10.6 },    // 熊猫 10.6% (期望: 0.106×8≈0.85)
-      { name: "eagle", multiplier: 15, weight: 5.7 },    // 老鹰 5.7% (期望: 0.057×15≈0.85)
-      { name: "monkey", multiplier: 6, weight: 14.2 },   // 猴子 14.2% (期望: 0.142×6≈0.85)
-      { name: "rabbit", multiplier: 4, weight: 21.2 },   // 兔子 21.2% (期望: 0.212×4≈0.85)
-      { name: "peacock", multiplier: 10, weight: 8.5 },  // 孔雀 8.5% (期望: 0.085×10≈0.85)
-      { name: "pigeon", multiplier: 3, weight: 28.3 },   // 鸽子 28.3% (期望: 0.283×3≈0.85)
-      { name: "swallow", multiplier: 5, weight: 17.0 },  // 燕子 17.0% (期望: 0.17×5≈0.85)
+      { name: "lion", multiplier: 12, weight: 7.1 }, // 狮子 7.1% (期望: 0.071×12≈0.85)
+      { name: "panda", multiplier: 8, weight: 10.6 }, // 熊猫 10.6% (期望: 0.106×8≈0.85)
+      { name: "eagle", multiplier: 15, weight: 5.7 }, // 老鹰 5.7% (期望: 0.057×15≈0.85)
+      { name: "monkey", multiplier: 6, weight: 14.2 }, // 猴子 14.2% (期望: 0.142×6≈0.85)
+      { name: "rabbit", multiplier: 4, weight: 21.2 }, // 兔子 21.2% (期望: 0.212×4≈0.85)
+      { name: "peacock", multiplier: 10, weight: 8.5 }, // 孔雀 8.5% (期望: 0.085×10≈0.85)
+      { name: "pigeon", multiplier: 3, weight: 28.3 }, // 鸽子 28.3% (期望: 0.283×3≈0.85)
+      { name: "swallow", multiplier: 5, weight: 17.0 }, // 燕子 17.0% (期望: 0.17×5≈0.85)
       { name: "gold_shark", multiplier: 100, weight: 0.8 }, // 金鲨 0.8% (期望: 0.008×100=0.8)
-      { name: "silver_shark", multiplier: 24, weight: 3.5 }, // 银鲨 3.5% (期望: 0.035×24≈0.84)
+      { name: "silver_shark", multiplier: 24, weight: 3.5 } // 银鲨 3.5% (期望: 0.035×24≈0.84)
     ];
 
     // 定义飞禽和走兽分类
@@ -69,7 +69,7 @@ class AnimalsGameHandler extends BaseGameHandler {
     try {
       console.log("开始处理飞禽走兽游戏请求");
       console.log("请求体:", req.body);
-      
+
       // 验证押注参数
       const { bets } = req.body;
       const totalAmount = this.validateBets(bets);
@@ -82,7 +82,7 @@ class AnimalsGameHandler extends BaseGameHandler {
       }
 
       console.log("开始游戏逻辑处理");
-      
+
       // 选择结果动物
       const resultAnimal = this.weightedRandom(this.animals);
       console.log("游戏结果:", resultAnimal.name);
@@ -95,35 +95,35 @@ class AnimalsGameHandler extends BaseGameHandler {
       // 计算新余额
       const newBalance = user.balance + netWin;
       console.log("新余额:", newBalance);
-      
+
       // 更新余额
       this.updateBalance(user.username, newBalance);
 
       // 记录游戏结果
-      await this.recordGame({
+      const recordId = await this.recordGame({
         username: user.username,
         game_type: "animals",
         bet_data: JSON.stringify(bets),
         result_animal: resultAnimal.name,
         amount: totalAmount,
-        win_amount: winAmount,
+        win_amount: winAmount
       });
 
       // 返回结果
       const result = {
+        record_id: recordId, // 添加记录ID字段
         result_animal: resultAnimal.name,
         win_amount: winAmount,
         net_win: netWin,
         new_balance: newBalance,
-        total_bet: totalAmount,
+        total_bet: totalAmount
       };
       console.log("准备返回结果:", result);
 
       return this.sendSuccess(res, result);
-      
     } catch (error) {
       console.error("飞禽走兽游戏错误:", error);
-      
+
       if (error.message === "无效的请求参数") {
         return this.sendError(res, 400, error.message);
       }
@@ -133,7 +133,7 @@ class AnimalsGameHandler extends BaseGameHandler {
       if (error.message === "余额不足") {
         return this.sendError(res, 400, error.message);
       }
-      
+
       return this.sendError(res, 500, "服务器错误");
     }
   }

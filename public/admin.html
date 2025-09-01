@@ -483,6 +483,15 @@
     
     <div class="card">
       <h2>游戏记录</h2>
+      <div id="records-controls" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">
+        <div>
+          <label for="username-filter">用户筛选:</label>
+          <input type="text" id="username-filter" placeholder="输入用户名" style="padding: 5px; margin-left: 5px;">
+        </div>
+        <button class="btn" onclick="filterRecords()">筛选</button>
+        <button class="btn" onclick="clearFilter()">清除筛选</button>
+      </div>
+      
       <div id="records-loading" class="loading">加载游戏记录中...</div>
       <div id="records-error" class="error-message" style="display: none;"></div>
       <div id="records-container" style="display: none;">
@@ -503,6 +512,22 @@
             <!-- 游戏记录将在这里动态加载 -->
           </tbody>
         </table>
+        
+        <!-- 分页控件 -->
+        <div id="pagination-controls" style="margin-top: 15px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px;">
+          <button id="prev-page" class="btn" onclick="changePage(-1)">上一页</button>
+          <span id="page-info">第 <span id="current-page">1</span> 页，共 <span id="total-pages">1</span> 页</span>
+          <button id="next-page" class="btn" onclick="changePage(1)">下一页</button>
+          <div style="margin-left: 20px;">
+            <label for="page-size">每页显示:</label>
+            <select id="page-size" onchange="changePageSize()">
+              <option value="5">5条</option>
+              <option value="10" selected>10条</option>
+              <option value="20">20条</option>
+              <option value="50">50条</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -539,6 +564,10 @@
     // 全局变量
     let currentUsers = [];
     let editingUserId = null;
+    let currentRecordsPage = 1;
+    let currentRecordsLimit = 10;
+    let currentRecordsUsername = '';
+    let totalRecordsPages = 1;
 
     // 页面加载时检查登录状态并加载数据
     window.addEventListener('load', async () => {
@@ -843,8 +872,13 @@
     }
 
     // 加载游戏记录
-    async function loadGameRecords() {
+    async function loadGameRecords(page = 1, limit = 10, username = '') {
       try {
+        // 更新全局变量
+        currentRecordsPage = page;
+        currentRecordsLimit = limit;
+        currentRecordsUsername = username;
+        
         // 获取token
         const token = localStorage.getItem('token');
         if (!token) {
@@ -852,7 +886,15 @@
           return;
         }
         
-        const response = await fetch('/api/game_records', {
+        // 构建查询参数
+        const params = new URLSearchParams();
+        params.append('page', page);
+        params.append('limit', limit);
+        if (username) {
+          params.append('username', username);
+        }
+        
+        const response = await fetch(`/api/game_records?${params.toString()}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -872,6 +914,15 @@
         if (!data.success || !data.records) {
           throw new Error('游戏记录格式错误');
         }
+        
+        // 更新分页信息
+        totalRecordsPages = data.pagination.pages;
+        document.getElementById('current-page').textContent = data.pagination.page;
+        document.getElementById('total-pages').textContent = data.pagination.pages;
+        
+        // 更新分页按钮状态
+        document.getElementById('prev-page').disabled = data.pagination.page <= 1;
+        document.getElementById('next-page').disabled = data.pagination.page >= data.pagination.pages;
         
         // 清空表格
         const tbody = document.getElementById('records-tbody');
@@ -1173,6 +1224,33 @@
           errorMsg.style.display = 'none';
         }, 3000);
       }
+    }
+
+    // 改变页面
+    function changePage(direction) {
+      const newPage = currentRecordsPage + direction;
+      if (newPage >= 1 && newPage <= totalRecordsPages) {
+        loadGameRecords(newPage, currentRecordsLimit, currentRecordsUsername);
+      }
+    }
+
+    // 改变每页显示条数
+    function changePageSize() {
+      const pageSizeSelect = document.getElementById('page-size');
+      const newLimit = parseInt(pageSizeSelect.value);
+      loadGameRecords(1, newLimit, currentRecordsUsername); // 重置到第一页
+    }
+
+    // 筛选记录
+    function filterRecords() {
+      const usernameFilter = document.getElementById('username-filter').value.trim();
+      loadGameRecords(1, currentRecordsLimit, usernameFilter); // 重置到第一页
+    }
+
+    // 清除筛选
+    function clearFilter() {
+      document.getElementById('username-filter').value = '';
+      loadGameRecords(1, currentRecordsLimit, ''); // 重置到第一页，清除筛选
     }
 
     // 登出

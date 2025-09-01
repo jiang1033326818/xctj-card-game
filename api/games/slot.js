@@ -627,7 +627,7 @@ class SlotGameHandler extends BaseGameHandler {
       }
 
       // 记录游戏结果
-      await this.recordGame({
+      const recordId = await this.recordGame({
         username: user.username,
         game_type: "slot",
         amount: isFreeSpins ? 0 : bet_amount, // 投注金额
@@ -641,11 +641,14 @@ class SlotGameHandler extends BaseGameHandler {
           : 0,
         jackpot: jackpot ? JSON.stringify(jackpot) : null,
         total_win: totalWin,
-        is_free_spin: isFreeSpins
+        is_free_spin: isFreeSpins,
+        old_balance: user.balance, // 添加旧余额字段
+        new_balance: newBalance // 添加新余额字段
       });
 
       // 返回结果
       const result = {
+        record_id: recordId, // 添加记录ID字段
         reels,
         wins,
         scatter: scatterResult,
