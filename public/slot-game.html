@@ -1030,8 +1030,8 @@
             const autoSpin = document.getElementById('auto-spin-checkbox').checked;
             
             // 验证投注金额
-            if (betAmount < 1 || betAmount > 5000) {
-                alert('投注金额必须在1-5000之间！');
+            if (betAmount < 1 || betAmount > 100000) {
+                alert('投注金额必须在1-100000之间！');
                 // 如果是自动旋转模式，取消自动旋转
                 if (autoSpin) {
                     document.getElementById('auto-spin-checkbox').checked = false;
