@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -625,6 +624,7 @@
         let slotReels = []; // 转轴数组
         let animationId = 0;
         let lastTime = 0;
+        let jackpotRefreshInterval = null; // 奖池刷新定时器
         
         // 初始化转轴
         function initializeReels() {
@@ -943,8 +943,9 @@
                     // 初始化转轴
                     initializeReels();
                     
-                    // 初始化超级大奖池显示（使用模拟值）
-                    document.getElementById('super-jackpot-amount').textContent = '0';
+                    // 初始化超级大奖池显示并启动定期刷新
+                    await refreshJackpotPool();
+                    startJackpotRefresh();
                 } else {
                     // 登录失效，跳转到登录页面
                     localStorage.removeItem('token');
@@ -1527,14 +1528,56 @@
             setTimeout(closeModal, 2500);
         }
 
+        // 刷新累计奖池
+        async function refreshJackpotPool() {
+            try {
+                // 通过一次游戏请求来获取最新的奖池金额
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/slot-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        bet_amount: 1, // 使用最小投注来获取奖池信息
+                        free_spins_remaining: 0
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok && result.super_jackpot_pool !== undefined) {
+                    document.getElementById('super-jackpot-amount').textContent = result.super_jackpot_pool;
+                }
+            } catch (error) {
+                console.error('刷新奖池失败:', error);
+            }
+        }
+
+        // 启动奖池定期刷新
+        function startJackpotRefresh() {
+            // 每30秒刷新一次奖池显示
+            jackpotRefreshInterval = setInterval(refreshJackpotPool, 30000);
+        }
+
+        // 停止奖池定期刷新
+        function stopJackpotRefresh() {
+            if (jackpotRefreshInterval) {
+                clearInterval(jackpotRefreshInterval);
+                jackpotRefreshInterval = null;
+            }
+        }
+
         // 返回主页
         function goHome() {
+            stopJackpotRefresh(); // 停止奖池刷新
             window.location.href = '/';
         }
 
         // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {
+                stopJackpotRefresh(); // 停止奖池刷新
                 localStorage.removeItem('token');
                 window.location.href = '/login.html';
             }
@@ -1544,6 +1587,11 @@
         document.getElementById('bet-amount').addEventListener('input', function() {
             const amount = parseInt(this.value) || 0;
             document.getElementById('current-bet').textContent = amount;
+        });
+
+        // 页面卸载时清理定时器
+        window.addEventListener('beforeunload', () => {
+            stopJackpotRefresh();
         });
     </script>
 </body>

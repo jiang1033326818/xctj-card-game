@@ -10,7 +10,7 @@ const { getUserFromRequest, getAllCachedUsers } = require("../auth");
 async function getGameRecords(req, res) {
   try {
     console.log("开始获取游戏记录");
-    
+
     const user = await getUserFromRequest(req);
     if (!user) {
       res.statusCode = 401;
@@ -23,7 +23,7 @@ async function getGameRecords(req, res) {
     let records;
     // 确保db已初始化
     const database = getDB() || (await connectDB());
-    
+
     if (user.is_admin) {
       console.log("管理员用户，获取所有游戏记录");
       records = await database.game_records.find({});
@@ -52,29 +52,44 @@ async function getGameRecords(req, res) {
 async function getTopPlayers(req, res) {
   try {
     console.log("开始获取排行榜数据");
-    
+
     // 用户认证
     const user = await getUserFromRequest(req).catch(err => {
       console.log("用户认证失败:", err.message);
       return null;
     });
-    
+
     if (!user) {
       console.log("用户未授权，返回空排行榜");
       res.statusCode = 200;
       res.setHeader("Content-Type", "application/json");
       return res.end(JSON.stringify({ success: true, users: [] }));
     }
-    
+
     console.log("用户认证成功:", user.username);
 
-    // 使用缓存数据获取排行榜
-    const topUsers = getAllCachedUsers();
+    // 从数据库获取真实用户数据，排除管理员用户
+    const database = getDB() || (await connectDB());
+    let users;
+    if (typeof database.users.toArray === "function") {
+      // MongoDB返回的是游标对象
+      users = await database.users.toArray();
+    } else {
+      // 内存数据库直接返回数组
+      users = await database.users.find({});
+    }
+
+    // 过滤掉管理员用户，按余额排序，取前3名
+    const topUsers = users
+      .filter(u => !u.is_admin)
+      .map(u => ({ username: u.username, balance: u.balance }))
+      .sort((a, b) => b.balance - a.balance)
+      .slice(0, 3);
+
     console.log("排行榜数据准备完成:", topUsers.length, "个用户");
 
     res.setHeader("Content-Type", "application/json");
     return res.end(JSON.stringify({ success: true, users: topUsers }));
-    
   } catch (error) {
     console.error("获取排行榜错误:", error.message);
     res.statusCode = 200;

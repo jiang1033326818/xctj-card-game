@@ -26,10 +26,10 @@ async function connectDB() {
 
       // 包装MongoDB为统一接口
       db = createMongoWrapper(mongoDb);
-      
+
       // 初始化数据库（确保有默认用户）
       await initializeDatabase(db);
-      
+
       return db;
     } else {
       // 本地开发使用内存数据库
@@ -72,10 +72,10 @@ function createMongoWrapper(mongoDb) {
       updateOne: async (query, update) => {
         return await mongoDb.collection("users").updateOne(query, update);
       },
-      deleteOne: async (query) => {
+      deleteOne: async query => {
         return await mongoDb.collection("users").deleteOne(query);
       },
-      deleteMany: async (query) => {
+      deleteMany: async query => {
         return await mongoDb.collection("users").deleteMany(query);
       }
     },
@@ -91,7 +91,15 @@ function createMongoWrapper(mongoDb) {
       insertOne: async doc => {
         return await mongoDb.collection("game_records").insertOne(doc);
       },
-    },
+      updateOne: async (query, update) => {
+        return await mongoDb
+          .collection("game_records")
+          .updateOne(query, update);
+      },
+      findOne: async (query = {}) => {
+        return await mongoDb.collection("game_records").findOne(query);
+      }
+    }
   };
 }
 
@@ -104,20 +112,22 @@ function createMemoryDB() {
     users: [
       {
         username: "admin",
-        password: "$2a$10$b.L8Ny3JLByTCDgdtlc53O5uA8.vyjY9QYCpirGzHZ2oVGoLRWKjm", // 密码: 068162
+        password:
+          "$2a$10$b.L8Ny3JLByTCDgdtlc53O5uA8.vyjY9QYCpirGzHZ2oVGoLRWKjm", // 密码: 068162
         is_admin: true,
         balance: 10000,
-        created_at: new Date(),
+        created_at: new Date()
       },
       {
         username: "test",
-        password: "$2a$10$IS/22uJqZYLHBZ9oXZW1F.axJ5KgXgzCI4opLPax.YtXrEg6rLzq2", // 密码: test123
+        password:
+          "$2a$10$IS/22uJqZYLHBZ9oXZW1F.axJ5KgXgzCI4opLPax.YtXrEg6rLzq2", // 密码: test123
         is_admin: false,
         balance: 1000,
-        created_at: new Date(),
-      },
+        created_at: new Date()
+      }
     ],
-    game_records: [],
+    game_records: []
   };
 
   return {
@@ -171,11 +181,11 @@ function createMemoryDB() {
         if (index !== -1 && update.$set) {
           memoryDatabase.users[index] = {
             ...memoryDatabase.users[index],
-            ...update.$set,
+            ...update.$set
           };
         }
       },
-      deleteOne: async (query) => {
+      deleteOne: async query => {
         const index = memoryDatabase.users.findIndex(user => {
           return Object.keys(query).every(key => user[key] === query[key]);
         });
@@ -185,7 +195,7 @@ function createMemoryDB() {
         }
         return { deletedCount: 0 };
       },
-      deleteMany: async (query) => {
+      deleteMany: async query => {
         let deletedCount = 0;
         // 从后往前删除，避免索引变化问题
         for (let i = memoryDatabase.users.length - 1; i >= 0; i--) {
@@ -211,11 +221,36 @@ function createMemoryDB() {
         );
       },
       insertOne: async doc => {
-        const newRecord = { ...doc, _id: Date.now().toString() };
+        const newRecord = {
+          ...doc,
+          _id: Date.now().toString(),
+          created_at: new Date()
+        };
         memoryDatabase.game_records.push(newRecord);
         return { insertedId: newRecord._id };
       },
-    },
+      updateOne: async (query, update) => {
+        const index = memoryDatabase.game_records.findIndex(record => {
+          return Object.keys(query).every(key => record[key] === query[key]);
+        });
+        if (index !== -1 && update.$set) {
+          memoryDatabase.game_records[index] = {
+            ...memoryDatabase.game_records[index],
+            ...update.$set,
+            updated_at: new Date()
+          };
+          return { modifiedCount: 1 };
+        }
+        return { modifiedCount: 0 };
+      },
+      findOne: async (query = {}) => {
+        return (
+          memoryDatabase.game_records.find(record => {
+            return Object.keys(query).every(key => record[key] === query[key]);
+          }) || null
+        );
+      }
+    }
   };
 }
 
@@ -227,8 +262,10 @@ async function initializeDatabase(database) {
   try {
     // 检查是否已有用户
     const existingUsers = await database.users.find({});
-    const usersArray = Array.isArray(existingUsers) ? existingUsers : await existingUsers.toArray();
-    
+    const usersArray = Array.isArray(existingUsers)
+      ? existingUsers
+      : await existingUsers.toArray();
+
     if (usersArray.length === 0) {
       console.log("数据库为空，初始化默认用户...");
 
@@ -239,7 +276,7 @@ async function initializeDatabase(database) {
         password: adminPassword,
         is_admin: true,
         balance: 10000,
-        created_at: new Date(),
+        created_at: new Date()
       });
 
       // 创建test用户
@@ -249,7 +286,7 @@ async function initializeDatabase(database) {
         password: testPassword,
         is_admin: false,
         balance: 1000,
-        created_at: new Date(),
+        created_at: new Date()
       });
 
       console.log("默认用户创建完成：admin (密码: 068162), test (密码: test123)");
