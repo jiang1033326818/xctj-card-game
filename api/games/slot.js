@@ -85,7 +85,7 @@ class SlotGameHandler extends BaseGameHandler {
         id: "scatter",
         name: "囍(Scatter)",
         multiplier: [0, 0, 0, 0, 0],
-        weight: 2 // 进一步大幅降低Scatter符号权重，从5降低到2
+        weight: 1 // 进一步大幅降低Scatter符号权重，从2降低到1
       } // Scatter符号（进一步降低权重以大幅减少触发概率）
     ];
 
@@ -101,9 +101,9 @@ class SlotGameHandler extends BaseGameHandler {
 
     // 免费旋转配置
     this.freeSpinsConfig = {
-      triggerScatters: 5, // 进一步增加触发免费旋转所需的Scatter符号数量，从4个增加到5个
-      baseSpins: 3, // 进一步减少基础免费旋转次数，从5次减少到3次
-      maxSpins: 15, // 进一步降低最大累积次数，从50次减少到15次
+      triggerScatters: 5, // 保持触发免费旋转所需的Scatter符号数量为5个
+      baseSpins: 1, // 进一步减少基础免费旋转次数，从3次减少到1次
+      maxSpins: 5, // 进一步降低最大累积次数，从15次减少到5次
       multiplier: 2 // 免费旋转期间的倍数
     };
   }
