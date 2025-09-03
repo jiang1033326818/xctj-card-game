@@ -15,8 +15,8 @@ class SlotGameHandler extends BaseGameHandler {
       reels: 5, // 5个转轴
       rows: 5, // 5行（增加为5行）
       paylines: 1024, // 1024种连线方式（增加连线）
-      minBet: 1, // 最小投注改为1
-      maxBet: 100000 // 最大投注改为10万
+      minBet: 10, // 最小投注改为10
+      maxBet: 500000 // 最大投注改为50万
     };
 
     // 符号配置（从低到高价值）- 微调保持小幅庄家优势，但中奖基本覆盖本金
@@ -89,14 +89,14 @@ class SlotGameHandler extends BaseGameHandler {
       } // Scatter符号（增加权重以提高触发概率）
     ];
 
-    // Jackpot累积奖池配置（调整奖金额度与触发概率）
+    // Jackpot累积奖池配置（调整奖金额度与触发概率，再减少50%）
     this.jackpotConfig = {
-      mini: { min: 2000, max: 10000, probability: 0.005 }, // 增加奖金额度
-      minor: { min: 10000, max: 50000, probability: 0.003 }, // 增加奖金额度
-      major: { min: 50000, max: 200000, probability: 0.001 }, // 增加奖金额度
-      grand: { min: 200000, max: 1000000, probability: 0.0005 }, // 增加奖金额度
+      mini: { min: 2000, max: 10000, probability: 0.00125 }, // 再减少50%触发概率
+      minor: { min: 10000, max: 50000, probability: 0.000375 }, // 再减少50%触发概率
+      major: { min: 50000, max: 200000, probability: 0.000125 }, // 再减少50%触发概率
+      grand: { min: 200000, max: 1000000, probability: 0.0000625 }, // 再减少50%触发概率
       // 超级大奖：游戏总投注金额
-      super: { probability: 0.0002 } // 稍微增加触发概率
+      super: { probability: 0.000025 } // 再减少50%触发概率
     };
 
     // 免费旋转配置
@@ -197,6 +197,7 @@ class SlotGameHandler extends BaseGameHandler {
    */
   checkPaylines(reels) {
     const wins = [];
+    console.log("检查连线组合，转轴结果:", reels);
 
     // 适度增加连线数量，保持合理平衡
     // 检查所有5条水平线
@@ -206,41 +207,147 @@ class SlotGameHandler extends BaseGameHandler {
         line.push(reels[reel][row]);
       }
 
+      console.log(`检查水平线 ${row}:`, line);
       const lineWin = this.checkLine(line, `horizontal-${row}`);
       if (lineWin) {
-        lineWin.positions = line.map((symbol, reel) => ({ reel, row }));
-        wins.push(lineWin);
+        console.log(`水平线 ${row} 初步中奖:`, lineWin);
+        // 正确计算水平线的位置，只包括连续的中奖符号
+        const positions = [];
+        // 处理Wild符号替换
+        let currentSymbol = line[0];
+        if (currentSymbol === "wild") {
+          currentSymbol = this.findBestWildReplacement(line);
+        }
+        console.log(`水平线 ${row} 当前符号:`, currentSymbol);
+
+        // 计算连续符号的位置
+        for (let reel = 0; reel < this.config.reels; reel++) {
+          const symbol = reels[reel][row];
+          console.log(`检查位置 [${reel},${row}] 符号:`, symbol);
+          // 检查是否匹配当前符号或为Wild符号
+          if (
+            symbol === currentSymbol ||
+            symbol === "wild" ||
+            (currentSymbol === "wild" && symbol !== "scatter")
+          ) {
+            positions.push({ reel, row });
+            console.log(`位置 [${reel},${row}] 匹配，添加到positions`);
+          } else {
+            // 遇到不匹配的符号就停止
+            console.log(`位置 [${reel},${row}] 不匹配，停止检查`);
+            break;
+          }
+        }
+
+        // 只有当连续符号数量大于等于2时才认为中奖
+        if (positions.length >= 2) {
+          lineWin.positions = positions;
+          console.log(`水平线 ${row} 最终中奖:`, lineWin);
+          wins.push(lineWin);
+        } else {
+          console.log(`水平线 ${row} 连续符号不足，不计入中奖`);
+        }
       }
     }
 
     // 添加两条对角线增加中奖机会
     // 主对角线（左上到右下）
     const diagonal1 = [];
-    const diagonal1Positions = [];
     for (let i = 0; i < Math.min(this.config.reels, this.config.rows); i++) {
       diagonal1.push(reels[i][i]);
-      diagonal1Positions.push({ reel: i, row: i });
     }
+    console.log("检查主对角线:", diagonal1);
     const diagonal1Win = this.checkLine(diagonal1, "diagonal-1");
     if (diagonal1Win) {
-      diagonal1Win.positions = diagonal1Positions;
-      wins.push(diagonal1Win);
+      console.log("主对角线初步中奖:", diagonal1Win);
+      // 正确计算对角线的位置，只包括连续的中奖符号
+      const positions = [];
+      // 处理Wild符号替换
+      let currentSymbol = diagonal1[0];
+      if (currentSymbol === "wild") {
+        currentSymbol = this.findBestWildReplacement(diagonal1);
+      }
+      console.log("主对角线当前符号:", currentSymbol);
+
+      // 计算连续符号的位置
+      for (let i = 0; i < Math.min(this.config.reels, this.config.rows); i++) {
+        const symbol = reels[i][i];
+        console.log(`检查位置 [${i},${i}] 符号:`, symbol);
+        // 检查是否匹配当前符号或为Wild符号
+        if (
+          symbol === currentSymbol ||
+          symbol === "wild" ||
+          (currentSymbol === "wild" && symbol !== "scatter")
+        ) {
+          positions.push({ reel: i, row: i });
+          console.log(`位置 [${i},${i}] 匹配，添加到positions`);
+        } else {
+          // 遇到不匹配的符号就停止
+          console.log(`位置 [${i},${i}] 不匹配，停止检查`);
+          break;
+        }
+      }
+
+      // 只有当连续符号数量大于等于2时才认为中奖
+      if (positions.length >= 2) {
+        diagonal1Win.positions = positions;
+        console.log("主对角线最终中奖:", diagonal1Win);
+        wins.push(diagonal1Win);
+      } else {
+        console.log("主对角线连续符号不足，不计入中奖");
+      }
     }
 
     // 反对角线（左下到右上）
     const diagonal2 = [];
-    const diagonal2Positions = [];
     for (let i = 0; i < Math.min(this.config.reels, this.config.rows); i++) {
       const row = this.config.rows - 1 - i;
       diagonal2.push(reels[i][row]);
-      diagonal2Positions.push({ reel: i, row });
     }
+    console.log("检查反对角线:", diagonal2);
     const diagonal2Win = this.checkLine(diagonal2, "diagonal-2");
     if (diagonal2Win) {
-      diagonal2Win.positions = diagonal2Positions;
-      wins.push(diagonal2Win);
+      console.log("反对角线初步中奖:", diagonal2Win);
+      // 正确计算反对角线的位置，只包括连续的中奖符号
+      const positions = [];
+      // 处理Wild符号替换
+      let currentSymbol = diagonal2[0];
+      if (currentSymbol === "wild") {
+        currentSymbol = this.findBestWildReplacement(diagonal2);
+      }
+      console.log("反对角线当前符号:", currentSymbol);
+
+      // 计算连续符号的位置
+      for (let i = 0; i < Math.min(this.config.reels, this.config.rows); i++) {
+        const row = this.config.rows - 1 - i;
+        const symbol = reels[i][row];
+        console.log(`检查位置 [${i},${row}] 符号:`, symbol);
+        // 检查是否匹配当前符号或为Wild符号
+        if (
+          symbol === currentSymbol ||
+          symbol === "wild" ||
+          (currentSymbol === "wild" && symbol !== "scatter")
+        ) {
+          positions.push({ reel: i, row });
+          console.log(`位置 [${i},${row}] 匹配，添加到positions`);
+        } else {
+          // 遇到不匹配的符号就停止
+          console.log(`位置 [${i},${row}] 不匹配，停止检查`);
+          break;
+        }
+      }
+
+      // 只有当连续符号数量大于等于2时才认为中奖
+      if (positions.length >= 2) {
+        diagonal2Win.positions = positions;
+        console.log("反对角线最终中奖:", diagonal2Win);
+        wins.push(diagonal2Win);
+      } else {
+        console.log("反对角线连续符号不足，不计入中奖");
+      }
     }
 
+    console.log("所有中奖线:", wins);
     return wins; // 7条连线（5水平 + 2对角）
   }
 
@@ -408,21 +515,25 @@ class SlotGameHandler extends BaseGameHandler {
           minAmount = config.min * 0.8;
           maxAmount = config.max * 1.2;
         } else {
-          // 超高投注，奖励范围最大（甚至可能超过原设定上限）
-          minAmount = config.min * (betAmount / 500);
-          maxAmount = config.max * (betAmount / 500);
+          // 超高投注，奖励范围最大（但不超过原设定上限）
+          minAmount = Math.min(config.min * (betAmount / 500), config.min * 2);
+          maxAmount = Math.min(config.max * (betAmount / 500), config.max);
         }
 
-        // 确保奖励金额不低于最小值
+        // 确保奖励金额不低于最小值且不超过最大值
         minAmount = Math.max(minAmount, config.min * 0.05);
-        maxAmount = Math.max(maxAmount, config.min * 0.1);
+        maxAmount = Math.min(maxAmount, config.max); // 确保不超过最大值
 
         const amount = Math.floor(
           Math.random() * (maxAmount - minAmount) + minAmount
         );
+
+        // 确保最终金额不超过该奖项的最大值
+        const finalAmount = Math.min(Math.round(amount), config.max);
+
         return {
           level,
-          amount: Math.round(amount),
+          amount: finalAmount,
           triggered: true,
           type: "regular_jackpot"
         };
@@ -499,9 +610,16 @@ class SlotGameHandler extends BaseGameHandler {
       // 获取当前累计奖池总额
       let totalGameBets = await this.getTotalGameBets();
 
-      // 生成转轴结果
-      const reels = this.generateReels();
-      console.log("转轴结果:", reels);
+      // 使用前端传来的矩阵，如果没有则生成新的
+      let reels;
+      if (req.body.game_matrix && Array.isArray(req.body.game_matrix)) {
+        reels = req.body.game_matrix;
+        console.log("🎲 使用前端传来的游戏矩阵:", reels);
+      } else {
+        // 后端完全控制游戏逻辑，生成真实的转轴结果
+        reels = this.generateReels();
+        console.log("后端生成的真实转轴结果:", reels);
+      }
 
       // 检查连线
       const wins = this.checkPaylines(reels);
@@ -512,7 +630,8 @@ class SlotGameHandler extends BaseGameHandler {
           line: w.line,
           symbol: w.symbol,
           count: w.count,
-          multiplier: w.multiplier
+          multiplier: w.multiplier,
+          positions: w.positions
         }))
       );
 

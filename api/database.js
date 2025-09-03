@@ -178,11 +178,20 @@ function createMemoryDB() {
         const index = memoryDatabase.users.findIndex(user => {
           return Object.keys(query).every(key => user[key] === query[key]);
         });
-        if (index !== -1 && update.$set) {
-          memoryDatabase.users[index] = {
-            ...memoryDatabase.users[index],
-            ...update.$set
-          };
+        if (index !== -1) {
+          // 支持 $set 和 $inc 操作
+          if (update.$set) {
+            memoryDatabase.users[index] = {
+              ...memoryDatabase.users[index],
+              ...update.$set
+            };
+          }
+          if (update.$inc) {
+            Object.keys(update.$inc).forEach(key => {
+              memoryDatabase.users[index][key] =
+                (memoryDatabase.users[index][key] || 0) + update.$inc[key];
+            });
+          }
           return { modifiedCount: 1 };
         }
         return { modifiedCount: 0 };

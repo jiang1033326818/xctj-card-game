@@ -578,9 +578,7 @@
                 <div class="controls">
                     <div class="bet-controls">
                         <span class="bet-label">投注金额:</span>
-                        <input type="number" id="bet-amount" class="bet-input" value="50" min="1" max="100000" step="1">
                         <div class="bet-buttons">
-                            <button class="bet-btn" onclick="setBet(1)">1</button>
                             <button class="bet-btn" onclick="setBet(10)">10</button>
                             <button class="bet-btn" onclick="setBet(50)">50</button>
                             <button class="bet-btn" onclick="setBet(100)">100</button>
@@ -588,8 +586,10 @@
                             <button class="bet-btn" onclick="setBet(1000)">1000</button>
                             <button class="bet-btn" onclick="setBet(10000)">1万</button>
                             <button class="bet-btn" onclick="setBet(100000)">10万</button>
-                            <button class="bet-btn" onclick="maxBet()">最大</button>
+                            <button class="bet-btn" onclick="setBet(500000)">50万</button>
                         </div>
+                        <input type="hidden" id="bet-amount" value="50">
+                        <div id="bet-amount-display" style="margin-top: 10px; color: #FFD700; font-weight: bold;">当前投注: <span id="current-bet-display">50</span></div>
                     </div>
                     <div class="spin-controls">
                         <label class="auto-spin-label">
@@ -711,6 +711,9 @@
                     const betAmount = slotReels.betAmount;
                     const autoSpin = slotReels.autoSpin;
                     
+                    // 显示转轴结果
+                    displayReels(result.reels);
+                    
                     updateGameInfo(result);
                     
                     // 显示中奖效果
@@ -741,7 +744,7 @@
                         setTimeout(() => showFreeSpinsWin(result.scatter), 500);
                     }
                     
-                    // 检查自动旋转
+                    // 检查自动旋转 - 修复版本：更宽容的错误处理
                     if (autoSpin) {
                         // 检查余额是否足够继续自动旋转
                         const canContinue = freeSpinsRemaining > 0 || currentUser.balance >= betAmount;
@@ -753,10 +756,10 @@
                                 }
                             }, 800);
                         } else {
-                            // 余额不足时显示提示
+                            // 余额不足时只在控制台记录，不显示弹框
+                            console.warn('余额不足，自动旋转已停止');
                             setTimeout(() => {
                                 if (document.getElementById('auto-spin-checkbox').checked) {
-                                    alert('余额不足，自动旋转已停止！');
                                     document.getElementById('auto-spin-checkbox').checked = false;
                                 }
                             }, 1000);
@@ -796,6 +799,21 @@
             'scatter': '囍'
         };
         
+        // 反向符号映射（用于调试）
+        const reverseSymbolMap = {
+            '10': 'card_10',
+            'J': 'card_j',
+            'Q': 'card_q',
+            'K': 'card_k',
+            'A': 'card_a',
+            '💰': 'coin',
+            '🧧': 'ingot',
+            '🏮': 'lantern',
+            '🐉': 'dragon',
+            '福': 'wild',
+            '囍': 'scatter'
+        };
+        
         // 水果机转轴类（基于fruit.html参考实现）
         class SlotReel {
             constructor(canvas) {
@@ -803,7 +821,7 @@
                 this.ctx = canvas.getContext('2d');
                 this.w = canvas.width;
                 this.h = canvas.height;
-                this.symbols = Object.values(symbolMap);
+                this.symbols = this.shuffleSymbols(Object.values(symbolMap)); // 初始化时随机打乱符号顺序
                 this.vel = 0;
                 this.targetVel = 0;
                 this.state = 'idle'; // idle, spinning, stopping, locked
@@ -813,7 +831,20 @@
                 this.resultSymbols = ['10', 'J', 'Q', 'K', 'A']; // 默认结果
             }
             
+            // 随机打乱数组顺序
+            shuffleSymbols(symbols) {
+                const shuffled = [...symbols];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+            
             buildStrip() {
+                // 每次构建符号带时都重新随机排列符号
+                this.symbols = this.shuffleSymbols(Object.values(symbolMap));
+                
                 const itemH = 60; // 符号高度
                 const REPEAT = 4; // 重复次数
                 const totalItems = this.symbols.length * REPEAT;
@@ -885,6 +916,8 @@
                 this.state = 'spinning';
                 this.vel = speed;
                 this.targetVel = speed;
+                // 每次开始旋转时重新构建符号带，确保随机性
+                this.sprite = this.buildStrip();
             }
             
             requestStop(targetIndex) {
@@ -898,6 +931,180 @@
                 this.state = 'stopping';
                 this.targetIndex = Math.floor(Math.random() * this.symbols.length);
                 this.targetVel = 0;
+            }
+            
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                const itemH = 60;
+                this.off = targetIndex * itemH;
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}`);
+            }
+            
+            // 新增：强制停止在指定位置，确保显示正确的符号
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                
+                // 计算正确的偏移量，确保目标符号显示在中心
+                const itemH = 60;
+                
+                // 设置偏移量使目标符号显示在中心位置
+                this.off = targetIndex * itemH;
+                
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}, 符号: ${this.symbols[targetIndex]}`);
+                
+                // 立即重绘以显示正确结果
+                this.draw();
+            }
+            
+            // 新增：强制停止在指定位置，确保显示正确的符号
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                
+                // 计算正确的偏移量，确保目标符号显示在中心
+                const itemH = 60;
+                
+                // 设置偏移量使目标符号显示在中心位置
+                this.off = targetIndex * itemH;
+                
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}, 符号: ${this.symbols[targetIndex]}`);
+                
+                // 立即重绘以显示正确结果
+                this.draw();
+            }
+            
+            // 新增：强制停止在指定位置，确保显示正确的符号
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                
+                // 计算正确的偏移量，确保目标符号显示在中心
+                const itemH = 60;
+                
+                // 设置偏移量使目标符号显示在中心位置
+                this.off = targetIndex * itemH;
+                
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}, 符号: ${this.symbols[targetIndex]}`);
+                
+                // 立即重绘以显示正确结果
+                this.draw();
+            }
+            
+            // 新增：强制停止在指定位置，确保显示正确的符号
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                
+                // 计算正确的偏移量，确保目标符号显示在中心
+                const itemH = 60;
+                
+                // 设置偏移量使目标符号显示在中心位置
+                this.off = targetIndex * itemH;
+                
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}, 符号: ${this.symbols[targetIndex]}`);
+                
+                // 立即重绘以显示正确结果
+                this.draw();
+            }
+            
+            // 新增：强制停止在指定位置，确保显示正确的符号
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                
+                // 计算正确的偏移量，确保目标符号显示在中心
+                const itemH = 60;
+                
+                // 设置偏移量使目标符号显示在中心位置
+                this.off = targetIndex * itemH;
+                
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}, 符号: ${this.symbols[targetIndex]}`);
+                
+                // 立即重绘以显示正确结果
+                this.draw();
+            }
+            
+            // 新增：强制停止在指定位置，确保显示正确的符号
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                
+                // 计算正确的偏移量，确保目标符号显示在中心
+                const itemH = 60;
+                
+                // 设置偏移量使目标符号显示在中心位置
+                this.off = targetIndex * itemH;
+                
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}, 符号: ${this.symbols[targetIndex]}`);
+                
+                // 立即重绘以显示正确结果
+                this.draw();
+            }
+            
+            // 新增：强制停止在指定位置，确保显示正确的符号
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                
+                // 计算正确的偏移量，确保目标符号显示在中心
+                const itemH = 60;
+                const len = this.symbols.length;
+                
+                // 设置偏移量使目标符号显示在中心位置
+                this.off = targetIndex * itemH;
+                
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}, 符号: ${this.symbols[targetIndex]}`);
+                
+                // 立即重绘以显示正确结果
+                this.draw();
+            }
+            
+            // 新增：强制停止在指定位置，确保显示正确的符号
+            forceStopAt(targetIndex) {
+                console.log(`强制停止转轴在位置 ${targetIndex}`);
+                this.targetIndex = targetIndex % this.symbols.length;
+                this.state = 'locked';
+                this.vel = 0;
+                this.targetVel = 0;
+                
+                // 计算正确的偏移量，确保目标符号显示在中心
+                const itemH = 60;
+                const len = this.symbols.length;
+                const cycle = len * itemH;
+                
+                // 设置偏移量使目标符号显示在中心位置
+                this.off = targetIndex * itemH;
+                
+                console.log(`转轴停止，目标索引: ${targetIndex}, 偏移量: ${this.off}, 符号: ${this.symbols[targetIndex]}`);
+                
+                // 立即重绘以显示正确结果
+                this.draw();
             }
             
             update(dt) {
@@ -1013,6 +1220,7 @@
         function setBet(amount) {
             document.getElementById('bet-amount').value = amount;
             document.getElementById('current-bet').textContent = amount;
+            document.getElementById('current-bet-display').textContent = amount;
         }
 
         // 最大投注
@@ -1021,7 +1229,28 @@
             setBet(maxAmount);
         }
 
-        // 旋转角子机 - 使用新的Canvas轮带效果
+        // 注释：删除前端生成转轴结果的函数，现在完全由后端控制游戏逻辑
+        // 这确保了显示的结果与后端计算的中奖结果完全一致
+
+        // 生成5×5随机矩阵
+        function generateRandomMatrix() {
+            const symbols = ['card_10', 'card_j', 'card_q', 'card_k', 'card_a', 'wild', 'scatter', 'lantern', 'coin', 'ingot', 'dragon'];
+            const matrix = [];
+            
+            for (let reel = 0; reel < 5; reel++) {
+                const reelSymbols = [];
+                for (let row = 0; row < 5; row++) {
+                    const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                    reelSymbols.push(randomSymbol);
+                }
+                matrix.push(reelSymbols);
+            }
+            
+            console.log('🎲 生成的5×5矩阵:', matrix);
+            return matrix;
+        }
+
+        // 旋转角子机 - 修复版本：前端生成矩阵，后端计算中奖
         async function spin() {
             if (isSpinning) return;
             
@@ -1029,8 +1258,8 @@
             const autoSpin = document.getElementById('auto-spin-checkbox').checked;
             
             // 验证投注金额
-            if (betAmount < 1 || betAmount > 100000) {
-                alert('投注金额必须在1-100000之间！');
+            if (betAmount < 10 || betAmount > 500000) {  // 修改最小投注为10
+                alert('投注金额必须在10-500000之间！');
                 // 如果是自动旋转模式，取消自动旋转
                 if (autoSpin) {
                     document.getElementById('auto-spin-checkbox').checked = false;
@@ -1063,6 +1292,11 @@
             clearWinningEffects();
 
             try {
+                // 步骤1: 前端生成5×5随机矩阵
+                const gameMatrix = generateRandomMatrix();
+                console.log('🎲 前端生成的游戏矩阵:', gameMatrix);
+                
+                // 步骤2: 把矩阵传给后端计算中奖结果
                 const token = localStorage.getItem('token');
                 const response = await fetch('/api/slot-game', {
                     method: 'POST',
@@ -1072,14 +1306,17 @@
                     },
                     body: JSON.stringify({
                         bet_amount: betAmount,
-                        free_spins_remaining: freeSpinsRemaining
+                        free_spins_remaining: freeSpinsRemaining,
+                        game_matrix: gameMatrix  // 传递前端生成的矩阵
                     })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    // 启动所有转轴同时旋转（按照fruit.html的方式）
+                    console.log("收到后端真实结果:", result);
+                    
+                    // 使用后端返回的真实结果启动转轴动画
                     slotReels.forEach((reel, index) => {
                         const reelElement = document.querySelector(`[data-reel="${index}"]`);
                         reelElement.classList.add('spinning');
@@ -1087,24 +1324,27 @@
                         console.log(`转轴 ${index + 1} 开始旋转`);
                     });
                     
-                    // 为每个转轴设置停止时间（按照fruit.html的方式）
+                    // 为每个转轴设置停止时间，使用后端返回的真实结果
                     const runMs = 3000; // 旋转时间
                     const stopIntervals = 400; // 每个转轴之间的停止间隔
                     
-                    // 依次停止转轴
+                    // 步骤3: 转轴显示前端生成的矩阵结果
                     slotReels.forEach((reel, index) => {
                         setTimeout(() => {
-                            // 获取对应位置的结果符号索引
-                            const resultSymbol = result.reels[index][2]; // 中间位置的符号
-                            const targetIndex = reel.symbols.indexOf(resultSymbol);
+                            // 使用前端生成的矩阵中间行作为显示结果
+                            const targetSymbolKey = gameMatrix[index][2]; // 中间位置
+                            const displaySymbol = symbolMap[targetSymbolKey] || targetSymbolKey;
+                            const targetIndex = reel.symbols.indexOf(displaySymbol);
+                            
+                            console.log(`🎰 转轴 ${index + 1} 显示符号: ${displaySymbol} (${targetSymbolKey}), 索引: ${targetIndex}`);
                             
                             if (targetIndex !== -1) {
-                                reel.requestStop(targetIndex);
-                                console.log(`转轴 ${index + 1} 请求停止，目标符号: ${resultSymbol}`);
+                                reel.forceStopAt(targetIndex);
                             } else {
-                                // 如果找不到符号，随机停止
-                                reel.forceStopNow();
-                                console.log(`转轴 ${index + 1} 随机停止`);
+                                // 如果符号不存在，添加到转轴
+                                console.warn(`转轴 ${index + 1} 符号 ${displaySymbol} 不存在，添加到转轴`);
+                                reel.symbols.push(displaySymbol);
+                                reel.forceStopAt(reel.symbols.length - 1);
                             }
                         }, runMs + index * stopIntervals);
                     });
@@ -1119,37 +1359,70 @@
                     slotReels.autoSpin = autoSpin;
                     
                 } else {
-                    alert(result.error || '游戏出错，请重试！');
+                    // 处理余额更新失败等错误，但不中断自动旋转
+                    const errorMessage = result.error || '游戏出错，请重试！';
+                    console.error('游戏错误:', errorMessage);
+                    
+                    // 如果是余额更新失败，不显示弹框，只在控制台记录
+                    if (errorMessage.includes('余额更新失败')) {
+                        console.warn('余额更新失败，但继续游戏流程');
+                        // 不中断自动旋转，继续下一轮
+                        if (autoSpin) {
+                            setTimeout(() => {
+                                if (document.getElementById('auto-spin-checkbox').checked) {
+                                    spin();
+                                }
+                            }, 1000);
+                        }
+                    } else {
+                        alert(errorMessage);
+                        // 如果是自动旋转模式，取消自动旋转
+                        if (autoSpin) {
+                            document.getElementById('auto-spin-checkbox').checked = false;
+                        }
+                    }
+                    
                     isSpinning = false;
                     document.getElementById('spin-btn').disabled = false;
                     document.getElementById('spin-btn').textContent = freeSpinsRemaining > 0 ? '🆓 免费旋转 🆓' : '🎰 旋转 🎰';
-                    
-                    // 如果是自动旋转模式，取消自动旋转
-                    if (autoSpin) {
-                        document.getElementById('auto-spin-checkbox').checked = false;
-                    }
                 }
                 
             } catch (error) {
                 console.error('游戏请求失败:', error);
-                alert('网络错误，请重试！');
+                
+                // 网络错误时不显示弹框，只在控制台记录，不中断自动旋转
+                console.warn('网络错误，但继续游戏流程');
                 
                 // 重置状态
                 isSpinning = false;
                 document.getElementById('spin-btn').disabled = false;
                 document.getElementById('spin-btn').textContent = freeSpinsRemaining > 0 ? '🆓 免费旋转 🆓' : '🎰 旋转 🎰';
                 
-                // 如果是自动旋转模式，取消自动旋转
+                // 如果是自动旋转模式，继续尝试
                 if (autoSpin) {
-                    document.getElementById('auto-spin-checkbox').checked = false;
+                    setTimeout(() => {
+                        if (document.getElementById('auto-spin-checkbox').checked) {
+                            spin();
+                        }
+                    }, 2000); // 网络错误时延迟2秒重试
                 }
             }
         }
 
         // 显示转轴结果 - 更新为兼容Canvas
         function displayReels(reels) {
-            // Canvas转轴会自动显示结果，这里可以用于额外的效果
-            console.log('转轴结果:', reels);
+            console.log("=== 显示转轴结果 ===");
+            console.log("转轴结果:", reels);
+            
+            // 显示每个转轴的中间符号
+            for (let i = 0; i < reels.length; i++) {
+                const middleSymbol = reels[i][2]; // 中间位置的符号
+                // 将符号ID转换为显示符号
+                const displaySymbol = symbolMap[middleSymbol] || middleSymbol;
+                console.log(`转轴 ${i + 1} 中间符号: ${displaySymbol} (ID: ${middleSymbol})`);
+            }
+            
+            console.log("=== 转轴结果显示完成 ===");
         }
 
         // 更新游戏信息
@@ -1194,8 +1467,14 @@
                     }
                 }
                 
+                // 翻译符号名称
+                let symbolName = win.symbol;
+                if (symbolMap[win.symbol]) {
+                    symbolName = symbolMap[win.symbol];
+                }
+                
                 winElement.innerHTML = `
-                    ${lineTypeName}: ${win.count}个 "${symbolMap[win.symbol] || win.symbol}" - 倍数 ${win.multiplier}x
+                    ${lineTypeName}: ${win.count}个 "${symbolName}" - 倍数 ${win.multiplier}x
                 `;
                 winsList.appendChild(winElement);
             });
@@ -1205,11 +1484,17 @@
 
         // 显示中奖效果 - 加强版本！
         function showWinningEffects(wins) {
+            console.log("=== 显示中奖效果 ===");
+            console.log("收到的中奖信息:", wins);
             // 为每条中奖线生成随机背景色
             const lineColors = {};
             
+            // 清除之前的高亮效果
+            clearWinningEffects();
+            
             // 在Canvas转轴上高亮显示中奖位置
-            wins.forEach(win => {
+            wins.forEach((win, index) => {
+                console.log(`处理第 ${index + 1} 条中奖线:`, win);
                 // 为这条线生成唯一颜色（如果还没有的话）
                 if (!lineColors[win.line]) {
                     // 生成鲜艳的颜色
@@ -1227,16 +1512,24 @@
                 }
                 
                 const lineColor = lineColors[win.line];
+                console.log("中奖线颜色:", lineColor);
                 
-                win.positions.forEach(pos => {
+                // 显示中奖线详情
+                console.log("中奖符号:", win.symbol);
+                console.log("中奖位置:", win.positions);
+                
+                // 高亮显示中奖位置
+                win.positions.forEach((pos, posIndex) => {
+                    console.log(`处理第 ${posIndex + 1} 个位置:`, pos);
                     const reel = slotReels[pos.reel];
-                    if (reel) {
+                    if (reel && reel.state === 'locked') {
                         // 在Canvas上绘制中奖高亮效果
                         const canvas = reel.canvas;
-                        const ctx = reel.ctx;
+                        const ctx = canvas.getContext('2d');
                         
                         // 计算中奖符号的Y位置
                         const symbolY = reel.h / 2 + (pos.row - 2) * 60;
+                        console.log("符号Y位置:", symbolY);
                         
                         // 绘制带背景色的中奖框
                         ctx.save();
@@ -1261,6 +1554,7 @@
             createWinCelebration(wins.length);
             
             console.log('中奖效果已显示:', wins.length, '条中奖线');
+            console.log("=== 中奖效果显示完成 ===");
         }
         
         // 中奖庆祝特效
@@ -1766,8 +2060,8 @@
             
             <h4>投注规则</h4>
             <ul>
-                <li>最小投注：1金币</li>
-                <li>最大投注：100000金币</li>
+                <li>最小投注：10金币</li>
+                <li>最大投注：500000金币</li>
                 <li>每次旋转消耗相应投注金额</li>
             </ul>
         </div>

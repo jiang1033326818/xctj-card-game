@@ -5,6 +5,7 @@ const { connectDB, getDB } = require("./database");
 
 // JWT密钥
 const JWT_SECRET = process.env.JWT_SECRET || "xctj-card-game-secret-key-2024";
+console.log("JWT_SECRET:", JWT_SECRET);
 
 // 全局用户缓存，解决内存数据库重启问题
 const userCache = new Map();
@@ -361,29 +362,54 @@ async function atomicUpdateUserBalance(username, amount) {
       return null;
     }
 
-    // 使用数据库的原子操作更新余额
-    const result = await database.users.updateOne(
-      { username: username },
-      { $inc: { balance: amount } }
-    );
+    // 检查是否是内存数据库（通过检查是否有toArray方法来判断）
+    const isMemoryDB =
+      typeof database.users.find === "function" &&
+      typeof database.users.toArray === "undefined";
 
-    if (result.modifiedCount > 0) {
-      // 更新成功，从数据库重新获取用户信息
-      const updatedUser = await database.users.findOne({ username: username });
-      if (updatedUser) {
-        // 同步到缓存
-        userCache.set(username, updatedUser);
-        console.log("原子化更新用户余额成功:", {
+    if (isMemoryDB) {
+      // 内存数据库模式 - 直接操作缓存
+      const user = userCache.get(username);
+      if (user) {
+        const newBalance = user.balance + amount;
+        user.balance = newBalance;
+        userCache.set(username, user);
+        console.log("内存数据库更新用户余额成功:", {
           username,
           amount,
-          newBalance: updatedUser.balance
+          newBalance
         });
-        return updatedUser;
+        return user;
       }
-    }
+      console.error("内存数据库更新用户余额失败，用户未找到:", username);
+      return null;
+    } else {
+      // MongoDB模式 - 使用原子操作
+      const result = await database.users.updateOne(
+        { username: username },
+        { $inc: { balance: amount } }
+      );
 
-    console.error("原子化更新用户余额失败，用户未找到或未更新:", username);
-    return null;
+      if (result.modifiedCount > 0) {
+        // 更新成功，从数据库重新获取用户信息
+        const updatedUser = await database.users.findOne({
+          username: username
+        });
+        if (updatedUser) {
+          // 同步到缓存
+          userCache.set(username, updatedUser);
+          console.log("原子化更新用户余额成功:", {
+            username,
+            amount,
+            newBalance: updatedUser.balance
+          });
+          return updatedUser;
+        }
+      }
+
+      console.error("原子化更新用户余额失败，用户未找到或未更新:", username);
+      return null;
+    }
   } catch (error) {
     console.error("原子化更新用户余额错误:", error);
     return null;
@@ -400,6 +426,22 @@ async function validateUserBalance(username, requiredAmount) {
   try {
     initializeUserCache();
 
+    // 优先从缓存获取用户
+    let user = userCache.get(username);
+    if (user) {
+      // 检查余额是否足够
+      if (user.balance >= requiredAmount) {
+        return user;
+      } else {
+        console.log("用户余额不足:", {
+          username,
+          balance: user.balance,
+          required: requiredAmount
+        });
+        return null;
+      }
+    }
+
     // 获取数据库实例
     const database = getDB();
     if (!database) {
@@ -408,7 +450,7 @@ async function validateUserBalance(username, requiredAmount) {
     }
 
     // 从数据库获取最新的用户信息
-    const user = await database.users.findOne({ username: username });
+    user = await database.users.findOne({ username: username });
     if (!user) {
       console.error("用户不存在:", username);
       return null;

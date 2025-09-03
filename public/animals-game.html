@@ -537,8 +537,8 @@
         <div class="left-panel">
             <div class="section-title">🎯 押注选项</div>
             <div class="quick-bet-buttons">
-                <button class="quick-bet-btn" onclick="quickBet(1)">1</button>
                 <button class="quick-bet-btn" onclick="quickBet(10)">10</button>
+                <button class="quick-bet-btn" onclick="quickBet(25)">25</button>
                 <button class="quick-bet-btn" onclick="quickBet(50)">50</button>
                 <button class="quick-bet-btn" onclick="quickBet(100)">100</button>
                 <button class="quick-bet-btn" onclick="quickBet(500)">500</button>
@@ -713,7 +713,7 @@
             currentBets: {},
             isSpinning: false,
             balance: 0,
-            selectedChip: 1, // 默认选中1元筹码
+            selectedChip: 10, // 默认选中10元筹码
             topPlayers: [], // 排行榜数据
             gameHistory: [], // 游戏记录
             currentPage: 1,

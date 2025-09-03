@@ -21,6 +21,9 @@ const {
   deleteAllAdminsAndRecreate
 } = require("./admin");
 
+// 本地测试接口
+const { getLocalDBStatus, resetLocalDB, addTestUser } = require("./local-test");
+
 /**
  * 处理API路由
  * @param {Object} req 请求对象
@@ -109,6 +112,21 @@ async function handleRoutes(req, res) {
 
   if (path === "/api/delete_user" && method === "POST") {
     return await handleDeleteUser(req, res);
+  }
+
+  // 本地测试接口（仅在开发环境可用）
+  if (process.env.NODE_ENV === "development") {
+    if (path === "/api/local/db-status" && method === "GET") {
+      return await getLocalDBStatus(req, res);
+    }
+
+    if (path === "/api/local/db-reset" && method === "POST") {
+      return await resetLocalDB(req, res);
+    }
+
+    if (path === "/api/local/add-user" && method === "POST") {
+      return await addTestUser(req, res);
+    }
   }
 
   // 路由未匹配
